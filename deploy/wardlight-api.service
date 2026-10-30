@@ -1,0 +1,42 @@
+# systemd unit for the Wardlight API on the VM. Install: see deploy/README.md. Not installed by the build.
+[Unit]
+Description=Wardlight API (FastAPI, uvicorn) behind the Cloudflare tunnel
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=wardlight
+Group=wardlight
+WorkingDirectory=/opt/wardlight/build/wardlight
+# Non-secret settings. Secrets (the WARDLIGHT_LLM_* model variables, only when he approves live agents) go in
+# /etc/wardlight/api.env, mode 600, owned by root; this unit reads it, the code never reads any .env file.
+Environment=PYTHONUNBUFFERED=1
+Environment=WARDLIGHT_FIXTURE=0
+Environment=WARDLIGHT_TRUST_CF=1
+Environment=WARDLIGHT_AGENT_LIVE=0
+Environment=WARDLIGHT_AGENT_DAILY_CAP=40
+Environment=WARDLIGHT_RATE_READ=240
+Environment=WARDLIGHT_RATE_SIMULATE=30
+Environment=WARDLIGHT_RATE_AGENT=6
+Environment=WARDLIGHT_RATE_TELEPHONY=60
+Environment=WARDLIGHT_MAX_BODY_BYTES=16384
+EnvironmentFile=-/etc/wardlight/api.env
+# One worker on purpose: the rate limiter, the what-if cache, agent runs and the daily cap live in process memory.
+ExecStart=/opt/wardlight/build/wardlight/deploy/run.sh
+Restart=on-failure
+RestartSec=3
+TimeoutStartSec=120
+MemoryMax=3G
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadOnlyPaths=/opt/wardlight
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,251 @@
+{
+ "order_file": "PHED_HOLDCO_YSS_September_2026_097.pdf",
+ "page": 11,
+ "disco": "PHED",
+ "target": "rows",
+ "transcribed_by": "build agent A, by eye from the 300 dpi render, before comparing with the reader output",
+ "rows": [
+  {
+   "sn": 1,
+   "feeder_name": "4POINT SHERATON",
+   "band": "A",
+   "location": "UYO",
+   "streets": "4POINT SHERATON COMPLEX.",
+   "min_hours": 20
+  },
+  {
+   "sn": 2,
+   "feeder_name": "AFAHA UBE",
+   "band": "A",
+   "location": "IKOT EKPENE",
+   "streets": "AFAHA UBE COMMUNITY",
+   "min_hours": 20
+  },
+  {
+   "sn": 3,
+   "feeder_name": "AFAHA UQUA",
+   "band": "A",
+   "location": "EKET",
+   "streets": "UQUA ROAD, AFAHA UQUA ROAD, AFAHA UQUA OBOKIDEM ROAD, EDIAM STREET, CHURCH ROAD.",
+   "min_hours": 20
+  },
+  {
+   "sn": 4,
+   "feeder_name": "CHAMPIONS BREWERIES",
+   "band": "A",
+   "location": "UYO",
+   "streets": "UDO UDOMA AVENUE, BANKING LAYOUT, WINNERS CHAPEL ROAD, AKA ROAD, IBB ROAD, COMMUNITY SCHOOL ROAD",
+   "min_hours": 20
+  },
+  {
+   "sn": 5,
+   "feeder_name": "EKPENUKPA",
+   "band": "A",
+   "location": "EKET",
+   "streets": "AFAHA UQUA, RCC, ORON ROAD",
+   "min_hours": 20
+  },
+  {
+   "sn": 6,
+   "feeder_name": "EWET",
+   "band": "A",
+   "location": "UYO",
+   "streets": "EWET HOUSING ESTATE, FOURLANE ROAD, ORON ROAD",
+   "min_hours": 20
+  },
+  {
+   "sn": 7,
+   "feeder_name": "FOURLANE",
+   "band": "A",
+   "location": "UYO",
+   "streets": "IKOT EKPENE ROAD, IKPA ROAD, ORON ROAD.",
+   "min_hours": 20
+  },
+  {
+   "sn": 8,
+   "feeder_name": "G.R.A",
+   "band": "A",
+   "location": "UYO",
+   "streets": "LIBRARY AVENUE, METRO ROAD, ABA ROAD, IKOT OSURUA.",
+   "min_hours": 20
+  },
+  {
+   "sn": 9,
+   "feeder_name": "IBENO",
+   "band": "A",
+   "location": "EKET",
+   "streets": "ONNA TOWN, AWA IMAN, NKPAT ENIN, IKOT ABASI, EDEM ENYA, MARINA L.G.A, IBAMO L.G.A",
+   "min_hours": 20
+  },
+  {
+   "sn": 10,
+   "feeder_name": "IBESIKPO",
+   "band": "A",
+   "location": "UYO",
+   "streets": "IBESIKPO, NUNG UDOE, OKOP NWA ERONG, AFAHA-UBE ROAD, WINNERS CHAPEL ROAD, ATIKU ROAD",
+   "min_hours": 20
+  },
+  {
+   "sn": 11,
+   "feeder_name": "IKOT EKPENE",
+   "band": "A",
+   "location": "IKOT EKPENE",
+   "streets": "IKOT EKPENE ROAD BY AFAHA UBE, ENEN AFAHA, ENEN IKOT ABASI",
+   "min_hours": 20
+  },
+  {
+   "sn": 12,
+   "feeder_name": "IKPA ROAD",
+   "band": "A",
+   "location": "UYO",
+   "streets": "UNIUYO TOWN CAMPUS IKPA ROAD, BROOK STREET, IKOT EKPENE ROAD, BARRACKS STREET, GOVT. HOUSE.",
+   "min_hours": 20
+  },
+  {
+   "sn": 13,
+   "feeder_name": "INDONGESIT NKANGA",
+   "band": "A",
+   "location": "UYO",
+   "streets": "STATE SECRETERIAT COMPLEX IBB WAY, ABAK ROAD, NSENTIP STREET",
+   "min_hours": 20
+  },
+  {
+   "sn": 14,
+   "feeder_name": "ITAM",
+   "band": "A",
+   "location": "UYO",
+   "streets": "ITU, ITAM, CALABAR-ITU ROAD, EKIM VILLAGE, EKIT ITAM, MBIAYA URUAN, ITU, IKIM, OGBORO, IBIODAN, ITAM, UYO VILLAGE ROAD, ODIOK, ITA-IRUAN",
+   "min_hours": 20
+  },
+  {
+   "sn": 15,
+   "feeder_name": "LA MERIDIAN",
+   "band": "A",
+   "location": "UYO",
+   "streets": "NSUKARA OFFOT, IDU URUAN, IKOT EKPENE ROAD BY DE CHOICE MALL, IDA ROAD, UWANIBA ROAD",
+   "min_hours": 20
+  },
+  {
+   "sn": 16,
+   "feeder_name": "OKON",
+   "band": "A",
+   "location": "EKET",
+   "streets": "ASANG STREET, IDUA ROAD, IKOT UDOMA, ODOROENEN ROAD, MKPOK STREET, ATABONG ROAD, AFIA NSIT ROAD, ETEBI STREET.",
+   "min_hours": 20
+  },
+  {
+   "sn": 17,
+   "feeder_name": "ORON ROAD",
+   "band": "A",
+   "location": "UYO",
+   "streets": "OKOBO, ORON ROAD, IFA ATAI, IFA IKOT OKPON, ITUK MBANG, AKPASAK, IDU URUAN, AFAHA-UBE, UKEMBA STR, IKOT-EKPENE ROAD, NEPA LINE",
+   "min_hours": 20
+  },
+  {
+   "sn": 18,
+   "feeder_name": "OSONGAMA",
+   "band": "A",
+   "location": "UYO",
+   "streets": "OSONGAMA COMMUNITY, AFAGA AND ORON ROAD",
+   "min_hours": 20
+  },
+  {
+   "sn": 19,
+   "feeder_name": "QUA RIVER",
+   "band": "A",
+   "location": "EKET",
+   "streets": "LIVERPOOL ROAD, HOSPITAL ROAD, SAINT GREGORY SREET, PARK ROAD, AKANIMO STREET, GRACE BILL ROAD, MARINA, IKO EKWA ROAD, IBENO ROAD, ESU STREET.",
+   "min_hours": 20
+  },
+  {
+   "sn": 20,
+   "feeder_name": "RCC",
+   "band": "A",
+   "location": "EKET",
+   "streets": "COURT ROAD, AKAI NYO, UDOFA, OKON EKET, IBEKEWE, EDITONG, ESA AKPAN",
+   "min_hours": 20
+  },
+  {
+   "sn": 21,
+   "feeder_name": "AKAMKPA",
+   "band": "A",
+   "location": "CALABAR",
+   "streets": "AWI, AKAMKPA, ODUKPANI, CREEK TOWN",
+   "min_hours": 20
+  },
+  {
+   "sn": 22,
+   "feeder_name": "AMIKA",
+   "band": "A",
+   "location": "CALABAR",
+   "streets": "MM HIGHWAY, MARIAM ROAD,UNICAL, ATAN ONOYOM",
+   "min_hours": 20
+  },
+  {
+   "sn": 23,
+   "feeder_name": "BAO YAO",
+   "band": "A",
+   "location": "CALABAR",
+   "streets": "IRON AND STEEL, BAO YAO",
+   "min_hours": 20
+  },
+  {
+   "sn": 24,
+   "feeder_name": "DIAMOND HILLS",
+   "band": "A",
+   "location": "CALABAR",
+   "streets": "LEOPARD TOWN, CALABAR ROAD, WATT MARKET",
+   "min_hours": 20
+  },
+  {
+   "sn": 25,
+   "feeder_name": "EPZ1",
+   "band": "A",
+   "location": "CALABAR",
+   "streets": "EPZ COMPLEX",
+   "min_hours": 20
+  },
+  {
+   "sn": 26,
+   "feeder_name": "EPZ2",
+   "band": "A",
+   "location": "CALABAR",
+   "streets": "ESUK UTAN, EPZ, NPA",
+   "min_hours": 20
+  },
+  {
+   "sn": 27,
+   "feeder_name": "ESUK UTAN",
+   "band": "A",
+   "location": "CALABAR",
+   "streets": "ESUK UTAN INDUSTRIAL LAYOUT",
+   "min_hours": 20
+  }
+ ],
+ "shortfalls": [
+  {
+   "sn": 1,
+   "feeder_name": "KOMKOM A",
+   "location": "PH",
+   "streets": "AFAM COMMUNITIES",
+   "measured_raw": "19.52",
+   "measured_avg_hours": 19.52,
+   "band": "A",
+   "remark": "COMPENSATE CUSTOMER",
+   "action": "compensation",
+   "period": "2026-08-01/2026-08-21"
+  },
+  {
+   "sn": 2,
+   "feeder_name": "INDUSTRIAL",
+   "location": "EKET",
+   "streets": "ONNA, WEE ENGINEERING",
+   "measured_raw": "AFFECTED BY LOW GENERATION",
+   "measured_avg_hours": null,
+   "band": "A",
+   "remark": "COMPENSATE CUSTOMER",
+   "action": "compensation",
+   "period": "2026-08-01/2026-08-21"
+  }
+ ]
+}

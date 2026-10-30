@@ -1,0 +1,526 @@
+{
+ "kind": "verifier_session",
+ "recorded": true,
+ "label": "Recorded session. sandbox, simulated replies. Replies typed for the demo; no clinic was contacted.",
+ "events": [
+  {
+   "type": "plan",
+   "seq": 0,
+   "t_ms": 0,
+   "steps": [
+    {
+     "id": "baseline",
+     "title": "Model the facility before asking"
+    },
+    {
+     "id": "ask_fridge",
+     "title": "Ask which fridge holds the vaccines"
+    },
+    {
+     "id": "ask_grid_hours",
+     "title": "Ask yesterday's grid hours"
+    },
+    {
+     "id": "ask_typical",
+     "title": "Ask if yesterday was usual (optional)"
+    },
+    {
+     "id": "answer",
+     "title": "Show the interval before and after"
+    }
+   ]
+  },
+  {
+   "type": "step_start",
+   "seq": 1,
+   "t_ms": 0,
+   "id": "baseline"
+  },
+  {
+   "type": "tool_call",
+   "seq": 2,
+   "t_ms": 0,
+   "id": "v1",
+   "name": "simulate",
+   "args": {
+    "unique_id": "SN_00094486CE",
+    "supply": "band mixture {\"A\": 0.3333, \"D\": 0.3333, \"E\": 0.3333}",
+    "fridge": null,
+    "why": "baseline: equipment unknown"
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 3,
+   "t_ms": 2211,
+   "id": "v1",
+   "summary": "today 0% to 98% of days held at 2 to 8 degC (unknown equipment (envelope))",
+   "rows": 1,
+   "ms": 2211,
+   "interval": {
+    "point": null,
+    "lo": 0.0,
+    "hi": 0.9847406518651152,
+    "width": 0.9847406518651152,
+    "scenario": "unknown equipment (envelope)"
+   },
+   "supply": "band mixture {\"A\": 0.3333, \"D\": 0.3333, \"E\": 0.3333}",
+   "width_before": null,
+   "width_after": 0.9847406518651152,
+   "widened": false,
+   "contradicts_prior": false,
+   "prior_predictive": null,
+   "note": "baseline"
+  },
+  {
+   "type": "step_start",
+   "seq": 4,
+   "t_ms": 2211,
+   "id": "ask_fridge"
+  },
+  {
+   "type": "tool_call",
+   "seq": 5,
+   "t_ms": 2211,
+   "id": "v2",
+   "name": "ask_clinic",
+   "args": {
+    "channel": "sms",
+    "message": "Wardlight (sandbox): which fridge holds your vaccines? Reply 1 ice-lined, 2 solar, 3 household, 4 none"
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 6,
+   "t_ms": 2212,
+   "id": "v2",
+   "summary": "reply: we have the household one",
+   "rows": 1,
+   "ms": 0,
+   "reply": "we have the household one",
+   "parsed": "household",
+   "parse_status": "ok",
+   "parsed_by": "rule",
+   "quote": null
+  },
+  {
+   "type": "tool_call",
+   "seq": 7,
+   "t_ms": 2212,
+   "id": "v3",
+   "name": "simulate",
+   "args": {
+    "unique_id": "SN_00094486CE",
+    "supply": "band mixture {\"A\": 0.3333, \"D\": 0.3333, \"E\": 0.3333}",
+    "fridge": "household",
+    "why": "fridge reported: household or non-PQS fridge"
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 8,
+   "t_ms": 2212,
+   "id": "v3",
+   "summary": "today 0% to 89% of days held at 2 to 8 degC (household or non-PQS fridge)",
+   "rows": 1,
+   "ms": 0,
+   "interval": {
+    "point": 0.0,
+    "lo": 0.0,
+    "hi": 0.8924786310158533,
+    "width": 0.8924786310158533,
+    "scenario": "household or non-PQS fridge"
+   },
+   "supply": "band mixture {\"A\": 0.3333, \"D\": 0.3333, \"E\": 0.3333}",
+   "width_before": 0.9847406518651152,
+   "width_after": 0.8924786310158533,
+   "widened": false,
+   "contradicts_prior": false,
+   "prior_predictive": null,
+   "note": "the interval did not widen"
+  },
+  {
+   "type": "step_start",
+   "seq": 9,
+   "t_ms": 2212,
+   "id": "ask_grid_hours"
+  },
+  {
+   "type": "tool_call",
+   "seq": 10,
+   "t_ms": 2212,
+   "id": "v4",
+   "name": "ask_clinic",
+   "args": {
+    "channel": "sms",
+    "message": "How many hours of grid power did the clinic have yesterday? Reply one number from 0 to 24"
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 11,
+   "t_ms": 2212,
+   "id": "v4",
+   "summary": "reply: about nine hours",
+   "rows": 1,
+   "ms": 0,
+   "reply": "about nine hours",
+   "parsed": 9.0,
+   "parse_status": "ok",
+   "parsed_by": "rule",
+   "quote": null
+  },
+  {
+   "type": "tool_call",
+   "seq": 12,
+   "t_ms": 2217,
+   "id": "v5",
+   "name": "simulate",
+   "args": {
+    "unique_id": "SN_00094486CE",
+    "supply": "reported 9 h a day, sd 2 h (assumption)",
+    "fridge": "household",
+    "why": "grid hours reported: 9"
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 13,
+   "t_ms": 2706,
+   "id": "v5",
+   "summary": "today 0% to 0.2% of days held at 2 to 8 degC (household or non-PQS fridge)",
+   "rows": 1,
+   "ms": 488,
+   "interval": {
+    "point": 0.0,
+    "lo": 0.0,
+    "hi": 0.0016063532625260868,
+    "width": 0.0016063532625260868,
+    "scenario": "household or non-PQS fridge"
+   },
+   "supply": "reported 9 h a day, sd 2 h (assumption)",
+   "width_before": 0.8924786310158533,
+   "width_after": 0.0016063532625260868,
+   "widened": false,
+   "contradicts_prior": false,
+   "prior_predictive": 0.3286914426369863,
+   "note": "the interval did not widen"
+  },
+  {
+   "type": "step_start",
+   "seq": 14,
+   "t_ms": 2706,
+   "id": "ask_typical"
+  },
+  {
+   "type": "tool_call",
+   "seq": 15,
+   "t_ms": 2706,
+   "id": "v6",
+   "name": "ask_clinic",
+   "args": {
+    "channel": "sms",
+    "message": "Optional: was yesterday a usual day for power? Reply 1 yes, 2 no, 0 skip"
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 16,
+   "t_ms": 2706,
+   "id": "v6",
+   "summary": "reply: 1",
+   "rows": 1,
+   "ms": 0,
+   "reply": "1",
+   "parsed": "yes",
+   "parse_status": "ok",
+   "parsed_by": "rule",
+   "quote": null
+  },
+  {
+   "type": "step_start",
+   "seq": 17,
+   "t_ms": 2706,
+   "id": "answer"
+  },
+  {
+   "type": "check",
+   "seq": 18,
+   "t_ms": 2707,
+   "kind": "grounding",
+   "numbers_checked": 8,
+   "unmatched": [],
+   "matches": [
+    {
+     "text": "0%",
+     "value": 0.0,
+     "matched": 0.0
+    },
+    {
+     "text": "98%",
+     "value": 98.0,
+     "matched": 0.9847406518651152
+    },
+    {
+     "text": "0%",
+     "value": 0.0,
+     "matched": 0.0
+    },
+    {
+     "text": "0.2%",
+     "value": 0.2,
+     "matched": 0.18921923497107918
+    },
+    {
+     "text": "9",
+     "value": 9.0,
+     "matched": 9.0
+    },
+    {
+     "text": "2",
+     "value": 2.0,
+     "matched": 2.0
+    },
+    {
+     "text": "9",
+     "value": 9.0,
+     "matched": 9.0
+    },
+    {
+     "text": "one",
+     "value": 1.0,
+     "matched": 0.9847406518651152
+    }
+   ],
+   "ok": true
+  },
+  {
+   "type": "answer",
+   "seq": 19,
+   "t_ms": 2707,
+   "markdown": "**Babanla Primary Health Centre ( Model )** (sandbox, simulated replies)\n\nBefore asking: today's fridge uptime between 0% and 98% of days (unknown equipment (envelope)).\nAfter the replies: between 0% and 0.2% (household or non-PQS fridge; supply: reported 9 h a day, sd 2 h (assumption)).\nNote: the reported 9 hours replace the band promise as the supply model\nModelled: grid supply from the clinic's one reported day, with an assumed spread.",
+   "funded": [],
+   "not_reached": [],
+   "totals": {
+    "before": {
+     "point": null,
+     "lo": 0.0,
+     "hi": 0.9847406518651152,
+     "width": 0.9847406518651152,
+     "scenario": "unknown equipment (envelope)"
+    },
+    "after": {
+     "point": 0.0,
+     "lo": 0.0,
+     "hi": 0.0016063532625260868,
+     "width": 0.0016063532625260868,
+     "scenario": "household or non-PQS fridge"
+    },
+    "narrowed_by": 0.983134298602589,
+    "answers": {
+     "fridge": "household",
+     "grid_hours": 9.0,
+     "typical": "yes"
+    },
+    "supply_before": "band mixture {\"A\": 0.3333, \"D\": 0.3333, \"E\": 0.3333}",
+    "supply_after": "reported 9 h a day, sd 2 h (assumption)",
+    "steps": [
+     {
+      "why": "baseline: equipment unknown",
+      "interval": {
+       "point": null,
+       "lo": 0.0,
+       "hi": 0.9847406518651152,
+       "width": 0.9847406518651152,
+       "scenario": "unknown equipment (envelope)"
+      },
+      "width_before": null,
+      "widened": false,
+      "contradicts_prior": false,
+      "prior_predictive": null,
+      "note": "baseline"
+     },
+     {
+      "why": "fridge reported: household or non-PQS fridge",
+      "interval": {
+       "point": 0.0,
+       "lo": 0.0,
+       "hi": 0.8924786310158533,
+       "width": 0.8924786310158533,
+       "scenario": "household or non-PQS fridge"
+      },
+      "width_before": 0.9847406518651152,
+      "widened": false,
+      "contradicts_prior": false,
+      "prior_predictive": null,
+      "note": "the interval did not widen"
+     },
+     {
+      "why": "grid hours reported: 9",
+      "interval": {
+       "point": 0.0,
+       "lo": 0.0,
+       "hi": 0.0016063532625260868,
+       "width": 0.0016063532625260868,
+       "scenario": "household or non-PQS fridge"
+      },
+      "width_before": 0.8924786310158533,
+      "widened": false,
+      "contradicts_prior": false,
+      "prior_predictive": 0.3286914426369863,
+      "note": "the interval did not widen"
+     }
+    ],
+    "label": "sandbox, simulated replies"
+   },
+   "sms": [
+    {
+     "from": "wardlight",
+     "text": "Wardlight (sandbox): which fridge holds your vaccines? Reply 1 ice-lined, 2 solar, 3 household, 4 none"
+    },
+    {
+     "from": "clinic",
+     "text": "we have the household one"
+    },
+    {
+     "from": "wardlight",
+     "text": "How many hours of grid power did the clinic have yesterday? Reply one number from 0 to 24"
+    },
+    {
+     "from": "clinic",
+     "text": "about nine hours"
+    },
+    {
+     "from": "wardlight",
+     "text": "Optional: was yesterday a usual day for power? Reply 1 yes, 2 no, 0 skip"
+    },
+    {
+     "from": "clinic",
+     "text": "1"
+    }
+   ],
+   "notes": [
+    "the reported 9 hours replace the band promise as the supply model"
+   ]
+  },
+  {
+   "type": "done",
+   "seq": 20,
+   "t_ms": 2707,
+   "model": "rules only",
+   "tokens": 0,
+   "cost_usd": 0.0,
+   "recorded": true,
+   "duration_ms": 2707,
+   "label": "sandbox, simulated replies"
+  }
+ ],
+ "facility": {
+  "unique_id": "SN_00094486CE",
+  "name": "Babanla Primary Health Centre ( Model )",
+  "lat": 8.5846171,
+  "lon": 5.1834301,
+  "tier": "c_lga_mixture",
+  "bands": {
+   "A": 0.3333,
+   "D": 0.3333,
+   "E": 0.3333
+  }
+ },
+ "answers": {
+  "fridge": "household",
+  "grid_hours": 9.0,
+  "typical": "yes"
+ },
+ "sms": [
+  {
+   "from": "wardlight",
+   "text": "Wardlight (sandbox): which fridge holds your vaccines? Reply 1 ice-lined, 2 solar, 3 household, 4 none"
+  },
+  {
+   "from": "clinic",
+   "text": "we have the household one"
+  },
+  {
+   "from": "wardlight",
+   "text": "How many hours of grid power did the clinic have yesterday? Reply one number from 0 to 24"
+  },
+  {
+   "from": "clinic",
+   "text": "about nine hours"
+  },
+  {
+   "from": "wardlight",
+   "text": "Optional: was yesterday a usual day for power? Reply 1 yes, 2 no, 0 skip"
+  },
+  {
+   "from": "clinic",
+   "text": "1"
+  }
+ ],
+ "before": {
+  "supply": "band mixture {\"A\": 0.3333, \"D\": 0.3333, \"E\": 0.3333}",
+  "bands": "{\"A\": 0.3333, \"D\": 0.3333, \"E\": 0.3333}",
+  "observed_hours": null,
+  "interval": {
+   "point": null,
+   "lo": 0.0,
+   "hi": 0.9847406518651152,
+   "width": 0.9847406518651152,
+   "scenario": "unknown equipment (envelope)"
+  },
+  "sim": {
+   "today_pqs_ice_lined": {
+    "point": 0.9198868808625885,
+    "lo": 0.18921923497107918,
+    "hi": 0.9714582011553412
+   },
+   "today_domestic": {
+    "point": 0.0,
+    "lo": 0.0,
+    "hi": 0.8924786310158533
+   },
+   "solar_direct_drive": {
+    "point": 0.940960336260998,
+    "lo": 0.9049205404435898,
+    "hi": 0.9847406518651152
+   },
+   "fix_label": "PQS solar direct-drive fridge",
+   "fix_category": "ii"
+  }
+ },
+ "after": {
+  "supply": "reported 9 h a day, sd 2 h (assumption)",
+  "bands": "{\"A\": 0.3333, \"D\": 0.3333, \"E\": 0.3333}",
+  "observed_hours": 9.0,
+  "interval": {
+   "point": 0.0,
+   "lo": 0.0,
+   "hi": 0.0016063532625260868,
+   "width": 0.0016063532625260868,
+   "scenario": "household or non-PQS fridge"
+  },
+  "sim": {
+   "today_pqs_ice_lined": {
+    "point": 0.940960336260998,
+    "lo": 0.9049205404435898,
+    "hi": 0.9847406518651152
+   },
+   "today_domestic": {
+    "point": 0.0,
+    "lo": 0.0,
+    "hi": 0.0016063532625260868
+   },
+   "solar_direct_drive": {
+    "point": 0.940960336260998,
+    "lo": 0.9049205404435898,
+    "hi": 0.9847406518651152
+   },
+   "fix_label": "PQS mains ice-lined fridge on the existing grid",
+   "fix_category": "i"
+  }
+ },
+ "notes": [
+  "the reported 9 hours replace the band promise as the supply model"
+ ]
+}

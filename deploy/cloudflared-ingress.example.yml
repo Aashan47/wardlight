@@ -1,0 +1,11 @@
+# Example ingress for the existing Cloudflare tunnel on the VM. The hostname is a placeholder: use the subdomain
+# he approves. Merge into the tunnel's config.yml; do not replace other ingress rules.
+ingress:
+  - hostname: SUBDOMAIN.example.org
+    service: http://127.0.0.1:8000
+    originRequest:
+      connectTimeout: 10s
+      # SSE: keep agent event streams open and unbuffered
+      disableChunkedEncoding: false
+      noHappyEyeballs: true
+  - service: http_status:404

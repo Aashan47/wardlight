@@ -1,0 +1,1699 @@
+{
+ "kind": "planner_session",
+ "recorded": true,
+ "label": "Recorded session. Scripted test model: rule-based, no language model was called. Tool results are real (Wardlight data version c703b8b82337).",
+ "events": [
+  {
+   "type": "plan",
+   "seq": 0,
+   "t_ms": 0,
+   "steps": [
+    {
+     "id": "scope",
+     "title": "Check the question is in scope"
+    },
+    {
+     "id": "gather",
+     "title": "Read the data with tools"
+    },
+    {
+     "id": "draft",
+     "title": "Draft the answer"
+    },
+    {
+     "id": "check",
+     "title": "Check every number against the tool results"
+    },
+    {
+     "id": "answer",
+     "title": "Answer with citations"
+    }
+   ]
+  },
+  {
+   "type": "step_start",
+   "seq": 1,
+   "t_ms": 0,
+   "id": "scope"
+  },
+  {
+   "type": "step_start",
+   "seq": 2,
+   "t_ms": 0,
+   "id": "gather"
+  },
+  {
+   "type": "tool_call",
+   "seq": 3,
+   "t_ms": 0,
+   "id": "call_rank",
+   "name": "rank_budget",
+   "args": {
+    "state": "Gombe",
+    "budget": 25000000.0,
+    "currency": "NGN",
+    "priority": "load_hours",
+    "top": 5
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 4,
+   "t_ms": 61,
+   "id": "call_rank",
+   "summary": "3 funded of 1136 ranked in Gombe; N21,421,557 of N25,000,000",
+   "rows": 1229,
+   "ms": 61,
+   "ok": true
+  },
+  {
+   "type": "tool_call",
+   "seq": 5,
+   "t_ms": 62,
+   "id": "call_fac",
+   "name": "get_facility",
+   "args": {
+    "unique_id": "SN_B0A8F8C09A"
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 6,
+   "t_ms": 64,
+   "id": "call_fac",
+   "summary": "Shaganawa Primary Health Centre (c_lga_mixture), 2 NERC rows",
+   "rows": 1,
+   "ms": 2,
+   "ok": true
+  },
+  {
+   "type": "step_start",
+   "seq": 7,
+   "t_ms": 64,
+   "id": "draft"
+  },
+  {
+   "type": "step_start",
+   "seq": 8,
+   "t_ms": 64,
+   "id": "check"
+  },
+  {
+   "type": "check",
+   "seq": 9,
+   "t_ms": 69,
+   "kind": "grounding",
+   "numbers_checked": 33,
+   "unmatched": [
+    "987,654"
+   ],
+   "matches": [
+    {
+     "text": "N25,000,000",
+     "value": 25000000.0,
+     "matched": 25000000.0
+    },
+    {
+     "text": "3",
+     "value": 3.0,
+     "matched": 3.0
+    },
+    {
+     "text": "N21,421,557",
+     "value": 21421557.0,
+     "matched": 21421556.64
+    },
+    {
+     "text": "N3,578,443",
+     "value": 3578443.0,
+     "matched": 3578443.36
+    },
+    {
+     "text": "27,375",
+     "value": 27375.0,
+     "matched": 27375.0
+    },
+    {
+     "text": "987,654",
+     "value": 987654.0,
+     "matched": null
+    },
+    {
+     "text": "N7,140,519",
+     "value": 7140519.0,
+     "matched": 7140519.0
+    },
+    {
+     "text": "9,125",
+     "value": 9125.0,
+     "matched": 9125.0
+    },
+    {
+     "text": "N7,140,519",
+     "value": 7140519.0,
+     "matched": 7140519.0
+    },
+    {
+     "text": "1,277.9",
+     "value": 1277.9,
+     "matched": 1277.9
+    },
+    {
+     "text": "N1m",
+     "value": 1000000.0,
+     "matched": 1000000.0
+    },
+    {
+     "text": "0%",
+     "value": 0.0,
+     "matched": 0.0
+    },
+    {
+     "text": "94%",
+     "value": 94.0,
+     "matched": 94.0
+    },
+    {
+     "text": "N7,140,519",
+     "value": 7140519.0,
+     "matched": 7140519.0
+    },
+    {
+     "text": "9,125",
+     "value": 9125.0,
+     "matched": 9125.0
+    },
+    {
+     "text": "N7,140,519",
+     "value": 7140519.0,
+     "matched": 7140519.0
+    },
+    {
+     "text": "1,277.9",
+     "value": 1277.9,
+     "matched": 1277.9
+    },
+    {
+     "text": "N1m",
+     "value": 1000000.0,
+     "matched": 1000000.0
+    },
+    {
+     "text": "0%",
+     "value": 0.0,
+     "matched": 0.0
+    },
+    {
+     "text": "94%",
+     "value": 94.0,
+     "matched": 94.0
+    },
+    {
+     "text": "N7,140,519",
+     "value": 7140519.0,
+     "matched": 7140519.0
+    },
+    {
+     "text": "9,125",
+     "value": 9125.0,
+     "matched": 9125.0
+    },
+    {
+     "text": "N7,140,519",
+     "value": 7140519.0,
+     "matched": 7140519.0
+    },
+    {
+     "text": "1,277.9",
+     "value": 1277.9,
+     "matched": 1277.9
+    },
+    {
+     "text": "N1m",
+     "value": 1000000.0,
+     "matched": 1000000.0
+    },
+    {
+     "text": "0%",
+     "value": 0.0,
+     "matched": 0.0
+    },
+    {
+     "text": "94%",
+     "value": 94.0,
+     "matched": 94.0
+    },
+    {
+     "text": "145",
+     "value": 145.0,
+     "matched": 145.0
+    },
+    {
+     "text": "14",
+     "value": 14.0,
+     "matched": 14.0
+    },
+    {
+     "text": "12",
+     "value": 12.0,
+     "matched": 12.0
+    },
+    {
+     "text": "1,133",
+     "value": 1133.0,
+     "matched": 1133.0
+    },
+    {
+     "text": "0",
+     "value": 0.0,
+     "matched": 0.0
+    },
+    {
+     "text": "93",
+     "value": 93.0,
+     "matched": 93.0
+    }
+   ],
+   "ok": false,
+   "bad_citations": [],
+   "missing_citation": false
+  },
+  {
+   "type": "step_start",
+   "seq": 10,
+   "t_ms": 69,
+   "id": "draft"
+  },
+  {
+   "type": "step_start",
+   "seq": 11,
+   "t_ms": 69,
+   "id": "check"
+  },
+  {
+   "type": "check",
+   "seq": 12,
+   "t_ms": 73,
+   "kind": "grounding",
+   "numbers_checked": 32,
+   "unmatched": [],
+   "matches": [
+    {
+     "text": "N25,000,000",
+     "value": 25000000.0,
+     "matched": 25000000.0
+    },
+    {
+     "text": "3",
+     "value": 3.0,
+     "matched": 3.0
+    },
+    {
+     "text": "N21,421,557",
+     "value": 21421557.0,
+     "matched": 21421556.64
+    },
+    {
+     "text": "N3,578,443",
+     "value": 3578443.0,
+     "matched": 3578443.36
+    },
+    {
+     "text": "27,375",
+     "value": 27375.0,
+     "matched": 27375.0
+    },
+    {
+     "text": "N7,140,519",
+     "value": 7140519.0,
+     "matched": 7140519.0
+    },
+    {
+     "text": "9,125",
+     "value": 9125.0,
+     "matched": 9125.0
+    },
+    {
+     "text": "N7,140,519",
+     "value": 7140519.0,
+     "matched": 7140519.0
+    },
+    {
+     "text": "1,277.9",
+     "value": 1277.9,
+     "matched": 1277.9
+    },
+    {
+     "text": "N1m",
+     "value": 1000000.0,
+     "matched": 1000000.0
+    },
+    {
+     "text": "0%",
+     "value": 0.0,
+     "matched": 0.0
+    },
+    {
+     "text": "94%",
+     "value": 94.0,
+     "matched": 94.0
+    },
+    {
+     "text": "N7,140,519",
+     "value": 7140519.0,
+     "matched": 7140519.0
+    },
+    {
+     "text": "9,125",
+     "value": 9125.0,
+     "matched": 9125.0
+    },
+    {
+     "text": "N7,140,519",
+     "value": 7140519.0,
+     "matched": 7140519.0
+    },
+    {
+     "text": "1,277.9",
+     "value": 1277.9,
+     "matched": 1277.9
+    },
+    {
+     "text": "N1m",
+     "value": 1000000.0,
+     "matched": 1000000.0
+    },
+    {
+     "text": "0%",
+     "value": 0.0,
+     "matched": 0.0
+    },
+    {
+     "text": "94%",
+     "value": 94.0,
+     "matched": 94.0
+    },
+    {
+     "text": "N7,140,519",
+     "value": 7140519.0,
+     "matched": 7140519.0
+    },
+    {
+     "text": "9,125",
+     "value": 9125.0,
+     "matched": 9125.0
+    },
+    {
+     "text": "N7,140,519",
+     "value": 7140519.0,
+     "matched": 7140519.0
+    },
+    {
+     "text": "1,277.9",
+     "value": 1277.9,
+     "matched": 1277.9
+    },
+    {
+     "text": "N1m",
+     "value": 1000000.0,
+     "matched": 1000000.0
+    },
+    {
+     "text": "0%",
+     "value": 0.0,
+     "matched": 0.0
+    },
+    {
+     "text": "94%",
+     "value": 94.0,
+     "matched": 94.0
+    },
+    {
+     "text": "145",
+     "value": 145.0,
+     "matched": 145.0
+    },
+    {
+     "text": "14",
+     "value": 14.0,
+     "matched": 14.0
+    },
+    {
+     "text": "12",
+     "value": 12.0,
+     "matched": 12.0
+    },
+    {
+     "text": "1,133",
+     "value": 1133.0,
+     "matched": 1133.0
+    },
+    {
+     "text": "0",
+     "value": 0.0,
+     "matched": 0.0
+    },
+    {
+     "text": "93",
+     "value": 93.0,
+     "matched": 93.0
+    }
+   ],
+   "ok": true,
+   "bad_citations": [],
+   "missing_citation": false
+  },
+  {
+   "type": "step_start",
+   "seq": 13,
+   "t_ms": 73,
+   "id": "answer"
+  },
+  {
+   "type": "citation",
+   "seq": 14,
+   "t_ms": 73,
+   "cite": "S1",
+   "facility_id": null,
+   "file": null,
+   "page": null,
+   "sn": null,
+   "row_text": null,
+   "source_type": "engine_run"
+  },
+  {
+   "type": "citation",
+   "seq": 15,
+   "t_ms": 73,
+   "cite": "S30",
+   "facility_id": null,
+   "file": "JED_HOLDCO_YSS_September_2026_094.pdf",
+   "page": 14,
+   "sn": "145",
+   "row_text": null,
+   "source_type": "nerc_row"
+  },
+  {
+   "type": "citation",
+   "seq": 16,
+   "t_ms": 73,
+   "cite": "S7",
+   "facility_id": "SN_B0A8F8C09A",
+   "file": "JED_HOLDCO_YSS_September_2026_094.pdf",
+   "page": 14,
+   "sn": "145",
+   "row_text": "FIKA | NAFADA | NAFADA TOWN",
+   "source_type": "facility"
+  },
+  {
+   "type": "citation",
+   "seq": 17,
+   "t_ms": 73,
+   "cite": "S8",
+   "facility_id": "SN_48877A11ED",
+   "file": "JED_HOLDCO_YSS_September_2026_094.pdf",
+   "page": 14,
+   "sn": "145",
+   "row_text": "FIKA | NAFADA | NAFADA TOWN",
+   "source_type": "facility"
+  },
+  {
+   "type": "citation",
+   "seq": 18,
+   "t_ms": 73,
+   "cite": "S9",
+   "facility_id": "SN_5570974415",
+   "file": "JED_HOLDCO_YSS_September_2026_094.pdf",
+   "page": 14,
+   "sn": "145",
+   "row_text": "FIKA | NAFADA | NAFADA TOWN",
+   "source_type": "facility"
+  },
+  {
+   "type": "answer",
+   "seq": 19,
+   "t_ms": 73,
+   "markdown": "**Gombe: N25,000,000, maternal and emergency care first** [S1]\n\nThe ranking funds 3 facilities and spends N21,421,557, leaving N3,578,443 [S1]. Their combined gain is 27,375 critical load-hours restored per year [S1].\n\nTop of the list:\n1. Shaganawa Primary Health Centre (Nafada, tier c_lga_mixture): PQS mains ice-lined fridge on the existing grid, N7,140,519; 9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture [S7]\n2. Nafada Primary Health Centre (Nafada, tier c_lga_mixture): PQS mains ice-lined fridge on the existing grid, N7,140,519; 9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture [S8]\n3. Shole Primary Health Care (Nafada, tier c_lga_mixture): PQS mains ice-lined fridge on the existing grid, N7,140,519; 9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture [S9]\n\nEvidence for the first pick: NERC row 145 on page 14 of JED_HOLDCO_YSS_September_2026_094.pdf, Band C, promising 12 hours a day [S30].\n\nWhat the money does not reach: 1,133 ranked facilities wait for the next budget; 0 are not ranked because today's grid supply is unknown (refused match); 93 have no engine result in this data version [S1].\n\nDoses are estimates. Grid supply is modelled from NERC's band promise: promised, not measured.",
+   "funded": [
+    {
+     "rank": 1,
+     "unique_id": "SN_B0A8F8C09A",
+     "name": "Shaganawa Primary Health Centre",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S7"
+    },
+    {
+     "rank": 2,
+     "unique_id": "SN_48877A11ED",
+     "name": "Nafada Primary Health Centre",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S8"
+    },
+    {
+     "rank": 3,
+     "unique_id": "SN_5570974415",
+     "name": "Shole Primary Health Care",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S9"
+    }
+   ],
+   "not_reached": [
+    {
+     "rank": 4,
+     "unique_id": "SN_3D2646754D",
+     "name": "Mada Primary Health Centre",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S2",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 5,
+     "unique_id": "SN_F059078443",
+     "name": "Barwo Winde Primary Health Centre",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S3",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 6,
+     "unique_id": "SN_A77E62816E",
+     "name": "Kargo Primary Health Clinic",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S4",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 7,
+     "unique_id": "SN_0008B65281",
+     "name": "Burari Primary Health Centre",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S5",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 8,
+     "unique_id": "SN_7DA5CC138A",
+     "name": "Njalkam Primary Health Care",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S6",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 9,
+     "unique_id": "SN_1A6A5C4BE3",
+     "name": "Kadubu Nafada Primary Health Care Center",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S10",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 10,
+     "unique_id": "SN_7871A1E900",
+     "name": "Kadubu Primary Health Centre",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S11",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 11,
+     "unique_id": "SN_6F1453D570",
+     "name": "Jolle Primary Health Centre",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S12",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 12,
+     "unique_id": "SN_CABEC31B48",
+     "name": "Jigawa Model Primary Health Center",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S13",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 13,
+     "unique_id": "SN_A75B12A55D",
+     "name": "Birin Fulani Primary Health Centre",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S14",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 14,
+     "unique_id": "SN_34C98F6614",
+     "name": "Birin Bolawa Primary Health Centre",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S15",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 15,
+     "unique_id": "SN_11F4EFEFCA",
+     "name": "Maidukuri Primary Health Centre",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S16",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 16,
+     "unique_id": "SN_B9C0F11829",
+     "name": "Wuro Bundu Primary Health Care",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S17",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 17,
+     "unique_id": "SN_914D59093F",
+     "name": "Barwo Nasarawo Primary Health Centre",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S18",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 18,
+     "unique_id": "SN_344F5D4EA2",
+     "name": "Daba Health Clinic",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S19",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 19,
+     "unique_id": "SN_DCE20B8988",
+     "name": "Birin Bolawa Cottage Hospital",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S20",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 20,
+     "unique_id": "SN_F43EDB4090",
+     "name": "Sudin Primary Health Centre",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S21",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 21,
+     "unique_id": "SN_F42CEC248E",
+     "name": "Gurajawa Primary Health Centre",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S22",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 22,
+     "unique_id": "SN_DA94251BD9",
+     "name": "Sorodo Primary Health Centre",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S23",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 23,
+     "unique_id": "SN_3BA0F5BCDC",
+     "name": "Wure Primary Health Centre",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S24",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 24,
+     "unique_id": "SN_859E905A21",
+     "name": "Burari Primary Health Care",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S25",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 25,
+     "unique_id": "SN_9D158E6BA7",
+     "name": "Shole Primary Health Centre",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S26",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 26,
+     "unique_id": "SN_2F6ECF639F",
+     "name": "Wakkaltu Health Clinic ( Nafada )",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S27",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 27,
+     "unique_id": "SN_E48C3A268F",
+     "name": "Tashan Kalprimary Health Centre",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S28",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    },
+    {
+     "rank": 28,
+     "unique_id": "SN_9EC66439AB",
+     "name": "Gadi Primary Health Centre",
+     "lga": "Nafada",
+     "tier": "c_lga_mixture",
+     "cost_ngn": 7140519,
+     "benefit": 9125,
+     "uptime_today": 0.0,
+     "uptime_with_fix": 0.9441,
+     "fix_label": "PQS mains ice-lined fridge on the existing grid",
+     "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+     "cite": "S29",
+     "why_not_funded": "budget spent on higher-ranked facilities"
+    }
+   ],
+   "totals": {
+    "budget_ngn": 25000000.0,
+    "spent_ngn": 21421556.64,
+    "remaining_ngn": 3578443.36,
+    "funded_count": 3,
+    "benefit_total": 27375,
+    "metric": "load_hours",
+    "benefit_unit": "critical load-hours restored per year",
+    "cost_basis": "separate clinic system capex (clinic_capex_ngn when present, else capex_ngn)",
+    "candidates_ranked": 1136,
+    "ranked_not_funded": 1133,
+    "not_ranked_unknown_supply": 0,
+    "no_engine_result": 93,
+    "facilities_in_scope": 1229
+   },
+   "status": "answered",
+   "citations": [
+    {
+     "id": "S1",
+     "type": "engine_run",
+     "function": "engine.plan.rank",
+     "state": "Gombe",
+     "lga": null,
+     "facility_level": null,
+     "budget_ngn": 25000000.0,
+     "metric": "load_hours",
+     "data_version": "c703b8b82337"
+    },
+    {
+     "id": "S30",
+     "type": "nerc_row",
+     "order_file": "JED_HOLDCO_YSS_September_2026_094.pdf",
+     "page": 14,
+     "sn": "145",
+     "crop": "data/work/nerc_crops/JEDC_p14_t0_r035.png"
+    },
+    {
+     "id": "S7",
+     "type": "facility",
+     "unique_id": "SN_B0A8F8C09A",
+     "registry": "GRID3 Nigeria health facilities (grid3_v3.0)",
+     "match_tier": "c_lga_mixture",
+     "results": "facility_results.parquet (data version c703b8b82337)",
+     "nerc": {
+      "order_file": "JED_HOLDCO_YSS_September_2026_094.pdf",
+      "page": 14,
+      "sn": "145",
+      "row_text": "FIKA | NAFADA | NAFADA TOWN"
+     }
+    },
+    {
+     "id": "S8",
+     "type": "facility",
+     "unique_id": "SN_48877A11ED",
+     "registry": "GRID3 Nigeria health facilities (grid3_v3.0)",
+     "match_tier": "c_lga_mixture",
+     "results": "facility_results.parquet (data version c703b8b82337)",
+     "nerc": {
+      "order_file": "JED_HOLDCO_YSS_September_2026_094.pdf",
+      "page": 14,
+      "sn": "145",
+      "row_text": "FIKA | NAFADA | NAFADA TOWN"
+     }
+    },
+    {
+     "id": "S9",
+     "type": "facility",
+     "unique_id": "SN_5570974415",
+     "registry": "GRID3 Nigeria health facilities (grid3_v3.0)",
+     "match_tier": "c_lga_mixture",
+     "results": "facility_results.parquet (data version c703b8b82337)",
+     "nerc": {
+      "order_file": "JED_HOLDCO_YSS_September_2026_094.pdf",
+      "page": 14,
+      "sn": "145",
+      "row_text": "FIKA | NAFADA | NAFADA TOWN"
+     }
+    }
+   ]
+  },
+  {
+   "type": "done",
+   "seq": 20,
+   "t_ms": 73,
+   "model": "scripted-rule-based (no language model)",
+   "tokens": 10541,
+   "cost_usd": 0.0,
+   "recorded": true,
+   "duration_ms": 73,
+   "status": "answered"
+  }
+ ],
+ "scripted": true,
+ "question_id": "Q06",
+ "what": "The grounding check in action: the first draft carries an invented figure, the check blocks it, the retry passes.",
+ "output": {
+  "question": "N25 million for Gombe, maternal care first: the delivery room has to stay lit at night.",
+  "answer_markdown": "**Gombe: N25,000,000, maternal and emergency care first** [S1]\n\nThe ranking funds 3 facilities and spends N21,421,557, leaving N3,578,443 [S1]. Their combined gain is 27,375 critical load-hours restored per year [S1].\n\nTop of the list:\n1. Shaganawa Primary Health Centre (Nafada, tier c_lga_mixture): PQS mains ice-lined fridge on the existing grid, N7,140,519; 9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture [S7]\n2. Nafada Primary Health Centre (Nafada, tier c_lga_mixture): PQS mains ice-lined fridge on the existing grid, N7,140,519; 9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture [S8]\n3. Shole Primary Health Care (Nafada, tier c_lga_mixture): PQS mains ice-lined fridge on the existing grid, N7,140,519; 9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture [S9]\n\nEvidence for the first pick: NERC row 145 on page 14 of JED_HOLDCO_YSS_September_2026_094.pdf, Band C, promising 12 hours a day [S30].\n\nWhat the money does not reach: 1,133 ranked facilities wait for the next budget; 0 are not ranked because today's grid supply is unknown (refused match); 93 have no engine result in this data version [S1].\n\nDoses are estimates. Grid supply is modelled from NERC's band promise: promised, not measured.",
+  "funded": [
+   {
+    "rank": 1,
+    "unique_id": "SN_B0A8F8C09A",
+    "name": "Shaganawa Primary Health Centre",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S7"
+   },
+   {
+    "rank": 2,
+    "unique_id": "SN_48877A11ED",
+    "name": "Nafada Primary Health Centre",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S8"
+   },
+   {
+    "rank": 3,
+    "unique_id": "SN_5570974415",
+    "name": "Shole Primary Health Care",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S9"
+   }
+  ],
+  "not_reached": [
+   {
+    "rank": 4,
+    "unique_id": "SN_3D2646754D",
+    "name": "Mada Primary Health Centre",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S2",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 5,
+    "unique_id": "SN_F059078443",
+    "name": "Barwo Winde Primary Health Centre",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S3",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 6,
+    "unique_id": "SN_A77E62816E",
+    "name": "Kargo Primary Health Clinic",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S4",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 7,
+    "unique_id": "SN_0008B65281",
+    "name": "Burari Primary Health Centre",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S5",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 8,
+    "unique_id": "SN_7DA5CC138A",
+    "name": "Njalkam Primary Health Care",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S6",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 9,
+    "unique_id": "SN_1A6A5C4BE3",
+    "name": "Kadubu Nafada Primary Health Care Center",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S10",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 10,
+    "unique_id": "SN_7871A1E900",
+    "name": "Kadubu Primary Health Centre",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S11",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 11,
+    "unique_id": "SN_6F1453D570",
+    "name": "Jolle Primary Health Centre",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S12",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 12,
+    "unique_id": "SN_CABEC31B48",
+    "name": "Jigawa Model Primary Health Center",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S13",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 13,
+    "unique_id": "SN_A75B12A55D",
+    "name": "Birin Fulani Primary Health Centre",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S14",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 14,
+    "unique_id": "SN_34C98F6614",
+    "name": "Birin Bolawa Primary Health Centre",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S15",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 15,
+    "unique_id": "SN_11F4EFEFCA",
+    "name": "Maidukuri Primary Health Centre",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S16",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 16,
+    "unique_id": "SN_B9C0F11829",
+    "name": "Wuro Bundu Primary Health Care",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S17",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 17,
+    "unique_id": "SN_914D59093F",
+    "name": "Barwo Nasarawo Primary Health Centre",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S18",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 18,
+    "unique_id": "SN_344F5D4EA2",
+    "name": "Daba Health Clinic",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S19",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 19,
+    "unique_id": "SN_DCE20B8988",
+    "name": "Birin Bolawa Cottage Hospital",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S20",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 20,
+    "unique_id": "SN_F43EDB4090",
+    "name": "Sudin Primary Health Centre",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S21",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 21,
+    "unique_id": "SN_F42CEC248E",
+    "name": "Gurajawa Primary Health Centre",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S22",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 22,
+    "unique_id": "SN_DA94251BD9",
+    "name": "Sorodo Primary Health Centre",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S23",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 23,
+    "unique_id": "SN_3BA0F5BCDC",
+    "name": "Wure Primary Health Centre",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S24",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 24,
+    "unique_id": "SN_859E905A21",
+    "name": "Burari Primary Health Care",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S25",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 25,
+    "unique_id": "SN_9D158E6BA7",
+    "name": "Shole Primary Health Centre",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S26",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 26,
+    "unique_id": "SN_2F6ECF639F",
+    "name": "Wakkaltu Health Clinic ( Nafada )",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S27",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 27,
+    "unique_id": "SN_E48C3A268F",
+    "name": "Tashan Kalprimary Health Centre",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S28",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   },
+   {
+    "rank": 28,
+    "unique_id": "SN_9EC66439AB",
+    "name": "Gadi Primary Health Centre",
+    "lga": "Nafada",
+    "tier": "c_lga_mixture",
+    "cost_ngn": 7140519,
+    "benefit": 9125,
+    "uptime_today": 0.0,
+    "uptime_with_fix": 0.9441,
+    "fix_label": "PQS mains ice-lined fridge on the existing grid",
+    "reason": "9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture",
+    "cite": "S29",
+    "why_not_funded": "budget spent on higher-ranked facilities"
+   }
+  ],
+  "not_reached_groups": {
+   "ranked_not_funded": {
+    "count": 1133,
+    "reason": "budget spent on higher-ranked facilities"
+   },
+   "unknown_supply": {
+    "count": 0,
+    "reason": "not ranked: today's grid supply is unknown (refused match), so the gain cannot be computed"
+   },
+   "no_engine_result": {
+    "count": 93,
+    "reason": "no engine result row for these facilities in this data version"
+   }
+  },
+  "totals": {
+   "budget_ngn": 25000000.0,
+   "spent_ngn": 21421556.64,
+   "remaining_ngn": 3578443.36,
+   "funded_count": 3,
+   "benefit_total": 27375,
+   "metric": "load_hours",
+   "benefit_unit": "critical load-hours restored per year",
+   "cost_basis": "separate clinic system capex (clinic_capex_ngn when present, else capex_ngn)",
+   "candidates_ranked": 1136,
+   "ranked_not_funded": 1133,
+   "not_ranked_unknown_supply": 0,
+   "no_engine_result": 93,
+   "facilities_in_scope": 1229
+  },
+  "plan_args": {
+   "state": "Gombe",
+   "lga": null,
+   "facility_level": null,
+   "budget_ngn": 25000000.0,
+   "metric": "load_hours",
+   "budget": 25000000.0,
+   "currency": "NGN"
+  },
+  "citations": [
+   {
+    "id": "S1",
+    "type": "engine_run",
+    "function": "engine.plan.rank",
+    "state": "Gombe",
+    "lga": null,
+    "facility_level": null,
+    "budget_ngn": 25000000.0,
+    "metric": "load_hours",
+    "data_version": "c703b8b82337"
+   },
+   {
+    "id": "S30",
+    "type": "nerc_row",
+    "order_file": "JED_HOLDCO_YSS_September_2026_094.pdf",
+    "page": 14,
+    "sn": "145",
+    "crop": "data/work/nerc_crops/JEDC_p14_t0_r035.png"
+   },
+   {
+    "id": "S7",
+    "type": "facility",
+    "unique_id": "SN_B0A8F8C09A",
+    "registry": "GRID3 Nigeria health facilities (grid3_v3.0)",
+    "match_tier": "c_lga_mixture",
+    "results": "facility_results.parquet (data version c703b8b82337)",
+    "nerc": {
+     "order_file": "JED_HOLDCO_YSS_September_2026_094.pdf",
+     "page": 14,
+     "sn": "145",
+     "row_text": "FIKA | NAFADA | NAFADA TOWN"
+    }
+   },
+   {
+    "id": "S8",
+    "type": "facility",
+    "unique_id": "SN_48877A11ED",
+    "registry": "GRID3 Nigeria health facilities (grid3_v3.0)",
+    "match_tier": "c_lga_mixture",
+    "results": "facility_results.parquet (data version c703b8b82337)",
+    "nerc": {
+     "order_file": "JED_HOLDCO_YSS_September_2026_094.pdf",
+     "page": 14,
+     "sn": "145",
+     "row_text": "FIKA | NAFADA | NAFADA TOWN"
+    }
+   },
+   {
+    "id": "S9",
+    "type": "facility",
+    "unique_id": "SN_5570974415",
+    "registry": "GRID3 Nigeria health facilities (grid3_v3.0)",
+    "match_tier": "c_lga_mixture",
+    "results": "facility_results.parquet (data version c703b8b82337)",
+    "nerc": {
+     "order_file": "JED_HOLDCO_YSS_September_2026_094.pdf",
+     "page": 14,
+     "sn": "145",
+     "row_text": "FIKA | NAFADA | NAFADA TOWN"
+    }
+   }
+  ],
+  "tool_calls": [
+   {
+    "name": "rank_budget",
+    "arguments": {
+     "state": "Gombe",
+     "budget": 25000000.0,
+     "currency": "NGN",
+     "priority": "load_hours",
+     "top": 5
+    },
+    "ok": true,
+    "ms": 61
+   },
+   {
+    "name": "get_facility",
+    "arguments": {
+     "unique_id": "SN_B0A8F8C09A"
+    },
+    "ok": true,
+    "ms": 2
+   }
+  ],
+  "model": "scripted-rule-based (no language model)",
+  "client_kind": "scripted",
+  "grounded": true,
+  "status": "answered",
+  "refusal": null,
+  "grounding": {
+   "ok": true,
+   "n_total": 32,
+   "n_traced": 32,
+   "unmatched": [],
+   "unknown_tokens": [],
+   "bad_citations": [],
+   "citations_used": [
+    "S1",
+    "S30",
+    "S7",
+    "S8",
+    "S9"
+   ],
+   "missing_citation": false
+  },
+  "usage": {
+   "steps": 4,
+   "prompt_tokens": 9616,
+   "completion_tokens": 925,
+   "tool_calls": 2,
+   "total_tokens": 10541
+  },
+  "budget": {
+   "max_steps": 8,
+   "max_tokens": 24000,
+   "max_tool_calls": 10,
+   "max_tool_result_chars": 10000,
+   "max_answer_tokens": 900,
+   "retries": 1
+  },
+  "data_version": "c703b8b82337",
+  "label": "scripted test model: rule-based, no language model was called"
+ },
+ "transcript": [
+  {
+   "role": "system",
+   "content": "You are the Wardlight planner. You help a Nigerian state primary health care board or a funder decide which health facilities get a vaccine cold-chain fix (and, separately, a clinic solar system) under a budget, using only Wardlight's tools.\n\nRules:\n1. Scope: only power, solar and the vaccine cold chain for Nigerian health facilities. For anything else, including medical or clinical advice (what dose a patient should get, symptoms, treatment), call refuse with reason out_of_scope. When the data cannot answer (measured temperatures, stock losses, outage logs, places outside Nigeria, future NERC orders), call refuse with reason data_cannot_support and say what is missing.\n2. Numbers: every number you write must be copied from a tool result in this conversation; you may round it. Do not compute new figures (no sums, differences or percentages you were not given). Code checks every number and blocks the answer if one does not match.\n3. Citations: after each claim about a plan total, a facility or a NERC row, cite the id the tool gave, like [S3]. Use only ids that tools returned.\n4. For a budget question: call rank_budget once with the state, the budget (currency USD if the user gave dollars), the priority ('doses' for vaccines; 'load_hours' for maternal, delivery-room or emergency care at night) and the lga or facility_level if the user named one. Then check the evidence for the top pick with get_facility. Use what_if only for a borderline pick.\n5. Answer in short markdown: the plan (facilities funded, spent, remaining, combined gain), the top picks with their fix and cost, what the money does not reach and why, and these labels: doses are estimates; grid supply is modelled from NERC's band promise, promised and not measured. Plain words, no em dashes.\n6. Wording: facilities the budget does not reach rank below the funded ones (never call them higher-ranked). Write numbers with plain ASCII commas or no separators, and put the citation after a space, like 68 [S1]."
+  },
+  {
+   "role": "user",
+   "content": "N25 million for Gombe, maternal care first: the delivery room has to stay lit at night."
+  },
+  {
+   "role": "assistant",
+   "content": null,
+   "tool_calls": [
+    {
+     "id": "call_rank",
+     "type": "function",
+     "function": {
+      "name": "rank_budget",
+      "arguments": "{\"state\": \"Gombe\", \"budget\": 25000000.0, \"currency\": \"NGN\", \"priority\": \"load_hours\", \"top\": 5}"
+     }
+    }
+   ]
+  },
+  {
+   "role": "tool",
+   "tool_call_id": "call_rank",
+   "content": "{\"state\": \"Gombe\", \"lga\": null, \"facility_level\": null, \"budget\": 25000000.0, \"currency\": \"NGN\", \"budget_ngn\": 25000000.0, \"priority\": \"load_hours\", \"totals\": {\"budget_ngn\": 25000000.0, \"spent_ngn\": 21421556.64, \"remaining_ngn\": 3578443.36, \"funded_count\": 3, \"benefit_total\": 27375, \"metric\": \"load_hours\", \"benefit_unit\": \"critical load-hours restored per year\", \"cost_basis\": \"separate clinic system capex (clinic_capex_ngn when present, else capex_ngn)\", \"candidates_ranked\": 1136, \"ranked_not_funded\": 1133, \"not_ranked_unknown_supply\": 0, \"no_engine_result\": 93, \"facilities_in_scope\": 1229}, \"funded_top\": [{\"rank\": 1, \"unique_id\": \"SN_B0A8F8C09A\", \"name\": \"Shaganawa Primary Health Centre\", \"lga\": \"Nafada\", \"level\": \"Primary\", \"tier\": \"c_lga_mixture\", \"cost_ngn\": 7140519, \"benefit\": 9125, \"benefit_per_million_ngn\": 1278, \"uptime_today\": 0.0, \"uptime_with_fix\": 0.9441, \"fix_label\": \"PQS mains ice-lined fridge on the existing grid\", \"reason\": \"9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture\", \"cite\": \"S7\"}, {\"rank\": 2, \"unique_id\": \"SN_48877A11ED\", \"name\": \"Nafada Primary Health Centre\", \"lga\": \"Nafada\", \"level\": \"Primary\", \"tier\": \"c_lga_mixture\", \"cost_ngn\": 7140519, \"benefit\": 9125, \"benefit_per_million_ngn\": 1278, \"uptime_today\": 0.0, \"uptime_with_fix\": 0.9441, \"fix_label\": \"PQS mains ice-lined fridge on the existing grid\", \"reason\": \"9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture\", \"cite\": \"S8\"}, {\"rank\": 3, \"unique_id\": \"SN_5570974415\", \"name\": \"Shole Primary Health Care\", \"lga\": \"Nafada\", \"level\": \"Primary\", \"tier\": \"c_lga_mixture\", \"cost_ngn\": 7140519, \"benefit\": 9125, \"benefit_per_million_ngn\": 1278, \"uptime_today\": 0.0, \"uptime_with_fix\": 0.9441, \"fix_label\": \"PQS mains ice-lined fridge on the existing grid\", \"reason\": \"9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture\", \"cite\": \"S9\"}], \"funded_shown\": 3, \"not_reached\": {\"ranked_not_funded\": {\"count\": 1133, \"reason\": \"budget spent on higher-ranked facilities\", \"next_in_line\": [{\"rank\": 4, \"unique_id\": \"SN_3D2646754D\", \"name\": \"Mada Primary Health Centre\", \"lga\": \"Nafada\", \"level\": \"Primary\", \"tier\": \"c_lga_mixture\", \"cost_ngn\": 7140519, \"benefit\": 9125, \"benefit_per_million_ngn\": 1278, \"uptime_today\": 0.0, \"uptime_with_fix\": 0.9441, \"fix_label\": \"PQS mains ice-lined fridge on the existing grid\", \"reason\": \"9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture\", \"why_not_funded\": \"the budget was spent on higher-ranked facilities before this one\", \"cite\": \"S2\"}, {\"rank\": 5, \"unique_id\": \"SN_F059078443\", \"name\": \"Barwo Winde Primary Health Centre\", \"lga\": \"Nafada\", \"level\": \"Primary\", \"tier\": \"c_lga_mixture\", \"cost_ngn\": 7140519, \"benefit\": 9125, \"benefit_per_million_ngn\": 1278, \"uptime_today\": 0.0, \"uptime_with_fix\": 0.9441, \"fix_label\": \"PQS mains ice-lined fridge on the existing grid\", \"reason\": \"9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture\", \"why_not_funded\": \"the budget was spent on higher-ranked facilities before this one\", \"cite\": \"S3\"}, {\"rank\": 6, \"unique_id\": \"SN_A77E62816E\", \"name\": \"Kargo Primary Health Clinic\", \"lga\": \"Nafada\", \"level\": \"Primary\", \"tier\": \"c_lga_mixture\", \"cost_ngn\": 7140519, \"benefit\": 9125, \"benefit_per_million_ngn\": 1278, \"uptime_today\": 0.0, \"uptime_with_fix\": 0.9441, \"fix_label\": \"PQS mains ice-lined fridge on the existing grid\", \"reason\": \"9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture\", \"why_not_funded\": \"the budget was spent on higher-ranked facilities before this one\", \"cite\": \"S4\"}, {\"rank\": 7, \"unique_id\": \"SN_0008B65281\", \"name\": \"Burari Primary Health Centre\", \"lga\": \"Nafada\", \"level\": null, \"tier\": \"c_lga_mixture\", \"cost_ngn\": 7140519, \"benefit\": 9125, \"benefit_per_million_ngn\": 1278, \"uptime_today\": 0.0, \"uptime_with_fix\": 0.9441, \"fix_label\": \"PQS mains ice-lined fridge on the existing grid\", \"reason\": \"9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture\", \"why_not_funded\": \"the budget was spent on higher-ranked facilities before this one\", \"cite\": \"S5\"}, {\"rank\": 8, \"unique_id\": \"SN_7DA5CC138A\", \"name\": \"Njalkam Primary Health Care\", \"lga\": \"Nafada\", \"level\": \"Primary\", \"tier\": \"c_lga_mixture\", \"cost_ngn\": 7140519, \"benefit\": 9125, \"benefit_per_million_ngn\": 1278, \"uptime_today\": 0.0, \"uptime_with_fix\": 0.9441, \"fix_label\": \"PQS mains ice-lined fridge on the existing grid\", \"reason\": \"9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture\", \"why_not_funded\": \"the budget was spent on higher-ranked facilities before this one\", \"cite\": \"S6\"}]}, \"unknown_supply\": {\"count\": 0, \"reason\": \"not ranked: today's grid supply is unknown (refused match), so the gain cannot be computed\"}, \"no_engine_result\": {\"count\": 93, \"reason\": \"no engine result row for these facilities in this data version\"}}, \"cite\": \"S1\", \"labels\": {\"doses\": \"ESTIMATE (WorldPop catchment, birth rate, unofficial schedule)\", \"supply\": \"MODELLED from the NERC band promise; promised, not measured\", \"metric_definition\": \"uptime = share of days in a year the vaccine fridge holds 2 to 8 degC; 'today' is the domestic-fridge scenario (b), PQS ice-lined scenario (a) alongside; doses are estimates\"}}"
+  },
+  {
+   "role": "assistant",
+   "content": null,
+   "tool_calls": [
+    {
+     "id": "call_fac",
+     "type": "function",
+     "function": {
+      "name": "get_facility",
+      "arguments": "{\"unique_id\": \"SN_B0A8F8C09A\"}"
+     }
+    }
+   ]
+  },
+  {
+   "role": "tool",
+   "tool_call_id": "call_fac",
+   "content": "{\"unique_id\": \"SN_B0A8F8C09A\", \"name\": \"Shaganawa Primary Health Centre\", \"level\": \"Primary\", \"lga\": \"Nafada\", \"ward\": \"Birin Bolawa\", \"tier\": \"c_lga_mixture\", \"has_result\": true, \"uptime_today\": 0.0, \"uptime_today_lo\": 0.0, \"uptime_today_hi\": 0.0026, \"uptime_today_pqs\": 0.9441, \"uptime_with_fix\": 0.9441, \"fix\": {\"label\": \"PQS mains ice-lined fridge on the existing grid\", \"category\": \"i\", \"model\": \"Haier HBC-80\", \"capex_ngn\": 1163039, \"capex_ngn_lo\": 1163039, \"capex_ngn_hi\": 1163039}, \"doses_per_year\": 7688, \"doses_gain\": 7259, \"cite\": \"S7\", \"state\": \"Gombe\", \"settlement\": null, \"facility_type\": \"Primary Health Center\", \"ownership\": \"Public\", \"functional\": \"Unknown\", \"registry_version\": \"grid3_v3.0\", \"lat\": 10.85009, \"lon\": 11.42132, \"match\": {\"tier\": \"c_lga_mixture\", \"bands\": {\"C\": 0.5, \"D\": 0.5}, \"reason\": \"no NERC row names it, its ward or its settlement; band mixture over 2 rows that name places in Nafada LGA, one vote per row; Gombe has a NERC transfer order to a state regulator but is still listed in NERC's October 2026 orders; naija-grid ANALYSIS.md section 5\", \"grid_km\": 0.617, \"evidence\": {\"source\": \"NERC rows naming a place in the facility's LGA (the LGA, a ward or a settlement)\", \"state\": \"Gombe\", \"lga\": \"Nafada\", \"rows_total\": 2, \"band_counts\": {\"C\": 1, \"D\": 1}, \"order_file\": \"JED_HOLDCO_YSS_September_2026_094.pdf\", \"page\": 14, \"sn\": \"145\", \"row_text\": \"FIKA | NAFADA | NAFADA TOWN\"}}, \"nerc_rows\": [{\"order_file\": \"JED_HOLDCO_YSS_September_2026_094.pdf\", \"order_month\": \"2026-09\", \"page\": 14, \"sn\": 145, \"band\": \"C\", \"min_hours\": 12.0, \"feeder_name\": \"FIKA\", \"location\": \"NAFADA\", \"streets\": \"NAFADA TOWN\", \"crop\": \"data/work/nerc_crops/JEDC_p14_t0_r035.png\", \"cite\": \"S30\"}, {\"order_file\": \"JED_HOLDCO_YSS_September_2026_094.pdf\", \"order_month\": \"2026-09\", \"page\": 15, \"sn\": 167, \"band\": \"D\", \"min_hours\": 8.0, \"feeder_name\": \"NAFADA TOWN\", \"location\": \"NAFADA TOWN\", \"streets\": \"ARDO ABBA NAFADA BESIDE ROUD\", \"crop\": \"data/work/nerc_crops/JEDC_p15_t0_r016.png\", \"cite\": \"S31\"}], \"results\": {\"uptime_today\": 0.0, \"uptime_today_lo\": 0.0, \"uptime_today_hi\": 0.0026, \"uptime_today_pqs\": 0.9441, \"uptime_with_fix\": 0.9441, \"doses_per_year\": 7688, \"doses_protected_today\": 0.0, \"doses_with_fix\": 7259, \"fix_monthly_cost_ngn\": 9692, \"crit_uptime_today\": 0.0, \"crit_uptime_with\": 1.0, \"clinic_system\": {\"pv_kwp\": 0.88, \"battery_kwh\": 6.34, \"target_met\": true, \"knee_pv_kwp\": 0.88, \"loads\": \"priority 1: lights, oxygen, delivery room\", \"optional\": true, \"recommended\": false}, \"clinic_capex_ngn\": 7140519, \"labels\": {\"doses\": \"ESTIMATE (WorldPop catchment capped at 20,000 people, birth rate, unofficial schedule)\", \"supply\": \"MODELLED from the NERC band promise; promised, not measured\", \"fridge\": \"PQS holdover treated as an upper bound; uptimes include an availability scenario (0.90 to 0.99)\", \"diesel\": \"clinic line only; counted only for grid-connected facilities, as backup-generator fuel displaced\", \"fx\": \"CBN central rate, same day as SOURCES-VERIFIED section 5\"}}, \"result_tier_differs_from_match\": false, \"metric_definition\": \"uptime = share of days in a year the vaccine fridge holds 2 to 8 degC; 'today' is the domestic-fridge scenario (b), PQS ice-lined scenario (a) alongside; doses are estimates\"}"
+  },
+  {
+   "role": "assistant",
+   "content": "**Gombe: N25,000,000, maternal and emergency care first** [S1]\n\nThe ranking funds 3 facilities and spends N21,421,557, leaving N3,578,443 [S1]. Their combined gain is 27,375 critical load-hours restored per year [S1].\nThat reaches about 987,654 more children every year.\n\nTop of the list:\n1. Shaganawa Primary Health Centre (Nafada, tier c_lga_mixture): PQS mains ice-lined fridge on the existing grid, N7,140,519; 9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture [S7]\n2. Nafada Primary Health Centre (Nafada, tier c_lga_mixture): PQS mains ice-lined fridge on the existing grid, N7,140,519; 9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture [S8]\n3. Shole Primary Health Care (Nafada, tier c_lga_mixture): PQS mains ice-lined fridge on the existing grid, N7,140,519; 9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture [S9]\n\nEvidence for the first pick: NERC row 145 on page 14 of JED_HOLDCO_YSS_September_2026_094.pdf, Band C, promising 12 hours a day [S30].\n\nWhat the money does not reach: 1,133 ranked facilities wait for the next budget; 0 are not ranked because today's grid supply is unknown (refused match); 93 have no engine result in this data version [S1].\n\nDoses are estimates. Grid supply is modelled from NERC's band promise: promised, not measured."
+  },
+  {
+   "role": "user",
+   "content": "GROUNDING CHECK FAILED. number '987,654' does not appear in any tool result. Rewrite the answer using only numbers that appear in this session's tool results (call a tool if you need a figure), keep the [S#] citations, or say plainly that the data does not give that figure."
+  },
+  {
+   "role": "assistant",
+   "content": "**Gombe: N25,000,000, maternal and emergency care first** [S1]\n\nThe ranking funds 3 facilities and spends N21,421,557, leaving N3,578,443 [S1]. Their combined gain is 27,375 critical load-hours restored per year [S1].\n\nTop of the list:\n1. Shaganawa Primary Health Centre (Nafada, tier c_lga_mixture): PQS mains ice-lined fridge on the existing grid, N7,140,519; 9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture [S7]\n2. Nafada Primary Health Centre (Nafada, tier c_lga_mixture): PQS mains ice-lined fridge on the existing grid, N7,140,519; 9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture [S8]\n3. Shole Primary Health Care (Nafada, tier c_lga_mixture): PQS mains ice-lined fridge on the existing grid, N7,140,519; 9,125 critical load-hours/yr restored for N7,140,519 (1,277.9 per N1m); fridge held 0% of days today (domestic-fridge scenario), 94% with the fix; tier c_lga_mixture [S9]\n\nEvidence for the first pick: NERC row 145 on page 14 of JED_HOLDCO_YSS_September_2026_094.pdf, Band C, promising 12 hours a day [S30].\n\nWhat the money does not reach: 1,133 ranked facilities wait for the next budget; 0 are not ranked because today's grid supply is unknown (refused match); 93 have no engine result in this data version [S1].\n\nDoses are estimates. Grid supply is modelled from NERC's band promise: promised, not measured."
+  }
+ ]
+}

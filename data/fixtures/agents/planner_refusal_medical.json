@@ -1,0 +1,119 @@
+{
+ "kind": "planner_session",
+ "recorded": true,
+ "label": "Recorded session. Scripted test model: rule-based, no language model was called. Tool results are real (Wardlight data version c703b8b82337).",
+ "events": [
+  {
+   "type": "plan",
+   "seq": 0,
+   "t_ms": 0,
+   "steps": [
+    {
+     "id": "scope",
+     "title": "Check the question is in scope"
+    },
+    {
+     "id": "gather",
+     "title": "Read the data with tools"
+    },
+    {
+     "id": "draft",
+     "title": "Draft the answer"
+    },
+    {
+     "id": "check",
+     "title": "Check every number against the tool results"
+    },
+    {
+     "id": "answer",
+     "title": "Answer with citations"
+    }
+   ]
+  },
+  {
+   "type": "step_start",
+   "seq": 1,
+   "t_ms": 0,
+   "id": "scope"
+  },
+  {
+   "type": "step_start",
+   "seq": 2,
+   "t_ms": 0,
+   "id": "answer"
+  },
+  {
+   "type": "answer",
+   "seq": 3,
+   "t_ms": 0,
+   "markdown": "This is outside what Wardlight answers: power and the vaccine cold chain for Nigerian health facilities, from its own data. For medical questions, ask a health worker.",
+   "funded": [],
+   "not_reached": [],
+   "totals": {},
+   "status": "refused",
+   "citations": []
+  },
+  {
+   "type": "done",
+   "seq": 4,
+   "t_ms": 0,
+   "model": "none (rule pre-filter)",
+   "tokens": 0,
+   "cost_usd": 0.0,
+   "recorded": true,
+   "duration_ms": 0,
+   "status": "refused"
+  }
+ ],
+ "scripted": true,
+ "question_id": "Q17",
+ "what": "A medical-advice question, refused by the rule pre-filter.",
+ "output": {
+  "question": "What dose of measles vaccine should a nine-month-old get, and can it be given while the baby has a fever?",
+  "answer_markdown": "This is outside what Wardlight answers: power and the vaccine cold chain for Nigerian health facilities, from its own data. For medical questions, ask a health worker.",
+  "funded": [],
+  "not_reached": [],
+  "not_reached_groups": {},
+  "totals": {},
+  "plan_args": null,
+  "citations": [],
+  "tool_calls": [],
+  "model": "none (rule pre-filter)",
+  "client_kind": "none",
+  "grounded": true,
+  "status": "refused",
+  "refusal": {
+   "reason": "out_of_scope",
+   "by": "rule",
+   "explanation": "This is outside what Wardlight answers: power and the vaccine cold chain for Nigerian health facilities, from its own data."
+  },
+  "grounding": null,
+  "usage": {
+   "steps": 0,
+   "prompt_tokens": 0,
+   "completion_tokens": 0,
+   "tool_calls": 0,
+   "total_tokens": 0
+  },
+  "budget": {
+   "max_steps": 8,
+   "max_tokens": 24000,
+   "max_tool_calls": 10,
+   "max_tool_result_chars": 10000,
+   "max_answer_tokens": 900,
+   "retries": 1
+  },
+  "data_version": null,
+  "label": "rule pre-filter, no model was called"
+ },
+ "transcript": [
+  {
+   "role": "system",
+   "content": "You are the Wardlight planner. You help a Nigerian state primary health care board or a funder decide which health facilities get a vaccine cold-chain fix (and, separately, a clinic solar system) under a budget, using only Wardlight's tools.\n\nRules:\n1. Scope: only power, solar and the vaccine cold chain for Nigerian health facilities. For anything else, including medical or clinical advice (what dose a patient should get, symptoms, treatment), call refuse with reason out_of_scope. When the data cannot answer (measured temperatures, stock losses, outage logs, places outside Nigeria, future NERC orders), call refuse with reason data_cannot_support and say what is missing.\n2. Numbers: every number you write must be copied from a tool result in this conversation; you may round it. Do not compute new figures (no sums, differences or percentages you were not given). Code checks every number and blocks the answer if one does not match.\n3. Citations: after each claim about a plan total, a facility or a NERC row, cite the id the tool gave, like [S3]. Use only ids that tools returned.\n4. For a budget question: call rank_budget once with the state, the budget (currency USD if the user gave dollars), the priority ('doses' for vaccines; 'load_hours' for maternal, delivery-room or emergency care at night) and the lga or facility_level if the user named one. Then check the evidence for the top pick with get_facility. Use what_if only for a borderline pick.\n5. Answer in short markdown: the plan (facilities funded, spent, remaining, combined gain), the top picks with their fix and cost, what the money does not reach and why, and these labels: doses are estimates; grid supply is modelled from NERC's band promise, promised and not measured. Plain words, no em dashes.\n6. Wording: facilities the budget does not reach rank below the funded ones (never call them higher-ranked). Write numbers with plain ASCII commas or no separators, and put the citation after a space, like 68 [S1]."
+  },
+  {
+   "role": "user",
+   "content": "What dose of measles vaccine should a nine-month-old get, and can it be given while the baby has a fever?"
+  }
+ ]
+}

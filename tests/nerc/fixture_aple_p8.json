@@ -1,0 +1,17 @@
+{
+  "order_file": "APLE-MYTO_-FEB-2025_014.pdf",
+  "page": 8,
+  "disco": "APLE",
+  "target": "rows",
+  "transcribed_by": "build agent A, by eye from the deskewed 300 dpi render, before comparing with the reader output",
+  "note": "A paper scan, rotated about 2 degrees. The streets column is headed '1ST - 25TH JANUARY AVE PERFORMANCE' in the order. Row 38 is printed as band D with 4 hours, which disagrees with the band table (D is 8); transcribed as printed.",
+  "rows": [
+    {"sn": 32, "band": "C", "feeder_name": "ASA OKPUAJA 11KV", "location": "ECN 2 ISS", "streets": "ASAOKPUAJA, FAULKS ROAD ETC", "min_hours": 12},
+    {"sn": 33, "band": "C", "feeder_name": "OSISIOMA 1 11KV", "location": "UMUODE ISS", "streets": "ABAYI, OSISIOMA, EKEAKPARA ETC", "min_hours": 12},
+    {"sn": 34, "band": "C", "feeder_name": "OSISIOMA 2 11KV", "location": "OSISIOMA ISS", "streets": "OSISIOMA, EKEAKPARA ETC", "min_hours": 12},
+    {"sn": 35, "band": "C", "feeder_name": "UKWA 33KV 05", "location": "ECN 2 ISS", "streets": "UKWA EAST & WEST, UGWUNAGBO", "min_hours": 12},
+    {"sn": 36, "band": "C", "feeder_name": "URATTA 11KV", "location": "ECN 2 ISS", "streets": "URATTA, ETC", "min_hours": 12},
+    {"sn": 37, "band": "C", "feeder_name": "UMUAFOR 33KV T-OFF (SAME AS ABA - UMUAHIA 33KV)", "location": "ABATX", "streets": "OBINGWA LGA (ITUNGWA, ITUKPA, UMUOBIAKWA ET AL), ISIALA NGWA SOUTH LGA (NDIOLUMBE, NVOSI ET AL), ISIALA NGWA NORTH (UMUAKWU NSULU ET AL)", "min_hours": 12},
+    {"sn": 38, "band": "D", "feeder_name": "OMOBA 11KV", "location": "OMOBA ISS", "streets": "OMOBA TOWN ISIALA NGWA SOUTH AND ENVIRONS", "min_hours": 4}
+  ]
+}

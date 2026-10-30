@@ -1,0 +1,19 @@
+{
+  "order_file": "IE_HOLDCO_YSS_September_2026_093.pdf",
+  "page": 12,
+  "disco": "IKEDC",
+  "target": "rows",
+  "transcribed_by": "build agent A, by eye from the 300 dpi render, before comparing with the reader output",
+  "rows": [
+    {"sn": 32, "feeder_name": "11-LAMBEINJ-T1-OLAMBE", "band": "C", "location": "ABULE EGBA", "streets": "OSHERE, MATOGUN ROAD, LAMBE ROAD", "min_hours": 12},
+    {"sn": 33, "feeder_name": "11-OPE ILUINJ-T1-ABORO", "band": "C", "location": "ABULE EGBA", "streets": "PASTOR AINA, OLAOLUWA, BOLAJI SHONDE", "min_hours": 12},
+    {"sn": 34, "feeder_name": "11-OPE ILUINJ-T1-ADIYAN", "band": "C", "location": "ABULE EGBA", "streets": "PETER RD, OLUASO, OLAOGUN, OLUWO", "min_hours": 12},
+    {"sn": 35, "feeder_name": "11-YIDIINJ-T1-OSOBA", "band": "C", "location": "ABULE EGBA", "streets": "ENILOLOBO, ALAYAKI, OLUASO, MURIABIOLA", "min_hours": 12},
+    {"sn": 36, "feeder_name": "33-IKORODUTCN-AGBOWA", "band": "D", "location": "IKORODU", "streets": "ITOKIN ROAD, AGBOWA, IMOTA, OKE OSHO, ADO OTA, POKA EPE, EREDO, MOSAFEJO, AYANDELU, KETU EPE, ODOGBAWOJO, AJEBO, ITUNMOJA, IGBODU, IGBOYE, IBOWON, ODO EGIRI, IRANGUNSHI, ODOGBONLE, LEJINA, ISIU, IMOKUN, OKE POPO, IKOSI EJINRIN, TEMU VILLAGE, EREDO,", "min_hours": 8},
+    {"sn": 37, "feeder_name": "11-ODOGUNYANINJ-T2-ITA OLUWO", "band": "D", "location": "IKORODU", "streets": "ITA-OLUWO, LIBERTY, LADUGBA, OWUSI, AKEBIORO, LOGUNLOGUN, GLORIOUS LAND, OPELOYERU", "min_hours": 8},
+    {"sn": 38, "feeder_name": "11-OWUTUINJ-T2-ISAWO", "band": "D", "location": "IKORODU", "streets": "COMMUNITY, YEWA, OLORUNSOGO, DAYO OLUYEMI", "min_hours": 8},
+    {"sn": 39, "feeder_name": "11-OPE ILUINJ-T1-IJOKO", "band": "D", "location": "ABULE EGBA", "streets": "IJOKO ROAD, ROBIYAN, IBARAGUN", "min_hours": 8},
+    {"sn": 40, "feeder_name": "11-YIDIINJ-T1-OPEILU", "band": "D", "location": "ABULE EGBA", "streets": "MUTA, GASLINE, ORUDU, DIAMOND ESTATE", "min_hours": 8},
+    {"sn": 41, "feeder_name": "11-ODOGUNYANINJ-T2-ODOKEKERE", "band": "E", "location": "IKORODU", "streets": "OLD IKORODU SHAGAMU ROAD, NAZARETH ROAD, AGODO ALARA COMMUNITY, EZE STREET, UNITY ROAD, POWERLINE ROAD, 2ND SAWMILL WOOD MARKET ODOKEKERE, IREAKARI IGBOSORO COMMUNITY, FOKANBALE COMMUNITY, COMFORT CDA.", "min_hours": 4}
+  ]
+}

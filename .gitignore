@@ -1,0 +1,21 @@
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+*.key
+.DS_Store
+# raw downloads stay outside git (see docs/SOURCES.md for URLs and hashes)
+data/raw/
+data/work/
+web/dist/
+# demo video renders, voice clips and licensed music never go in git
+video/raw/
+video/voice/
+video/*.mp4
+video/*.m4a
+*.mp3
+*.egg-info/
+web/screenshots/
+web/node_modules/
