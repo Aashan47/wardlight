@@ -4,15 +4,21 @@ import { useReducedMotion } from '../hooks'
 import { Link } from '../router'
 import type { AgentRunHandle } from './useAgentRun'
 import type { Check, CheckedNumber, Citation, RunState } from './types'
+import { share } from '../city/format'
 
 const isFacilityId = (s: string) => /^(WL-\d+|SN_[0-9A-F]+|v[23]_[0-9a-f-]{20,})$/.test(s)
+/** brief 13 site ids: H-<GRID3 id>, W-BH-<n>, W-WORKS-<n>, C-<OSM id> */
+const isSiteId = (s: string) => /^(H-SN_[0-9A-F]+|W-[A-Z]+-\d+|C-\d+)$/.test(s)
+const idLink = (s: string) => (isSiteId(s) ? `/site/${encodeURIComponent(s)}` : `/facility/${encodeURIComponent(s)}`)
 
-/** Small markdown: # headings, **bold**, "- " and "1. " lists, paragraphs, [S7] source chips and [[id]] facility chips. */
+/** Small markdown: # headings, **bold**, *italic*, "- " and "1. " lists, | tables |, paragraphs, [S7] source chips and
+ *  [[id]] facility chips. */
 export function Markdown({ text, cites = [] }: { text: string; cites?: Citation[] }) {
   const clean = text.replace(/\[\[?[^\]]*$/, '')
-  const inline = (s: string, k: string) => s.split(/(\*\*[^*]+\*\*|\[\[[^\]]+\]\]|\[S\d+\])/g).map((part, i) => {
+  const inline = (s: string, k: string) => s.split(/(\*\*[^*]+\*\*|\*[^*\s][^*]*\*|\[\[[^\]]+\]\]|\[S\d+\])/g).map((part, i) => {
     const key = `${k}${i}`
     if (part.startsWith('**') && part.endsWith('**')) return <strong key={key}>{part.slice(2, -2)}</strong>
+    if (part.length > 2 && part.startsWith('*') && part.endsWith('*')) return <em key={key}>{inline(part.slice(1, -1), `${key}e`)}</em>
     if (part.startsWith('[[') && part.endsWith(']]')) { const id = part.slice(2, -2); return <Link key={key} className="cite" to={`/facility/${id}`}><Icon name="doc" size={11} />{id}</Link> }
     if (/^\[S\d+\]$/.test(part)) {
       const id = part.slice(1, -1); const c = cites.find((x) => x.cite === id)
@@ -27,7 +33,26 @@ export function Markdown({ text, cites = [] }: { text: string; cites?: Citation[
   const flush = () => { if (list) { const L = list.ordered ? 'ol' : 'ul'; out.push(<L key={`l${out.length}`}>{list.items.map((it, j) => <li key={j}>{inline(it, `l${out.length}-${j}-`)}</li>)}</L>); list = null } }
   let para: string[] = []
   const flushP = () => { if (para.length) { out.push(<p key={`p${out.length}`}>{inline(para.join(' '), `p${out.length}-`)}</p>); para = [] } }
+  // live models answer in tables: header row, |---| rule, body rows
+  let table: string[][] | null = null
+  const cells = (l: string) => l.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim())
+  const flushT = () => {
+    if (!table) return
+    const [head, ...body] = table, k = `t${out.length}`
+    out.push(<div key={k} className="md-table"><table>
+      <thead><tr>{head.map((c, j) => <th key={j} scope="col">{inline(c, `${k}h${j}-`)}</th>)}</tr></thead>
+      <tbody>{body.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j}>{inline(c, `${k}r${i}c${j}-`)}</td>)}</tr>)}</tbody>
+    </table></div>)
+    table = null
+  }
   for (const l of lines) {
+    if (/^\s*\|\s*$/.test(l)) continue  // a stray pipe left after a table
+    if (/^\s*\|.*\|\s*$/.test(l)) {
+      flushP(); flush()
+      if (/^\s*\|?[\s:|-]+\|?\s*$/.test(l) && l.includes('-')) continue
+      ;(table ??= []).push(cells(l)); continue
+    }
+    flushT()
     const ul = /^\s*- (.*)$/.exec(l), ol = /^\s*\d+\. (.*)$/.exec(l), h = /^(#{1,3}) (.*)$/.exec(l)
     if (ul || ol) { flushP(); const ordered = !!ol; if (!list || list.ordered !== ordered) { flush(); list = { ordered, items: [] } } list.items.push((ul ?? ol)![1]); continue }
     flush()
@@ -35,7 +60,7 @@ export function Markdown({ text, cites = [] }: { text: string; cites?: Citation[
     if (!l.trim()) { flushP(); continue }
     para.push(l)
   }
-  flush(); flushP()
+  flush(); flushP(); flushT()
   return <>{out}</>
 }
 
@@ -73,7 +98,7 @@ function Args({ args }: { args: Record<string, unknown> }) {
         return (
           <span key={k}>{i > 0 && ', '}{k}: {val.map((x, j) => {
             const s = typeof x === 'object' && x !== null ? JSON.stringify(x) : String(x)
-            return <Fragment key={j}>{j > 0 && ', '}{isFacilityId(s) ? <Link to={`/facility/${s}`}>{s}</Link> : typeof x === 'string' ? `"${s}"` : s}</Fragment>
+            return <Fragment key={j}>{j > 0 && ', '}{isFacilityId(s) || isSiteId(s) ? <Link to={idLink(s)}>{s}</Link> : typeof x === 'string' ? `"${s}"` : s}</Fragment>
           })}</span>
         )
       })}
@@ -109,10 +134,11 @@ function Grounding({ check, n }: { check: Check; n: number }) {
   )
 }
 
-const TOTALS: [string, string, 'ngn' | 'n'][] = [
-  ['funded_count', 'Facilities funded', 'n'], ['spent_ngn', 'Spent', 'ngn'], ['benefit_total', 'Benefit', 'n'], ['remaining_ngn', 'Left over', 'ngn'],
+const TOTALS: [string, string, 'ngn' | 'n' | 'share'][] = [
+  ['funded_count', 'Sites funded', 'n'], ['spent_ngn', 'Spent', 'ngn'], ['share_with_funded', 'Critical service-hours kept', 'share'], ['diesel_l_avoided', 'Diesel avoided, litres', 'n'],
+  ['own_solar', 'Sites on their own solar', 'n'], ['dark', 'Sites dark unless fuelled', 'n'], ['window_days', 'Outage, days', 'n'],
+  ['benefit_total', 'Benefit', 'n'], ['remaining_ngn', 'Left over', 'ngn'],
   ['changed', 'Feeders changed', 'n'], ['facilities_affected', 'Facilities affected', 'n'], ['fix_changed', 'Fix changed', 'n'],
-  ['facilities', 'Facilities', 'n'], ['doses_protected', 'Doses protected', 'n'],
 ]
 const ngnFmt = (n: number) => (n >= 1e9 ? `N${(n / 1e9).toFixed(2)}bn` : `N${(n / 1e6).toFixed(1)}m`)
 
@@ -207,7 +233,7 @@ export function AgentRun({ run, title, question, badge, children, controls, star
             return shown.length > 0 && (
               <div className="metrics" style={{ marginTop: 10 }}>
                 {shown.map(([k, label, f]) => (
-                  <div key={k}><div className="kicker">{k === 'benefit_total' && unit ? unit : label}</div><div className="counter"><CountUp value={t[k] as number} format={f === 'ngn' ? ngnFmt : undefined} /></div></div>
+                  <div key={k}><div className="kicker">{k === 'benefit_total' && unit ? unit : label}</div><div className="counter">{f === 'share' ? <span className="mono">{share(t[k] as number)}</span> : <CountUp value={t[k] as number} format={f === 'ngn' ? ngnFmt : undefined} />}</div></div>
                 ))}
               </div>
             )
@@ -217,7 +243,7 @@ export function AgentRun({ run, title, question, badge, children, controls, star
               <ul className="small">
                 {s.answer.not_reached.slice(0, 5).map((n, i) => typeof n === 'string' ? <li key={i}><Markdown text={n} /></li>
                   : n.text ? <li key={i}><Markdown text={n.text} /></li>
-                  : <li key={i}>{n.rank ? <span className="mono">#{n.rank} </span> : null}{n.unique_id ? <Link to={`/facility/${n.unique_id}`}>{n.name ?? n.unique_id}</Link> : n.name}{n.why_not_funded ? `: ${n.why_not_funded}` : ''}</li>)}
+                  : <li key={i}>{n.rank ? <span className="mono">#{n.rank} </span> : null}{n.unique_id ? <Link to={idLink(n.unique_id)}>{n.name ?? n.unique_id}</Link> : n.name}{n.why_not_funded ? `: ${n.why_not_funded}` : ''}</li>)}
               </ul>
               {s.answer.not_reached.length > 5 && <p className="small muted" style={{ margin: 0 }}>and {s.answer.not_reached.length - 5} more listed by the agent</p>}
             </div>

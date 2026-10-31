@@ -106,6 +106,7 @@ section { margin-top: 36px; }
 /* tags and status */
 .tag { display: inline-flex; align-items: center; gap: 6px; border: 1px solid currentColor; border-radius: 999px; padding: 1px 9px 1px 7px; font: 500 0.78rem/1.6 var(--sans); white-space: nowrap; }
 .tag svg { flex: none; }
+.tag.tag-wrap { white-space: normal; max-width: 100%; }
 .s-grid { color: var(--t-grid); } .s-sun { color: var(--t-sun); } .s-cell { color: var(--t-cell); } .s-risk { color: var(--t-risk); } .s-unknown { color: var(--t-unknown); }
 .sample { display: inline-flex; align-items: center; gap: 6px; background: repeating-linear-gradient(135deg, rgb(232 163 61 / 0.18) 0 8px, rgb(232 163 61 / 0.08) 8px 16px); border: 1px dashed var(--t-sun); color: var(--t-sun); border-radius: 6px; padding: 2px 9px; font: 600 0.75rem/1.6 var(--mono); text-transform: uppercase; letter-spacing: 0.06em; }
 .banner { border: 1px dashed var(--t-sun); border-radius: var(--r); padding: 10px 14px; background: rgb(232 163 61 / 0.08); font-size: 0.9rem; }
@@ -269,6 +270,12 @@ footer.site { border-top: 1px solid var(--line); padding: 24px 0 40px; font-size
 .answer { border-top: 1px solid var(--line); padding-top: 12px; }
 .answer-text p { margin: 0 0 8px; }
 .answer-text ul { margin: 0 0 8px; padding-left: 20px; }
+.answer-text .md-table { overflow-x: auto; margin: 0 0 10px; max-width: 100%; }
+.answer-text table { border-collapse: collapse; font-size: 0.84rem; width: 100%; }
+.answer-text th, .answer-text td { text-align: left; padding: 4px 10px 4px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.answer-text th { color: var(--muted); font-weight: 500; font-size: 0.76rem; word-break: normal; overflow-wrap: normal; min-width: 3.5em; }
+.answer-text td { font-variant-numeric: tabular-nums; word-break: normal; overflow-wrap: normal; }
+.answer-text tr:last-child td { border-bottom: 0; }
 .caret { display: inline-block; width: 7px; height: 1em; background: var(--text); vertical-align: -2px; margin-left: 2px; opacity: 0.6; }
 .cite { display: inline-flex; align-items: center; gap: 3px; font: 500 0.78rem var(--mono); border: 1px solid var(--t-grid); border-radius: 999px; padding: 0 7px; text-decoration: none; white-space: nowrap; }
 .agent-foot { display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }

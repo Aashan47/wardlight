@@ -36,7 +36,7 @@ export function FeaturePhone({ defaultCode = '' }: { defaultCode?: string }) {
     <div className="card stack">
       <div className="row between"><h3 style={{ margin: 0 }}>SMS lookup</h3><span className="tag s-sun">Sandbox demo</span></div>
       <p className="small muted" style={{ margin: 0 }}>
-        A clinic officer with a basic phone sends a facility code and gets the fridge figure back.
+        An officer in charge with a basic phone sends a facility code and gets back the vaccine fridge figure and its fix.
         {MODE === 'live' ? ' This panel calls the same SMS route Africa\'s Talking calls; in the sandbox the reply comes back here and no SMS is sent.' : ' This panel composes the reply in the browser from sample data.'}
       </p>
       <div className="phone" aria-label="Feature phone simulator">

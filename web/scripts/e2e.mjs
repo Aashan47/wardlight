@@ -20,14 +20,15 @@ const rec = await j(`/api/facilities/${auchi.id}`)
 const verifierId = (await j('/api/agent/recordings')).recordings.find((r) => r.agent === 'verifier').facility_id
 
 const ROUTES = [
-  ['overview', '/'], ['facility', `/facility/${auchi.id}`], ['facility-named', `/facility/${named.id}`], ['facility-refused', `/facility/${refused}`],
-  ['sheet', `/facility/${auchi.id}/sheet`], ['plan', '/plan'], ['brief', '/plan/brief?state=Kano&budget=80000000'], ['feeder', `/feeder/${bichi.match.feeder_id}`], ['method', '/method'], ['about', '/about'],
+  ['city', '/'], ['city-damaturu', '/city/damaturu?days=40'], ['overview', '/facilities'], ['facility', `/facility/${auchi.id}`], ['facility-named', `/facility/${named.id}`], ['facility-refused', `/facility/${refused}`],
+  ['sheet', `/facility/${auchi.id}/sheet`], ['plan', '/plan'], ['brief', '/plan/brief?city=maiduguri&budget=2000000000&days=60&sectors=health,water,cold'], ['feeder', `/feeder/${bichi.match.feeder_id}`], ['method', '/method'], ['about', '/about'],
 ]
 const report = []
 const fails = []
 
 async function page(b, width, scheme, motion = 'no-preference') {
   const ctx = await b.newContext({ viewport: { width, height: width < 600 ? 844 : 1000 }, colorScheme: scheme, reducedMotion: motion, deviceScaleFactor: 1, serviceWorkers: 'block' })
+  await ctx.addInitScript((s) => { try { localStorage.setItem('wl-theme', s) } catch { /* blocked */ } }, scheme) // the app is dark-first
   const p = await ctx.newPage()
   const errors = []
   p.on('console', (m) => { if (m.type() === 'error') errors.push(`console: ${m.text()}`) })
@@ -77,14 +78,15 @@ for (const gl of [true, false]) {
   await p.waitForFunction(() => /Auchi/.test(document.querySelector('.phone .screen')?.textContent ?? ''), null, { timeout: 15000 }).catch(() => {})
   const smsText = await p.textContent('.phone .screen')
   check('sms 5-digit code', /Auchi/.test(smsText ?? ''), smsText)
-  // overview hero: Bichi row and its crop image
-  await p.goto(`${BASE}/`, { waitUntil: 'load' }); await p.waitForSelector('main h1')
+  // health facilities (brief 13 health layer): plan-order list, the NERC row of the first-ranked named facility, no dose wording
+  await p.goto(`${BASE}/facilities`, { waitUntil: 'load' }); await p.waitForSelector('main h1')
   await p.waitForSelector('img.crop', { timeout: 20000 }).catch(() => {})
   const crop = await p.$eval('img.crop', (i) => ({ ok: i.complete && i.naturalWidth > 0, src: i.getAttribute('src') })).catch(() => ({ ok: false, src: null }))
   check('hero crop image', crop.ok, JSON.stringify(crop))
-  check('hero is Bichi', /BICHI GENERAL HOSPITAL/i.test(await p.textContent('.nerc') ?? ''), 'hero row text')
-  check('overview map opens on Kano', /Kano State/.test(await p.textContent('main') ?? ''), 'heading')
-  check('list uptime carries its scenario', /of days if a household or non-PQS fridge/.test(await p.textContent('main') ?? ''), 'bare figure')
+  check('hero NERC row', ((await p.textContent('.nerc').catch(() => '')) ?? '').length > 10, 'hero row text')
+  const ovText = await p.textContent('main') ?? ''
+  check('overview is the Maiduguri health layer', /Maiduguri: health facilities in plan order/.test(ovText) && /critical service-hours/i.test(ovText), 'heading')
+  check('overview has no dose wording', !/\bdoses?\b/i.test(ovText), 'dose wording')
   // facility: draw label
   await p.goto(`${BASE}/facility/${named.id}`, { waitUntil: 'load' }); await p.waitForSelector('main h1')
   check('draw label', /Scenario:.*Draw: lane/s.test(await p.textContent('.draw-label').catch(() => '') ?? ''), 'missing')
@@ -93,12 +95,11 @@ for (const gl of [true, false]) {
   const feederText = await p.textContent('main')
   check('served summary', /Who depends on this feeder/.test(feederText ?? '') && /not this feeder/.test(feederText ?? ''), 'missing')
   // brief: JSON page and CSV
-  await p.goto(`${BASE}/plan/brief?state=Kano&budget=80000000`, { waitUntil: 'load' }); await p.waitForSelector('.brief h1', { timeout: 30000 })
-  check('brief rows', (await p.locator('.brief-table tbody tr').count()) > 0, 'no rows')
+  await p.goto(`${BASE}/plan/brief?city=maiduguri&budget=2000000000&days=60&sectors=health,water,cold`, { waitUntil: 'load' }); await p.waitForSelector('.brief h1', { timeout: 30000 })
+  check('brief rows', (await p.locator('.brief table tbody tr').count()) > 10, 'no rows')
   const briefText = await p.textContent('.brief') ?? ''
-  check('brief capped note', /catchment capped at 20,000 people/i.test(briefText) && /uncapped demand/.test(briefText), 'missing')
-  check('brief scenario wording', /today if a household or non-PQS fridge/.test(briefText), 'bare figure')
-  const csv = await fetch(`${BASE}/api/plan/brief.csv?state=Kano&budget_ngn=80000000`)
+  check('brief is brief 13', /Maiduguri/.test(briefText) && /critical service-hours/i.test(briefText) && !/Kano|vaccine doses/.test(briefText), 'brief 1 wording')
+  const csv = await fetch(`${BASE}/api/city/maiduguri/plan.csv?budget_ngn=2000000000&days=60`)
   const csvText = await csv.text()
   check('brief csv', csv.status === 200 && csvText.split('\n').length > 10, `status ${csv.status}`)
   report.push({ tag: 'interactions-facility', errors: [...errors], overflow: 0, sampleMarks: 0 })
@@ -107,8 +108,8 @@ for (const gl of [true, false]) {
 
 const AGENTS = [
   ['planner', '/plan', 'Ask Wardlight', /Replay this session/, '.agent-grid', 3200],
-  ['verifier', `/facility/${verifierId}`, 'Verify this clinic by SMS', /Replay the recorded session/, 'section[aria-label="Verify this clinic by SMS"]', 2600],
-  ['watcher', '/method', 'Regulator watch', /Replay the recorded run/, 'section[aria-label="Regulator watch"]', 2200],
+  ['verifier', '/site/W-BH-589?city=maiduguri', 'Verify this site by SMS', /Replay the recorded session/, 'section[aria-label="Verify this site by SMS"]', 2600],
+  ['watcher', '/plan', 'Line watch', /Replay the 2024 line cut/, 'section[aria-label="Line watch"]', 2200],
 ]
 for (const [kind, path, title, btn, sel, mid] of AGENTS) {
   for (const width of [390, 1440]) for (const scheme of ['light', 'dark']) {
@@ -129,10 +130,10 @@ for (const [kind, path, title, btn, sel, mid] of AGENTS) {
     const foot = await panel.locator('footer.agent-foot').textContent()
     check(`${kind} recorded label`, /recorded session/.test(foot ?? ''), foot)
     if (kind === 'planner') {
-      check('planner lit the map', /Kano/.test(await p.textContent('h2:has-text("Ranked list")') ?? ''), 'state did not follow the agent')
-      check('brief from the run', (await panel.locator('a:has-text("Investment brief for this answer")').count()) === 1, 'no brief link')
+      check('planner set the city', /Maiduguri/.test(await p.textContent('#list-h') ?? ''), 'city did not follow the agent')
+      check('planner answer is brief 13', /critical service-hours/.test(await panel.textContent() ?? ''), 'no brief 13 answer')
     }
-    if (kind === 'verifier') check('verifier narrows to 0.2%', /0% to 0\.2%/.test(await panel.textContent() ?? ''), (await panel.locator('ol.small').textContent().catch(() => '')) ?? '')
+    if (kind === 'verifier') check('verifier closes on the reported hours', /10 of 56/.test(await panel.textContent() ?? ''), (await panel.locator('ol.small').textContent().catch(() => '')) ?? '')
     report.push({ tag, errors: [...errors], overflow: await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), sampleMarks: 0 })
     await close(); await b.close()
   }

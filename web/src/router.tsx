@@ -2,11 +2,11 @@ import { useEffect, useState, type AnchorHTMLAttributes, type MouseEvent } from 
 
 // A small history router: six routes do not need a dependency.
 const listeners = new Set<() => void>()
-export function navigate(to: string, replace = false) {
+export function navigate(to: string, replace = false, scroll = true) {
   if (replace) history.replaceState(null, '', to)
   else history.pushState(null, '', to)
   listeners.forEach((l) => l())
-  window.scrollTo(0, 0)
+  if (scroll) window.scrollTo(0, 0)
 }
 if (typeof window !== 'undefined') window.addEventListener('popstate', () => listeners.forEach((l) => l()))
 

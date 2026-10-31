@@ -1,236 +1,214 @@
+// Funder plan (brief 13): a budget in naira, an outage length and the sectors to protect -> which critical sites the
+// budget keeps running when the line is cut, in the city's plan order. The plan is computed in the browser from the
+// sites collection with the same rule as the planner agent's rank_city_plan tool (src/api/cityplan.ts); the planner
+// and the line watcher run beside it and drive the same controls.
 import { useEffect, useMemo, useState } from 'react'
-import { api, MODE } from '../api/client'
-import type { FixCategory, PlanRow } from '../api/types'
+import { api, BASE, MODE } from '../api/client'
+import { b13, weakest } from '../api/brief13-client'
+import { CITIES, OUTAGE_DAYS, SECTORS, type CityId, type Sector } from '../api/brief13'
+import { ALL_SECTORS, download, PLAN_RULE, planCity, planCsv, type PlanSite } from '../api/cityplan'
 import { AgentRun } from '../agent/AgentRun'
+import { LineWatchPanel } from '../agent/LineWatchPanel'
 import { useAgentRun } from '../agent/useAgentRun'
-import { CappedNote, ErrorNote, FIX, FixTag, Icon, Loading, SampleBadge, scenarioOf, TierTag } from '../components/ui'
-import { ngn, num, pct } from '../format'
+import { Icon, Loading } from '../components/ui'
+import { Empty, Segmented, SourceBadge } from '../city/bits'
+import { CriticalMap } from '../city/CriticalMap'
+import { full, naira, SECTOR_NAME, share } from '../city/format'
+import { type MapSite } from '../city/mapdata'
+import { SectorDot, SectorTag } from '../city/panels'
 import { useAsync, useReducedMotion } from '../hooks'
-import { FacilityMap } from '../map/FacilityMap'
-import type { MapPoint } from '../map/types'
-import { Link } from '../router'
+import { Link, navigate } from '../router'
 
-const FIXTURE_QUESTION = 'I have N50 million for Edo this year. Protect the most vaccine doses.'
-const mix = (a: string, b: string, k: number) => {
-  const p = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16))
-  const [x, y] = [p(a), p(b)]
-  return `#${x.map((v, i) => Math.round(v * (1 - k) + y[i] * k).toString(16).padStart(2, '0')).join('')}`
-}
+const DAY_HINT: Record<number, string> = { 14: 'two weeks', 40: 'the 2024 cut', 60: "the brief's two months" }
+const DEFAULT_BUDGET = 2e9 // one month of the gas plant's federal operating support (brief 13, refs 5 and 6)
+const STEP = 1e7
 
 export function PlanPage() {
   const reduced = useReducedMotion()
-  const summary = useAsync(() => api.summary(), [])
-  const recs = useAsync(() => api.recordings(), [])
-  const planners = (recs.data?.recordings ?? []).filter((r) => r.agent === 'planner' && r.question)
-  const [state, setState] = useState('Edo')
-  const plan = useAsync(() => api.plan({ state, target: 0.99 }), [state])
-  const max = plan.data?.budget_ngn_max ?? 0
-  const [budget, setBudget] = useState<number | null>(null)
+  const [city, setCity] = useState<CityId>('maiduguri')
+  const [days, setDays] = useState<number>(60)
+  const [sectors, setSectors] = useState<Sector[]>(ALL_SECTORS)
+  const [budget, setBudget] = useState<number>(DEFAULT_BUDGET)
   const [all, setAll] = useState(false)
+  const [sel, setSel] = useState<string | null>(null)
   const [pick, setPick] = useState<string | null>(null)
   const [own, setOwn] = useState('')
-  const run = useAgentRun('planner')
-  const rows = useMemo(() => plan.data?.ranked ?? [], [plan.data])
-  const b = budget ?? Math.round(max * 0.02 / 1e6) * 1e6
-  useEffect(() => { if (planners.length && !pick) setPick(planners.find((r) => r.name.includes('kano'))?.name ?? planners[0].name) }, [planners, pick])
-  const chosen = planners.find((r) => r.name === pick)
-  const question = MODE === 'fixture' ? FIXTURE_QUESTION : chosen?.question ?? 'Loading recorded questions…'
+  const cityInfo = CITIES.find((c) => c.id === city)!
 
-  // the agent drives the page: its rank call sets state and budget; the facilities it ranks pulse; the funded list lights in order
+  const sites = useAsync(() => b13.sites(city), [city])
+  const met = useAsync(() => b13.metrics(city, 60), [city])
+  const cor = useAsync(() => b13.corridor(), [])
+  const recs = useAsync(() => (MODE === 'live' ? api.recordings() : Promise.resolve({ recorded: true, recordings: [] })), [])
+  const planners = (recs.data?.recordings ?? []).filter((r) => r.agent === 'planner' && r.question)
+  useEffect(() => { if (planners.length && !pick) setPick(planners.find((r) => r.name.includes('maiduguri'))?.name ?? planners[0].name) }, [planners, pick])
+  const chosen = planners.find((r) => r.name === pick)
+  const run = useAgentRun('planner')
   const s = run.state
-  const rankCall = s.tools.find((t) => /rank/.test(t.name))
-  const agentState = typeof rankCall?.args.state === 'string' ? rankCall.args.state : undefined
-  const agentBudget = Number(rankCall?.args.budget ?? rankCall?.args.budget_ngn ?? s.answer?.totals?.budget_ngn) || undefined
-  useEffect(() => { if (agentState) setState(agentState) }, [agentState])
+
+  const m = met.data?.data
+  const price = m?.constants?.DIESEL_NGN_PER_L?.value
+  const dieselPrice = typeof price === 'number' ? price : null
+  const planSites: PlanSite[] = useMemo(() => (sites.data?.data.features ?? []).map((f) => ({ ...f.properties, lon: f.geometry.coordinates[0], lat: f.geometry.coordinates[1] })), [sites.data])
+  const maxBudget = useMemo(() => Math.ceil(planSites.filter((x) => x.rank != null && sectors.includes(x.sector)).reduce((a, x) => a + (x.system?.capex_ngn ?? 0), 0) / STEP) * STEP, [planSites, sectors])
+
+  // the agent drives the controls: its rank_city_plan call sets city, budget, days and sectors
+  const call = s.tools.find((t) => t.name === 'rank_city_plan')
+  const a = call?.args ?? {}
+  const agentBudget = Number(s.answer?.totals?.budget_ngn ?? (a.currency === 'USD' ? NaN : a.budget)) || undefined
+  useEffect(() => {
+    if (!call) return
+    const c = String(a.city ?? '').toLowerCase()
+    if (CITIES.some((x) => x.id === c)) setCity(c as CityId)
+    if (typeof a.days === 'number' && (OUTAGE_DAYS as readonly number[]).includes(a.days)) setDays(a.days)
+    if (Array.isArray(a.sectors) && a.sectors.length) setSectors(ALL_SECTORS.filter((x) => (a.sectors as string[]).includes(x)))
+  }, [call]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (agentBudget) setBudget(agentBudget) }, [agentBudget])
-  const agentFunded = useMemo(() => {
-    const fromAnswer = s.answer?.funded?.map((f) => (typeof f === 'string' ? f : f.unique_id))
-    const fromTool = [...s.tools].reverse().find((t) => t.result?.data?.funded)?.result?.data?.funded
-    return fromAnswer ?? fromTool
-  }, [s.answer, s.tools])
-  const considering = useMemo(() => {
-    if (s.status !== 'running' || agentFunded) return [] as string[]
-    const fromTool = [...s.tools].reverse().find((t) => t.result?.data?.considering)?.result?.data?.considering
-    if (fromTool) return fromTool
-    return rankCall ? rows.slice(0, 150).map((r) => r.id) : []
-  }, [s.status, s.tools, agentFunded, rankCall, rows])
+
+  const plan = useMemo(() => planCity(planSites, budget, days, sectors, dieselPrice), [planSites, budget, days, sectors, dieselPrice])
+  const agentFunded = useMemo(() => s.answer?.funded?.map((f) => (typeof f === 'string' ? f : f.unique_id)), [s.answer])
   const [lit, setLit] = useState(0)
-  const [pulse, setPulse] = useState(false)
   useEffect(() => { if (!agentFunded) setLit(0) }, [agentFunded])
   useEffect(() => {
     if (!agentFunded) return
     if (reduced) { setLit(agentFunded.length); return }
     if (lit >= agentFunded.length) return
-    const step = Math.max(1, Math.ceil(agentFunded.length / 60))
-    const h = setTimeout(() => setLit((n) => Math.min(agentFunded.length, n + step)), 35)
+    const h = setTimeout(() => setLit((n) => Math.min(agentFunded.length, n + Math.max(1, Math.ceil(agentFunded.length / 60)))), 35)
     return () => clearTimeout(h)
   }, [agentFunded, lit, reduced])
-  useEffect(() => {
-    if (reduced || considering.length === 0) return
-    const h = setInterval(() => setPulse((p) => !p), 400)
-    return () => clearInterval(h)
-  }, [reduced, considering.length])
+  const funded = useMemo(() => (agentFunded && s.status !== 'idle' ? new Set(agentFunded.slice(0, lit)) : new Set(plan.funded.map((r) => r.id))), [agentFunded, lit, plan, s.status])
+  const considering = s.status === 'running' && !!call && !agentFunded
 
-  const agentLit = useMemo(() => new Set(agentFunded?.slice(0, lit) ?? []), [agentFunded, lit])
-  const funded = useMemo(() => (agentFunded && s.status !== 'idle' ? agentLit : new Set(rows.filter((r) => r.cumulative_ngn <= b).map((r) => r.id))), [agentFunded, agentLit, rows, b, s.status])
-  const consideringSet = useMemo(() => new Set(considering), [considering])
-  const fundedRows = rows.filter((r) => funded.has(r.id))
-  const doses = fundedRows.reduce((a, r) => a + r.doses_protected_gain, 0)
-  const spent = fundedRows.reduce((a, r) => a + r.cost_ngn, 0)
-  const byFix = (f: FixCategory) => fundedRows.filter((r) => r.fix === f).length
-  const points: MapPoint[] = useMemo(() => rows.filter((r) => r.lat != null && r.lon != null).map((r, n) => {
-    const on = funded.has(r.id), thinking = consideringSet.has(r.id) && !on
-    const color = FIX[r.fix]?.color ?? '#8A8F98'
-    return {
-      n, id: r.id, name: r.name, lat: r.lat, lon: r.lon, funded: on,
-      color: on ? color : thinking ? (pulse ? '#F0B95E' : mix(color, '#8A8F98', 0.45)) : mix(color, '#8A8F98', 0.7),
-      height: (800 + Math.min(r.unmet_hours, 30) * 500) * (thinking && pulse ? 1.35 : on ? 1.15 : 1),
-    }
-  }), [rows, funded, consideringSet, pulse])
+  const mapSites: MapSite[] = useMemo(() => plan.rows.map((r) => {
+    const on = funded.has(r.id)
+    const today = r.needed_h ? r.today_h / r.needed_h : 0, withP = r.needed_h ? r.with_h / r.needed_h : 0
+    return { id: r.id, name: r.name, sector: r.sector, kw: planSites.find((x) => x.id === r.id)?.kw ?? 1, lon: r.lon, lat: r.lat, glow: on ? withP : considering ? 0.35 : today, planned: true, rank: r.rank, today, withPlan: withP }
+  }), [plan, funded, considering, planSites])
 
+  const reset = () => { if (s.status !== 'idle') run.reset() }
+  const toggle = (x: Sector) => { reset(); setSectors((p) => (p.includes(x) ? (p.length > 1 ? p.filter((y) => y !== x) : p) : ALL_SECTORS.filter((y) => p.includes(y) || y === x))) }
   const go = (body: Record<string, unknown>) => run.start({ path: '/agent/plan', body })
+  const t = plan.totals
+  const shown = all ? plan.rows : plan.rows.slice(0, 15)
+  const selRow = plan.rows.find((r) => r.id === sel)
+  const query = `city=${city}&budget=${Math.round(budget)}&days=${days}&sectors=${sectors.join(',')}`
+  const src = weakest([sites.data?.src, met.data?.src])
+
   const controls = (
     <div className="stack">
       {MODE === 'live' && planners.length > 0 && (
         <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
           <legend className="small" style={{ fontWeight: 500, marginBottom: 6 }}>Recorded sessions</legend>
           <div className="chips">
-            {planners.map((r) => (
-              <button key={r.name} type="button" className={`chip pick ${pick === r.name ? 'on' : ''}`} aria-pressed={pick === r.name} onClick={() => { run.reset(); setPick(r.name) }} title={r.what}>{r.what}</button>
-            ))}
+            {planners.map((r) => <button key={r.name} type="button" className={`chip pick ${pick === r.name ? 'on' : ''}`} aria-pressed={pick === r.name} onClick={() => { run.reset(); setPick(r.name) }} title={r.what}>{r.what}</button>)}
           </div>
         </fieldset>
       )}
       <div className="row">
-        <button className="btn primary" disabled={s.status === 'running' || (MODE === 'live' && !chosen)} onClick={() => (MODE === 'fixture' ? run.start({ path: '' }) : go({ question: chosen!.question, recorded: true, recording: chosen!.name }))}>
+        <button className="btn primary" disabled={s.status === 'running' || !chosen} onClick={() => go({ question: chosen!.question, recorded: true, recording: chosen!.name })}>
           <Icon name="play" /> {s.status === 'running' ? 'Running…' : 'Replay this session'}
         </button>
         {s.status !== 'idle' && s.status !== 'running' && <button className="btn" onClick={run.reset}>Clear</button>}
-        {MODE === 'live' && s.status === 'done' && s.answer && agentState && <Link className="btn" to={`/plan/brief?state=${encodeURIComponent(agentState)}&budget=${agentBudget ?? ''}`}><Icon name="doc" /> Investment brief for this answer</Link>}
       </div>
       {MODE === 'live' && (
         <form className="field" onSubmit={(e) => { e.preventDefault(); if (own.trim()) go({ question: own.trim() }) }}>
           <label htmlFor="own-q" className="small">Or ask your own question</label>
           <div className="row" style={{ flexWrap: 'nowrap' }}>
-            <input id="own-q" type="text" value={own} onChange={(e) => setOwn(e.target.value)} placeholder="N60 million for Bauchi, maternal care first" maxLength={600} />
+            <input id="own-q" type="text" value={own} onChange={(e) => setOwn(e.target.value)} placeholder="N800 million for Yola clinics, a 40 day cut" maxLength={600} />
             <button className="btn" type="submit" disabled={!own.trim() || s.status === 'running'}>Ask</button>
           </div>
-          <span className="small muted">Runs against the real tools; counts against the daily agent cap.</span>
+          <span className="small muted">Runs against the real tools; counts against the daily agent cap. When no language model is configured, a scripted rule-based planner answers and says so.</span>
         </form>
       )}
     </div>
   )
 
-  if (plan.error && !plan.data) return <ErrorNote error={plan.error} />
-
-  const csv = () => {
-    const head = 'rank,id,name,lga,tier,fix,fix_cost_ngn,cumulative_ngn,uptime_today,uptime_with_fix,doses_protected_gain,funded,reason'
-    const body = rows.map((r) => [r.rank, r.id, r.name, r.lga, r.tier, r.fix, r.cost_ngn, r.cumulative_ngn, r.uptime_today, r.uptime_with_system, r.doses_protected_gain, funded.has(r.id), r.reason].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
-    const blob = new Blob([[head, ...body].join('\n')], { type: 'text/csv' })
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `wardlight-plan-${state.toLowerCase()}-${b}.csv`; a.click()
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000)
-  }
-  const shown = all ? rows : rows.slice(0, 15)
-  const states = summary.data?.by_state.map((x) => x.state).filter((x) => x && !/not yet/i.test(x)) ?? [state]
-
   return (
-    <div>
-      <div className="row between">
-        <div><p className="kicker">Funder plan</p><h1 style={{ marginBottom: 4 }}>Which clinics does the budget reach first?</h1></div>
-        {plan.data?.sample && <SampleBadge />}
+    <div className="city">
+      <div className="row between" style={{ alignItems: 'flex-start' }}>
+        <div><p className="kicker">Funder plan · brief 13</p><h1 style={{ marginBottom: 4 }}>When the line is cut, which critical sites does the budget keep running?</h1></div>
+        <SourceBadge src={src} />
       </div>
-      <p className="muted" style={{ maxWidth: 780 }}>Each clinic gets the cheapest fix that keeps its vaccines at 2 to 8 °C: (i) a PQS ice-lined fridge on the grid it has, (ii) a PQS solar fridge, or (iii) a solar fridge plus the separate clinic system. Facilities are ranked by doses protected per naira of that fix. Ask Wardlight, or drag the budget yourself.</p>
+      <p className="muted" style={{ maxWidth: 820 }}>Each critical site (health facilities, water pumping, market cold rooms) gets its own solar and battery, sized to keep its critical loads running through a 7-day outage at the pessimistic end. The budget funds sites in the city's plan order until it runs out. Ask Wardlight, or set the budget yourself.</p>
 
       <div className="agent-grid" style={{ marginTop: 16 }}>
-        <AgentRun run={run} title="Ask Wardlight" question={question} controls={controls} />
+        <AgentRun run={run} title="Ask Wardlight" question={chosen?.question ?? (MODE === 'live' ? 'Loading recorded questions…' : 'Recorded sessions need the live API')} controls={controls} />
         <div className="stack">
           <div className="card stack">
-            <div className="grid2" style={{ alignItems: 'end' }}>
-              <div className="field"><label htmlFor="state">State</label>
-                <select id="state" value={state} onChange={(e) => { run.reset(); setBudget(null); setState(e.target.value) }}>{states.map((x) => <option key={x}>{x}</option>)}</select>
-              </div>
-              <div className="field">
-                <div className="range-row"><label htmlFor="budget">Budget</label><output htmlFor="budget" className="mono">{ngn(b)}</output></div>
-                <input id="budget" type="range" min={0} max={max || 1} step={Math.max(1e6, Math.round(max / 400 / 1e6) * 1e6)} value={Math.min(b, max || 1)} onChange={(e) => { run.reset(); setBudget(+e.target.value) }} aria-valuetext={ngn(b)} />
-              </div>
+            <div className="controls">
+              <Segmented id="pcity" label="City" value={city} onChange={(c) => { reset(); setSel(null); setCity(c) }} options={CITIES.map((c) => ({ value: c.id, label: c.name, hint: `${c.state} State` }))} />
+              <Segmented id="pdays" label="Line outage" value={days} onChange={(d) => { reset(); setDays(d) }} options={OUTAGE_DAYS.map((d) => ({ value: d, label: `${d} days`, hint: DAY_HINT[d] }))} />
             </div>
-            <div className="metrics" aria-live="polite">
-              <div><div className="kicker">Facilities funded</div><div className="counter">{num(fundedRows.length)} <span className="muted">of {num(rows.length)}</span></div></div>
-              <div><div className="kicker">Doses protected a year</div><div className="counter s-cell">+{num(doses)}</div></div>
-              <div><div className="kicker">Spent</div><div className="counter">{ngn(spent)}</div></div>
+            <div className="sector-chips" role="group" aria-label="Sectors to fund">
+              {SECTORS.map((x) => <button key={x} type="button" className={`chip pick${sectors.includes(x) ? ' on' : ''}`} aria-pressed={sectors.includes(x)} onClick={() => toggle(x)}><SectorDot sector={x} />{SECTOR_NAME[x]}</button>)}
             </div>
-            <div className="chips">{(Object.keys(FIX) as FixCategory[]).map((f) => <span key={f} className="chip"><span style={{ width: 9, height: 9, borderRadius: 2, background: FIX[f].color, display: 'inline-block' }} />{FIX[f].short}: {num(byFix(f))}</span>)}</div>
+            <div className="field">
+              <div className="range-row"><label htmlFor="budget">Budget</label><output htmlFor="budget" className="mono">{naira(budget)}</output></div>
+              <input id="budget" type="range" min={0} max={Math.max(maxBudget, STEP)} step={STEP} value={Math.min(budget, Math.max(maxBudget, STEP))} onChange={(e) => { reset(); setBudget(+e.target.value) }} aria-valuetext={naira(budget)} />
+              <span className="small muted">N2bn is one month of the gas plant's federal operating support. Funding every site in scope costs {naira(t.capex_every_site_ngn)}.</span>
+            </div>
+            {sites.loading && !sites.data ? <Loading what={`Loading ${cityInfo.name}`} /> : sites.error && !sites.data ? <Empty>{sites.error.message}</Empty> : (
+              <div className="metrics" aria-live="polite">
+                <div><div className="kicker">Sites funded</div><div className="counter">{full(t.funded)} <span className="muted">of {full(t.candidates)}</span></div></div>
+                <div><div className="kicker">Critical service-hours kept</div><div className="counter"><span className="muted">{share(t.share_today)}</span> → <span className="s-cell">{share(t.share_with_funded)}</span></div><div className="small muted">today, then with the funded sites</div></div>
+                <div><div className="kicker">Diesel avoided</div><div className="counter">{full(t.diesel_l_avoided)} L</div><div className="small muted">{t.diesel_ngn_avoided != null ? `${naira(t.diesel_ngn_avoided)} at the May 2026 price` : ''}</div></div>
+                <div><div className="kicker">Capex</div><div className="counter">{naira(t.spent_ngn)}</div><div className="small muted">{naira(t.remaining_ngn)} left</div></div>
+              </div>
+            )}
           </div>
-          {plan.loading && !plan.data ? <Loading what={`Loading ${state}`} /> : <FacilityMap points={points} label={`Budget map for ${state}: columns coloured by fix; faded columns are not yet funded; height is critical load-hours at risk`} legend={<Legend />} />}
+          <CriticalMap sites={mapSites} corridor={cor.data?.data ?? null} selected={sel} onSelect={setSel} reduced={reduced} focus="city" cut
+            label={`Map of ${cityInfo.name}'s critical sites during a line cut: lit sites are funded and run on their own solar and battery`} />
+          <p className="small muted" style={{ margin: 0 }}>
+            Lit: funded, running on its own solar and battery through the cut. Dim: not funded, at what it keeps today.
+            {selRow && <> Selected: <Link to={`/site/${encodeURIComponent(selRow.id)}?city=${city}&days=${days}`}>{selRow.name}</Link> ({selRow.funded ? `funded, #${selRow.order} in plan order` : 'not funded'}).</>}
+          </p>
         </div>
       </div>
 
-      <section>
+      <section className="block" aria-labelledby="sec-h">
+        <div className="block-h"><div><p className="kicker">By sector, {days}-day line cut</p><h2 id="sec-h">What the budget reaches</h2></div></div>
+        <div className="table-scroll">
+          <table className="table">
+            <thead><tr><th>Sector</th><th>Funded</th><th>Kept today</th><th>Kept with the funded sites</th><th>Capex funded</th><th>To fund the rest</th></tr></thead>
+            <tbody>{ALL_SECTORS.filter((x) => plan.by_sector[x]).map((x) => { const g = plan.by_sector[x]!; return (
+              <tr key={x} className={g.in_scope ? '' : 'muted'}><td><SectorTag sector={x} />{g.in_scope ? '' : ' (not selected)'}</td><td className="mono">{full(g.funded)} of {full(g.sites)}</td><td className="mono">{share(g.share_today)}</td><td className="mono">{share(g.share_with_funded)}</td><td className="mono">{naira(g.capex_funded_ngn)}</td><td className="mono">{naira(g.capex_to_fund_the_rest_ngn)}</td></tr>) })}</tbody>
+          </table>
+        </div>
+        {plan.by_sector.water?.in_scope && plan.water.m3_with > plan.water.m3_today && <p className="small">Water pumped with the funded sites: <span className="mono">{full(plan.water.m3_with)}</span> m³ a day against <span className="mono">{full(plan.water.m3_today)}</span> today, enough for up to <span className="mono">{full(plan.water.people_with_upper)}</span> people at the Sphere minimum of 15 litres a day (an upper count).</p>}
+      </section>
+
+      <section className="block" aria-labelledby="watch-h">
+        <div className="block-h"><div><p className="kicker">When the line is cut</p><h2 id="watch-h">The watcher reads the cut, then re-plans which sites run first</h2></div></div>
+        <LineWatchPanel />
+      </section>
+
+      <section className="block" aria-labelledby="list-h">
         <div className="row between">
-          <h2 style={{ margin: 0 }}>Ranked list, {state}</h2>
+          <h2 id="list-h" style={{ margin: 0 }}>Plan order, {cityInfo.name}</h2>
           <div className="row no-print">
-            {MODE === 'live' && <Link className="btn small primary" to={`/plan/brief?state=${encodeURIComponent(state)}&budget=${b}`}><Icon name="doc" /> Investment brief</Link>}
-            <button className="btn small" onClick={csv}><Icon name="download" /> CSV</button>
+            <button className="btn small primary" onClick={() => navigate(`/plan/brief?${query}`)}><Icon name="doc" /> Investment brief</button>
+            <button className="btn small" onClick={() => download(`wardlight-plan-${city}-${Math.round(budget)}-${days}d.csv`, planCsv(plan, cityInfo.name, m?.data_version))}><Icon name="download" /> CSV</button>
+            {MODE === 'live' && <a className="btn small" href={`${BASE}/city/${city}/plan.csv?budget_ngn=${Math.round(budget)}&days=${days}&sectors=${sectors.join(',')}`}><Icon name="download" /> CSV from the API</a>}
             <button className="btn small" onClick={() => window.print()}><Icon name="print" /> PDF</button>
           </div>
         </div>
-        <ol className="plan-cards only-narrow" style={{ marginTop: 10 }} aria-label="Ranked facilities">
-          {shown.map((r) => <Card key={r.id} r={r} funded={funded.has(r.id)} />)}
-        </ol>
-        <div className="table-scroll only-wide" style={{ marginTop: 10 }}>
+        <div className="table-scroll" style={{ marginTop: 10 }}>
           <table className="table">
-            <thead><tr><th>#</th><th>Facility</th><th>Fix</th><th>Fridge holds 2 to 8 °C</th><th>Fix cost</th><th>Status</th><th className="hide-sm">Why here</th></tr></thead>
-            <tbody>{shown.map((r) => <Row key={r.id} r={r} funded={funded.has(r.id)} />)}</tbody>
+            <thead><tr><th>#</th><th>Site</th><th>System</th><th>Capex</th><th>Critical service-hours kept</th><th>Diesel avoided</th><th>Status</th></tr></thead>
+            <tbody>{shown.map((r) => (
+              <tr key={r.id} style={funded.has(r.id) ? { background: 'color-mix(in srgb, var(--cell-500) 9%, transparent)' } : undefined}>
+                <td className="mono nowrap">{r.order ?? '·'}<div className="small muted">rank {r.rank}</div></td>
+                <td><Link to={`/site/${encodeURIComponent(r.id)}?city=${city}&days=${days}`}>{r.name}</Link><div className="small muted"><SectorTag sector={r.sector} />{r.lga ? ` · ${r.lga}` : ''}</div></td>
+                <td className="small mono">{r.pv_kwp ?? 'n/a'} kWp, {r.battery_kwh ?? 'n/a'} kWh</td>
+                <td className="mono nowrap">{naira(r.capex_ngn)}</td>
+                <td className="small"><span className="mono">{full(r.today_h)}</span> today, <span className="mono">{full(r.with_h)}</span> with its system, of <span className="mono">{full(r.needed_h)}</span></td>
+                <td className="mono small">{full(r.diesel_l_avoided)} L</td>
+                <td>{funded.has(r.id) ? <span className="tag s-cell"><Icon name="check" size={13} />Funded</span> : <span className="tag s-risk"><Icon name="x" size={13} />Waiting</span>}</td>
+              </tr>))}</tbody>
           </table>
         </div>
-        {rows.length > 15 && <p><button className="btn small" onClick={() => setAll((a) => !a)} aria-expanded={all}>{all ? 'Show the top 15' : `Show all ${num(rows.length)}`}</button></p>}
-        <p className="small muted">{plan.data?.currency_note}. Ranking: doses protected a year per N1m of the cold-chain fix. "Today" assumes a household or non-PQS fridge. {fundedRows.filter((r) => r.capped).length > 0 && `${num(fundedRows.filter((r) => r.capped).length)} funded facilities have their catchment capped at 20,000 people: their doses are counted at the cap, which is why many show the same figure.`}{plan.data && 'not_ranked' in plan.data ? ' Facilities whose grid supply is unknown are not ranked.' : ''}</p>
+        {plan.rows.length > 15 && <p><button className="btn small" onClick={() => setAll((x) => !x)} aria-expanded={all}>{all ? 'Show the first 15' : `Show all ${full(plan.rows.length)}`}</button></p>}
+        <p className="small muted">{PLAN_RULE} Critical service-hours: the hours each critical load is needed in the outage window; "today" is with no backup. Diesel avoided: litres a generator would burn to deliver what each funded system delivers, at N{dieselPrice?.toLocaleString('en-US') ?? 'n/a'} per litre (national average, May 2026). Grid supply is modelled; loads are archetypes. Data version <span className="mono">{m?.data_version ?? 'n/a'}</span>.</p>
       </section>
-    </div>
-  )
-}
-
-function Status({ funded }: { funded: boolean }) {
-  return funded ? <span className="tag s-cell"><Icon name="check" size={13} />Funded</span> : <span className="tag s-risk"><Icon name="x" size={13} />Waiting</span>
-}
-
-function Row({ r, funded }: { r: PlanRow; funded: boolean }) {
-  return (
-    <tr style={funded ? { background: 'color-mix(in srgb, var(--cell-500) 9%, transparent)' } : undefined}>
-      <td className="mono nowrap">{r.rank}</td>
-      <td><Link to={`/facility/${r.id}`}>{r.name}</Link><br /><TierTag tier={r.tier} />{r.capped && <div style={{ marginTop: 4 }}><CappedNote r={r} short /></div>}</td>
-      <td>{FIX[r.fix] && <FixTag fix={r.fix} />}</td>
-      <td className="small"><span className="mono">{pct(r.uptime_today)}</span> of days today {scenarioOf(r)}; <span className="mono">{pct(r.uptime_with_system)}</span> with the fix</td>
-      <td className="mono nowrap">{ngn(r.cost_ngn)}</td>
-      <td><Status funded={funded} /></td>
-      <td className="small hide-sm">{r.reason}</td>
-    </tr>
-  )
-}
-
-function Card({ r, funded }: { r: PlanRow; funded: boolean }) {
-  return (
-    <li className={funded ? 'funded' : undefined}>
-      <div className="head"><span className="mono">#{r.rank}</span><Link to={`/facility/${r.id}`}><strong>{r.name}</strong></Link></div>
-      <div className="chips">
-        <span className="chip long">Fridge holds {pct(r.uptime_today)} of days {scenarioOf(r)}, {pct(r.uptime_with_system)} with the fix</span>
-        <span className="chip">{ngn(r.cost_ngn)}</span>
-        <CappedNote r={r} short />
-        {FIX[r.fix] && <FixTag fix={r.fix} />}
-        <TierTag tier={r.tier} />
-        <Status funded={funded} />
-      </div>
-      <p className="small muted" style={{ margin: '8px 0 0' }}>{r.reason}</p>
-    </li>
-  )
-}
-
-function Legend() {
-  const sw = (c: string) => <span style={{ display: 'inline-block', width: 10, height: 10, background: c, borderRadius: 2, marginRight: 5 }} />
-  return (
-    <div style={{ display: 'grid', gap: 2 }}>
-      {(Object.keys(FIX) as FixCategory[]).map((f) => <div key={f}>{sw(FIX[f].color)}Fix {FIX[f].short}</div>)}
-      <div className="muted">faded: not yet funded · height: load-hours at risk</div>
     </div>
   )
 }

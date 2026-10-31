@@ -90,6 +90,24 @@ export interface FacilityRecord {
   fix?: Fix
   scenarios?: Scenario[]
   results_stale?: boolean; result_tier?: Tier; labels?: Record<string, string>; data_version?: string
+  /** brief 13: the facility's critical service-hours in a forced line outage (engine/outage.py) */
+  outage?: FacilityOutage
+}
+
+export interface LoHiMid { lo: number; mid: number; hi: number }
+export interface OutageWindow {
+  days: number; window_h: number; needed_h: number
+  hours_today: Interval; hours_with: Interval; hours_orfix: Interval | null
+  share_today: number; share_with: number
+  diesel_l_avoided?: LoHiMid; generator_litres?: LoHiMid
+  by_service?: Record<string, { name: string; needed_h: number; today_h: number; with_h?: number; with_h_lo?: number }>
+  orfix?: { hours_kept: Interval; diesel_l_avoided: LoHiMid; share_kept: number; capex_ngn: LoHiMid; sized_for_days: number } | null
+  orfix_available?: boolean; orfix_note?: string | null
+}
+export interface FacilityOutage {
+  metric: string; durations: number[]; by_days: Record<string, OutageWindow>; scenarios?: Record<string, string>
+  outage_ready_fix?: { days: number; category: string; label: string; pv_kwp: number; battery_kwh: number; needed_h: number; share_kept: number; capex_ngn: Interval; diesel_l_avoided: Interval; hours_kept: Interval } | null
+  outage_ready_fix_note?: string | null; labels?: Record<string, string>
 }
 
 export interface SimulateRequest { loads: RoomKey[]; pv_kwp: number; battery_kwh: number; target: number; fridge_mode: FridgeMode }

@@ -1,136 +1,145 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api, MODE } from '../api/client'
+import { b13 } from '../api/brief13-client'
+import { CITIES, DEFAULT_DAYS, OUTAGE_DAYS, type CityId, type OutageDays, type SiteProps } from '../api/brief13'
 import type { FacilityListItem, Tier } from '../api/types'
-import { FeaturePhone } from '../components/FeaturePhone'
-import { Icon, Loading, RingDivider, SampleBadge, scenarioOf, TIER, TierTag, VerifiedNote } from '../components/ui'
-import { num, pct } from '../format'
+import { Segmented, SourceBadge } from '../city/bits'
+import { daysWords, full, naira, pt, rv, share, siteResult, span } from '../city/format'
+import { Icon, Loading, RingDivider, SampleBadge, TIER, TierTag, VerifiedNote } from '../components/ui'
+import { num } from '../format'
 import { useAsync } from '../hooks'
 import { FacilityMap } from '../map/FacilityMap'
 import { MAP_COLORS, type MapPoint } from '../map/types'
 import { Link } from '../router'
+import { NercRow } from './Facility'
 
-const TIER_COLOR: Record<Tier, string> = { a_named: MAP_COLORS.grid, b_place: MAP_COLORS.grid, c_lga_mixture: MAP_COLORS.sun, c_unit_mixture: MAP_COLORS.sun, offgrid: MAP_COLORS.sun, d_refused: MAP_COLORS.unknown }
+/** How a health site's grid supply was placed, from the engine's `supply` text. */
+function supplyKind(p: SiteProps): 'feeder' | 'mixture' | 'onsite' {
+  if (p.existing_onsite) return 'onsite'
+  return /^feeder band/i.test(p.supply ?? '') ? 'feeder' : 'mixture'
+}
+const KIND_COLOR = { feeder: MAP_COLORS.grid, mixture: MAP_COLORS.sun, onsite: MAP_COLORS.unknown }
 
+/** The health layer of the city plan: every health facility in the city, ranked as the funder plan ranks it. */
 export function Overview() {
+  const [city, setCity] = useState<CityId>('maiduguri')
+  const [days, setDays] = useState<OutageDays>(DEFAULT_DAYS)
+  const [all, setAll] = useState(false)
+  const c = CITIES.find((x) => x.id === city)!
+  const metrics = useAsync(() => b13.metrics(city, days), [city, days])
+  const sites = useAsync(() => b13.sites(city), [city])
   const summary = useAsync(() => api.summary(), [])
-  // the map opens on Kano, the hero's state; the selector stays free
-  const [mapState, setMapState] = useState(MODE === 'fixture' ? 'Edo' : 'Kano')
-  const all = useAsync(() => api.facilities({ state: mapState }), [mapState])
-  // the hero: Bichi General Hospital, named in KEDCO's September 2026 order; looked up by name, never by a hard-coded id
-  const featured = useAsync(() => (MODE === 'live' ? api.facilities({ q: 'Bichi General Hospital', limit: 5 }) : Promise.resolve([])), [])
-  const feat = featured.data?.find((f) => /^bichi general hospital$/i.test(f.name.trim())) ?? featured.data?.[0]
-  const hero = useAsync(() => (feat ? api.facility(feat.id) : Promise.resolve(null)), [feat?.id])
+  const health = useMemo(() => (sites.data?.data.features ?? []).filter((f) => f.properties.sector === 'health'), [sites.data])
+  const ranked = useMemo(() => health.map((f) => f.properties).filter((p) => p.rank != null).sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0)), [health])
+  const onsite = health.map((f) => f.properties).filter((p) => p.existing_onsite)
+  const h = metrics.data?.data.impact.by_sector.health
+  const shown = all ? ranked : ranked.slice(0, 10)
+
+  const points: MapPoint[] = useMemo(() => health.filter((f) => f.properties.facility_id).map((f, n) => {
+    const r = siteResult(f.properties, days)
+    const gained = Math.max(0, (r.with_h ?? 0) - (r.today_h ?? 0))
+    return { n, id: f.properties.facility_id!, name: f.properties.name, lon: f.geometry.coordinates[0], lat: f.geometry.coordinates[1], color: KIND_COLOR[supplyKind(f.properties)], height: 1200 + gained * 4 }
+  }), [health, days])
+
+  // the evidence card: the city's first-ranked health facility named in a NERC feeder row (live API only)
+  const first = ranked.find((p) => supplyKind(p) === 'feeder' && p.facility_id)
+  const hero = useAsync(() => (MODE === 'live' && first?.facility_id ? api.facility(first.facility_id) : Promise.resolve(null)), [first?.facility_id])
   const ev = hero.data?.match.evidence
+
   const [q, setQ] = useState('')
   const [dq, setDq] = useState('')
-  useEffect(() => { const h = setTimeout(() => setDq(q.trim()), 250); return () => clearTimeout(h) }, [q])
-  // search runs on the server across every facility; empty search lists the facilities named in NERC rows
-  const search = useAsync(() => (dq ? api.facilities({ q: dq, limit: 8 }) : MODE === 'live' ? api.facilities({ tier: 'a_named', limit: 8 }) : api.facilities({ limit: 8 })), [dq])
-  const hits = search.data ?? []
-  const points: MapPoint[] = useMemo(() => (all.data ?? []).filter((f) => f.lat !== null && f.lon !== null).map((f, n) => ({
-    n, id: f.id, name: f.name, lat: f.lat!, lon: f.lon!, color: TIER_COLOR[f.tier],
-    height: f.p_fridge_survives === null ? 1200 : 1200 + (1 - f.p_fridge_survives) * 14000,
-  })), [all.data])
+  useEffect(() => { const t = setTimeout(() => setDq(q.trim()), 250); return () => clearTimeout(t) }, [q])
+  const search = useAsync(() => (dq ? api.facilities({ q: dq, limit: 8 }) : Promise.resolve([] as FacilityListItem[])), [dq])
 
   return (
     <div>
-      <section style={{ marginTop: 8 }} className="grid2 wide-left">
-        <div>
-          <p className="kicker">Brief 1 · off-grid cold storage for clinics</p>
-          <h1>Will this clinic's vaccine fridge stay at 2 to 8 °C through the night?</h1>
-          <p style={{ fontSize: '1.08rem' }}>
-            For each Nigerian health facility, Wardlight reads the supply the regulator promises its feeder, models the night that follows,
-            and sizes the cheapest solar and battery system that would keep the cold chain cold. Every figure shows its evidence and its uncertainty.
-          </p>
-          <form role="search" onSubmit={(e) => e.preventDefault()} className="field" style={{ maxWidth: 560 }}>
-            <label htmlFor="q">Find a facility</label>
-            <div style={{ position: 'relative' }}>
-              <input id="q" type="search" placeholder="Name, LGA or code, e.g. WL-0001" value={q} onChange={(e) => setQ(e.target.value)} autoComplete="off" style={{ paddingLeft: 38 }} />
-              <span style={{ position: 'absolute', left: 12, top: 15, color: 'var(--muted)' }}><Icon name="search" /></span>
-            </div>
-          </form>
-          {search.loading && !search.data ? <Loading /> : (
-            <ul className="list" aria-label="Matching facilities" style={{ maxWidth: 560, marginTop: 8 }}>
-              {hits.map((f) => <FacilityItem key={f.id} f={f} />)}
-              {hits.length === 0 && <li className="muted small" style={{ padding: 12 }}>No facility matches “{q}”.</li>}
-              {!dq && MODE === 'live' && <li className="small muted" style={{ padding: '8px 4px', borderBottom: 'none' }}>Showing facilities named in a NERC feeder row. Search covers all {num(summary.data?.headline.facilities ?? 0)}.</li>}
-            </ul>
-          )}
+      <section style={{ marginTop: 8 }}>
+        <p className="kicker">Health facilities · the health layer of the city plan</p>
+        <h1>Every health facility in the city, and the hours its critical services keep when the line is cut</h1>
+        <p style={{ fontSize: '1.08rem', maxWidth: 820 }}>
+          For each health facility, Wardlight reads the supply the regulator promises its feeder, forces the grid off for the whole outage,
+          and runs it hour by hour: delivery room, oxygen and lights on a solar and battery system sized for a 7-day outage, the vaccine fridge on its own
+          prequalified system. The same numbers feed the city scoreboard and the funder plan.
+        </p>
+        <div className="row" style={{ gap: 16, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <Segmented id="hf-city" label="City" value={city} onChange={(v) => { setCity(v); setAll(false) }} options={CITIES.map((x) => ({ value: x.id, label: x.name }))} />
+          <Segmented id="hf-days" label="Line outage" value={days} onChange={setDays} options={OUTAGE_DAYS.map((d) => ({ value: d, label: `${d} days` }))} />
+          <SourceBadge src={metrics.data?.src} />
         </div>
-        <div className="stack">
-          <div className="card">
-            <p className="kicker">The promise, in the regulator's own table</p>
-            {MODE === 'live' ? (hero.data && ev?.row_text ? (() => {
-              const [feeder, station, serving] = ev.row_text.split(' | ')
-              const key = (ev.nerc_text ?? hero.data.facility.name).toUpperCase()
-              const at = serving ? serving.toUpperCase().indexOf(key) : -1
-              const m = hero.data.match
-              return (
-                <>
-                  <div className="nerc" aria-label={`NERC feeder row ${ev.sn}`}>
-                    <dl>
-                      <dt>Feeder</dt><dd>{feeder}</dd>
-                      <dt>Band</dt><dd>{m.band ?? Object.keys(m.bands).join(', ')}</dd>
-                      <dt>Station</dt><dd>{station}</dd>
-                      <dt>Serving</dt><dd>{at >= 0 ? <>{serving.slice(0, at)}<mark>{serving.slice(at, at + key.length)}</mark>{serving.slice(at + key.length)}</> : serving}</dd>
-                      {m.min_hours !== null && Object.keys(m.bands).length <= 1 && <><dt>Min. supply</dt><dd><mark>{m.min_hours}</mark> hours a day</dd></>}
-                    </dl>
-                  </div>
-                  {ev.crop && <div className="crop-wrap" tabIndex={0} role="region" aria-label="NERC row scan, scroll sideways"><img className="crop" src={ev.crop} alt={`Scan of NERC row ${ev.sn} on page ${ev.page} of ${ev.file}`} /></div>}
-                  <p className="small muted" style={{ margin: '8px 0 0' }}>
-                    NERC, {m.disco} order, page {ev.page}, row {ev.sn}.{ev.url && <> <a href={ev.url} target="_blank" rel="noopener">Source PDF</a>.</>} <VerifiedNote v={ev} />
-                    A band is a promise, not a measurement. <Link to={`/facility/${hero.data.facility.id}`}>See {hero.data.facility.name}'s night</Link>.
-                  </p>
-                </>
-              )
-            })() : <Loading what="Reading the NERC row" />) : (
-              <>
-                <div className="nerc" aria-label="NERC feeder row 108">
-                  <dl>
-                    <dt>Band</dt><dd>C</dd>
-                    <dt>Feeder</dt><dd>GOVT. HOUSE</dd>
-                    <dt>Serving</dt><dd>HIGH COURT, <mark>NEW GENERAL HOSPITAL</mark>, GRA, NWAWOLOR</dd>
-                    <dt>Min. supply</dt><dd><mark>12</mark> hours a day</dd>
-                  </dl>
-                </div>
-                <p className="small muted" style={{ margin: '8px 0 0' }}>
-                  NERC, BEDC MYTO order, February 2026, page 14, row 108. <a href="https://nerc.gov.ng/wp-content/uploads/2026/04/BEDC_MYTO_FEB_2026.pdf" target="_blank" rel="noopener">Source PDF</a>.
-                  A band is a promise, not a measurement. <Link to="/facility/WL-0001">See this hospital's night</Link>.
-                </p>
-              </>
-            )}
+      </section>
+
+      <section>
+        {metrics.loading && !metrics.data ? <Loading what="Loading the city figures" /> : h ? (
+          <div className="metrics" style={{ marginTop: 16 }}>
+            <div className="card flat"><div className="kicker">Health facilities in the plan</div><div className="metric">{num(h.sites ?? ranked.length)}</div>
+              <p className="small muted" style={{ margin: 0 }}>{onsite.length ? `${onsite.length} GRID3 rows for UMTH left out: it already runs on its own solar plant` : `${c.name}, ${c.state} State`}</p></div>
+            <div className="card flat"><div className="kicker">Critical service-hours kept today</div><div className="metric s-risk">{share(rv(h.csh_today).point != null && pt(h.csh_needed) ? pt(h.csh_today)! / pt(h.csh_needed)! : null)}</div>
+              <p className="small muted" style={{ margin: 0 }}>{full(pt(h.csh_today))} of {full(pt(h.csh_needed))} hours, no backup, {daysWords(days)} without the line</p></div>
+            <div className="card flat"><div className="kicker">With the plan</div><div className="metric s-cell">{share(pt(h.csh_with) != null && pt(h.csh_needed) ? pt(h.csh_with)! / pt(h.csh_needed)! : null)}</div>
+              <p className="small muted" style={{ margin: 0 }}>{full(pt(h.csh_with))} hours, every facility on its own solar and battery</p></div>
+            <div className="card flat"><div className="kicker">Diesel avoided, health</div><div className="metric">{full(pt(h.diesel_l_avoided))}<small> L</small></div>
+              <p className="small muted" style={{ margin: 0 }}>{span(rv(h.diesel_l_avoided), full) ? <>range {span(rv(h.diesel_l_avoided), full)} L; </> : null}what a generator would burn for the same hours</p></div>
           </div>
-          {summary.data?.quotes.slice(0, 2).map((qt) => (
-            <blockquote className="quote" key={qt.url}>
-              <p>“{qt.text}”</p>
-              <cite>{qt.source}. <a href={qt.url} target="_blank" rel="noopener">Source</a></cite>
-            </blockquote>
-          ))}
-        </div>
+        ) : <p className="muted">No health figures for {c.name}.</p>}
       </section>
 
       <RingDivider />
       <section style={{ marginTop: 8 }}>
-        <div className="row between">
-          <h2 style={{ margin: 0 }}>{mapState} State{MODE === 'fixture' ? ', sample facilities' : ''}</h2>
-          {MODE === 'fixture' ? <SampleBadge /> : (
-            <label className="row small" style={{ gap: 8 }}>State
-              <select value={mapState} onChange={(e) => setMapState(e.target.value)} style={{ width: 'auto', minHeight: 40 }}>
-                {(summary.data?.by_state.map((x) => x.state) ?? [mapState]).map((x) => <option key={x}>{x}</option>)}
-              </select>
-            </label>
-          )}
-        </div>
-        <p className="muted">Column height: share of days the vaccine fridge leaves 2 to 8 °C today, {scenarioOf(null)}. Colour: how the facility was placed on the grid. Select a column to open the facility.</p>
-        {all.data && <FacilityMap points={points} label={`Map of ${mapState} State facilities as 3D columns`} legend={<TierLegend />} />}
-        {MODE === 'live' && summary.data && (
-          <div className="metrics" style={{ marginTop: 16 }}>
-            <div className="card flat"><div className="kicker">Facilities, all states</div><div className="metric">{num(summary.data.headline.facilities)}</div><p className="small muted" style={{ margin: 0 }}>{(summary.data as { coverage_note?: string }).coverage_note}</p></div>
-            <div className="card flat"><div className="kicker">Placed on a feeder</div><div className="metric">{num(summary.data.headline.matched)}</div><p className="small muted" style={{ margin: 0 }}>{num((summary.data.headline as { offgrid?: number }).offgrid ?? 0)} modelled off-grid; {num(summary.data.headline.refused)} refused, each with its reason</p></div>
-          </div>
+        <h2 style={{ marginBottom: 4 }}>{c.name}: health facilities in plan order</h2>
+        <p className="muted" style={{ marginTop: 0 }}>Column height: critical service-hours each facility gains with its system in a {days}-day outage. Colour: how its grid supply was placed. Select a column to open the facility.</p>
+        {points.length > 0 && <FacilityMap points={points} label={`Map of ${c.name} health facilities as 3D columns`} legend={<KindLegend />} />}
+        {sites.loading && !sites.data ? <Loading what="Loading the sites" /> : (
+          <>
+            <ul className="list" aria-label={`${c.name} health facilities in plan order`} style={{ marginTop: 14 }}>
+              {shown.map((p) => <SiteItem key={p.id} p={p} days={days} city={city} />)}
+            </ul>
+            {ranked.length > 10 && <p><button className="btn" onClick={() => setAll((x) => !x)}>{all ? 'Show the first 10' : `Show all ${num(ranked.length)}`}</button></p>}
+            <p className="small muted">Plan order: critical service-hours gained in a 60-day outage, most first; ties by lower capex. The funder plan walks this order until the budget runs out. Critical loads are an archetype (SEforALL Type 2 priority-1 loads); no facility has been metered.</p>
+          </>
         )}
-        {summary.data && (
-          <div className="metrics wide-cells" style={{ marginTop: 16 }}>
+      </section>
+
+      <RingDivider />
+      <section style={{ marginTop: 8 }} className="grid2 wide-left">
+        <div className="stack">
+          <h2 style={{ margin: 0 }}>Find any facility in the national registry</h2>
+          <p className="muted" style={{ margin: 0 }}>The same engine covers every facility GRID3 lists in Nigeria{MODE === 'live' && summary.data ? `, ${num(summary.data.headline.facilities)} in 37 states` : ''}. Each page shows its feeder evidence, its outage hours and the system that keeps them.</p>
+          {MODE === 'fixture' && <p className="small banner" style={{ margin: 0 }}><SampleBadge /> Fixture mode: registry search runs over synthetic sample records (Edo State). They are not engine results.</p>}
+          <form role="search" onSubmit={(e) => e.preventDefault()} className="field" style={{ maxWidth: 560 }}>
+            <label htmlFor="q">Facility name, LGA or code</label>
+            <div style={{ position: 'relative' }}>
+              <input id="q" type="search" placeholder="e.g. Gwange, Jere or 8230" value={q} onChange={(e) => setQ(e.target.value)} autoComplete="off" style={{ paddingLeft: 38 }} />
+              <span style={{ position: 'absolute', left: 12, top: 15, color: 'var(--muted)' }}><Icon name="search" /></span>
+            </div>
+          </form>
+          {dq && (search.loading && !search.data ? <Loading /> : (
+            <ul className="list" aria-label="Matching facilities" style={{ maxWidth: 560 }}>
+              {(search.data ?? []).map((f) => <FacilityItem key={f.id} f={f} />)}
+              {(search.data ?? []).length === 0 && <li className="muted small" style={{ padding: 12 }}>No facility matches “{q}”.</li>}
+            </ul>
+          ))}
+        </div>
+        <div className="card stack">
+          <p className="kicker" style={{ margin: 0 }}>The promise, in the regulator's own table</p>
+          {MODE !== 'live' ? <p className="small muted" style={{ margin: 0 }}>The NERC row for a facility is read from the live API.</p>
+            : hero.data && ev?.row_text ? (
+              <>
+                <p style={{ margin: 0 }}><strong>{hero.data.facility.name}</strong>, first in {c.name}'s plan order among facilities named in a feeder row.</p>
+                <NercRow text={ev.row_text} name={ev.nerc_text ?? hero.data.facility.name} />
+                {ev.crop && <div className="crop-wrap" tabIndex={0} role="region" aria-label="NERC row scan, scroll sideways"><img className="crop" src={ev.crop} alt={`Scan of NERC row ${ev.sn} on page ${ev.page} of ${ev.file}`} /></div>}
+                <p className="small muted" style={{ margin: 0 }}>
+                  NERC, {hero.data.match.disco} order, page {ev.page}, row {ev.sn}.{ev.url && <> <a href={ev.url} target="_blank" rel="noopener">Source PDF</a>.</>} <VerifiedNote v={ev} />{' '}
+                  A band is the regulator's promise of hours, never measured at the facility, and in a line outage it falls to zero. <Link to={`/facility/${hero.data.facility.id}`}>Open {hero.data.facility.name}</Link>.
+                </p>
+              </>
+            ) : first ? <Loading what="Reading the NERC row" /> : <p className="small muted" style={{ margin: 0 }}>No facility in {c.name} is named in a NERC feeder row; their supply is a band mixture for the LGA.</p>}
+        </div>
+      </section>
+
+      {summary.data && (
+        <section>
+          <h3>How each facility was placed on the grid, all states</h3>
+          <div className="metrics wide-cells">
             {(Object.keys(TIER) as Tier[]).filter((t) => summary.data!.tiers[t] !== undefined).map((t) => (
               <div className="card flat" key={t}>
                 <TierTag tier={t} />
@@ -139,25 +148,42 @@ export function Overview() {
               </div>
             ))}
           </div>
-        )}
-        <p className="small" style={{ marginTop: 14 }}>
-          <strong>What it cannot see:</strong> measured supply at a facility. NERC bands are promises; the product models the shortfall below them and labels it modelled. Facilities it cannot place on a feeder are refused, counted and listed, never guessed.
-        </p>
-      </section>
+          <p className="small" style={{ marginTop: 14 }}>
+            <strong>What it cannot see:</strong> measured supply at a facility, and its real loads. NERC bands are promises, and in the outage model the grid is off for the whole window. Facilities it cannot place on a feeder are refused, counted and listed, never guessed.
+          </p>
+        </section>
+      )}
 
       <RingDivider />
       <section style={{ marginTop: 8 }} className="grid2">
         <div className="stack">
-          <h2>For a planner with a budget</h2>
-          <p>Rank every facility in a state by fridge-nights saved per naira, drag the budget, and see which clinics it funds, in order, with the reason for each.</p>
-          <p><Link className="btn primary" to="/plan">Open the funder plan</Link></p>
-          <h2 style={{ marginTop: 24 }}>For the officer in charge</h2>
-          <p>Every facility has a one-page sheet that prints, installs and opens offline, and a code that works by SMS on a basic phone.</p>
-          <p className="row"><Link className="btn" to={`/facility/${MODE === 'fixture' ? 'WL-0001' : feat?.id ?? ''}/sheet`}><Icon name="doc" /> {MODE === 'fixture' ? 'A sample facility sheet' : 'An example facility sheet'}</Link><Link className="btn" to="/method">How it decides</Link></p>
+          <h2 style={{ margin: 0 }}>For a funder with a fixed budget</h2>
+          <p style={{ margin: 0 }}>The funder plan puts these facilities beside the city's water pumping sites and market cold rooms, in one plan order, and shows which ones a budget funds and what the rest would cost.</p>
+          <p style={{ margin: 0 }}><Link className="btn primary" to="/plan">Open the funder plan</Link></p>
         </div>
-        <FeaturePhone defaultCode={MODE === 'fixture' ? '1' : String(feat?.code ?? '')} />
+        <div className="stack">
+          <h2 style={{ margin: 0 }}>For the officer in charge</h2>
+          <p style={{ margin: 0 }}>Every facility has a one-page sheet that prints and opens offline, with its outage hours, the system that keeps them and the feeder evidence.</p>
+          <p className="row" style={{ margin: 0 }}>{first?.facility_id && <Link className="btn" to={`/facility/${first.facility_id}/sheet`}><Icon name="doc" /> An example facility sheet</Link>}<Link className="btn" to="/method">How it decides</Link></p>
+        </div>
       </section>
     </div>
+  )
+}
+
+function SiteItem({ p, days, city }: { p: SiteProps; days: number; city: CityId }) {
+  const r = siteResult(p, days)
+  const to = p.facility_id ? `/facility/${p.facility_id}` : `/site/${p.id}?city=${city}`
+  return (
+    <li>
+      <Link className="item" to={to}>
+        <span><strong>{p.name}</strong><br /><span className="small muted"><span className="mono">#{p.rank}</span> · {p.lga ?? ''}{p.system?.pv_kwp != null ? <> · <span className="mono">{p.system.pv_kwp} kWp, {p.system.battery_kwh} kWh</span></> : null}</span></span>
+        <span style={{ textAlign: 'right' }} className="small">
+          <span className="mono">{share(r.share_today)} to <strong>{share(r.share_with)}</strong></span><br />
+          <span className="muted mono">{naira(p.system?.capex_ngn)}</span>
+        </span>
+      </Link>
+    </li>
   )
 }
 
@@ -166,16 +192,13 @@ function FacilityItem({ f }: { f: FacilityListItem }) {
     <li>
       <Link className="item" to={`/facility/${f.id}`}>
         <span><strong>{f.name}</strong><br /><span className="small muted"><span className="mono">{f.code ?? f.id}</span> · {f.lga}, {f.state}</span></span>
-        <span style={{ textAlign: 'right' }}>
-          <TierTag tier={f.tier} /><br />
-          <span className="small mono">{f.p_fridge_survives === null ? 'no figure' : `fridge holds ${pct(f.p_fridge_survives)} of days ${scenarioOf(f)}`}</span>
-        </span>
+        <TierTag tier={f.tier} />
       </Link>
     </li>
   )
 }
 
-function TierLegend() {
+function KindLegend() {
   const sw = (c: string) => <span style={{ display: 'inline-block', width: 10, height: 10, background: c, borderRadius: 2, marginRight: 5 }} />
-  return <div>{sw(MAP_COLORS.grid)}feeder match &nbsp;{sw(MAP_COLORS.sun)}mixture or off-grid &nbsp;{sw(MAP_COLORS.unknown)}refused</div>
+  return <div>{sw(KIND_COLOR.feeder)}named in a feeder row &nbsp;{sw(KIND_COLOR.mixture)}band mixture or off-grid &nbsp;{sw(KIND_COLOR.onsite)}own plant, left out of the plan</div>
 }

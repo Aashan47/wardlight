@@ -1,10 +1,14 @@
 import { useState } from 'react'
 import { api, MODE } from '../api/client'
-import type { FacilityRecord, Match } from '../api/types'
+import { b13 } from '../api/brief13-client'
+import { DEFAULT_DAYS, OUTAGE_DAYS, type CityId, type OutageDays } from '../api/brief13'
+import type { Facility, FacilityOutage, FacilityRecord, Match } from '../api/types'
+import { Segmented } from '../city/bits'
+import { daysWords, full, share } from '../city/format'
 import { CostCurve } from '../components/charts'
 import { FeaturePhone } from '../components/FeaturePhone'
 import { NightStage } from '../components/NightStage'
-import { CappedNote, ErrorNote, FIX, FixTag, Icon, IntervalBar, Loading, RingDivider, SampleBadge, scenarioOf, TIER, TierTag, VerifiedNote } from '../components/ui'
+import { ErrorNote, FIX, FixTag, Icon, IntervalBar, Loading, RingDivider, SampleBadge, scenarioOf, TIER, TierTag, VerifiedNote } from '../components/ui'
 import { VerifyPanel } from '../agent/VerifyPanel'
 import { ngn, num, pct, usd } from '../format'
 import { useAsync } from '../hooks'
@@ -18,7 +22,7 @@ export function FacilityPage({ id }: { id: string }) {
   const f = data.facility
   return (
     <article>
-      <p className="small"><Link to="/">Overview</Link> / <span className="mono">{f.id}</span></p>
+      <p className="small"><Link to="/facilities">Health facilities</Link> / <span className="mono">{f.id}</span></p>
       <div className="row between" style={{ alignItems: 'flex-start' }}>
         <div>
           <h1 style={{ marginBottom: 6 }}>{f.name}</h1>
@@ -62,18 +66,17 @@ function Full({ data }: { data: FacilityRecord }) {
   }
   return (
     <>
-      <section>
-        <h2 className="sr-only">Brief 1 metric</h2>
+      {data.outage ? <OutagePanel outage={data.outage} facility={data.facility} /> : (
+        <p className="small banner">{MODE === 'fixture' ? 'This sample record carries no outage figures; the live engine serves them for every facility.' : 'No outage figures for this facility.'}</p>
+      )}
+
+      <RingDivider />
+      <section style={{ marginTop: 8 }}>
+        <h2 style={{ marginBottom: 4 }}>On an ordinary day: the supply its feeder is promised</h2>
+        <p className="muted" style={{ marginTop: 0 }}>Outside an outage the grid comes and goes inside the band. The vaccine fridge is one critical load, on its own prequalified system.</p>
         <div className="metrics">
-          <MetricCard label="Days a year the fridge holds 2 to 8 °C, today (household fridge)" v={b.uptime_today} />
-          <MetricCard label="With the recommended fix" v={b.uptime_with_system} good />
-          <div className="card">
-            <div className="kicker">Doses protected a year</div>
-            <div className="metric">{num(b.doses_protected_today)}<small> today</small></div>
-            <div className="metric s-cell" style={{ fontSize: '1.4rem' }}>{num(b.doses_protected_with_system)}<small> with the fix</small></div>
-            {(data.capped ?? data.facility.capped) && <p style={{ margin: '6px 0 0' }}><CappedNote r={data.facility.capped ? data.facility : { ...data.facility, capped: data.capped }} /></p>}
-            <p className="small muted" style={{ margin: '6px 0 0' }}>{b.doses_note}.</p>
-          </div>
+          <MetricCard label="Days a year the vaccine fridge holds 2 to 8 °C, today (household fridge)" v={b.uptime_today} />
+          <MetricCard label="With the recommended cold-chain fix" v={b.uptime_with_system} good />
         </div>
       </section>
 
@@ -102,8 +105,8 @@ function Full({ data }: { data: FacilityRecord }) {
       </section>
 
       <section>
-        <div className="row between"><h2 style={{ margin: 0 }}>Run the night</h2><span className="small muted">Grid hours from the band; sun and battery from the trace</span></div>
-        <p className="muted">Grid blocks switch off, the sun sets, the tank drains and rooms go dark in priority order: fridge first to keep, ward first to drop.</p>
+        <div className="row between"><h2 style={{ margin: 0 }}>Run an ordinary night</h2><span className="small muted">Grid hours from the band; sun and battery from the trace</span></div>
+        <p className="muted">Grid blocks switch off, the sun sets, the battery drains and rooms go dark in priority order: fridge first to keep, ward first to drop. The outage night, with the grid off for the whole window, runs on the city site page.</p>
         <NightStage id={data.facility.id} record={data} />
       </section>
 
@@ -161,7 +164,7 @@ function Full({ data }: { data: FacilityRecord }) {
               <tr><th scope="row">Who maintains</th><td>{rec.maintains}</td></tr>
             </tbody>
           </table>
-          <p className="small muted" style={{ margin: 0 }}>Naira at N1,352.37 per USD (CBN central rate).{MODE === 'fixture' ? ' Diesel at N1,441.28 per litre, the newest NBS figure found (October 2024). Generator litres and system prices are sample placeholders.' : ''}</p>
+          <p className="small muted" style={{ margin: 0 }}>Naira at N1,352.37 per USD (CBN central rate).{MODE === 'fixture' ? ' These sample figures price diesel at N1,441.28 per litre (NBS, October 2024); the live engine uses the NBS national average for May 2026, N3,277.47 per litre. Generator litres and system prices are sample placeholders.' : ''}</p>
         </div>
         <div className="card stack">
           {data.cost_curve && <><h3>Cost against reliability</h3><CostCurve points={data.cost_curve} chosen={rec.clinic_system.battery_kwh} /></>}
@@ -208,7 +211,7 @@ export function Evidence({ match: m, name }: { match: Match; name: string }) {
   return (
     <div className="card stack">
       <h3>Evidence: which feeder, and how we know</h3>
-      <div className="row"><TierTag tier={m.tier} /><span className="tag s-sun"><Icon name="q" size={13} />Promised, not measured</span></div>
+      <div className="row"><TierTag tier={m.tier} /><span className="tag s-sun"><Icon name="q" size={13} />Promised hours, never measured</span></div>
       <p className="small" style={{ margin: 0 }}>{TIER[m.tier].long} {m.reason}.</p>
       {m.feeder_id && (
         <p style={{ margin: 0 }}>Feeder <Link to={`/feeder/${m.feeder_id}`} className="mono">{m.feeder_name ?? m.feeder_id}</Link>{m.disco ? <> ({m.disco})</> : null}{m.band ? <>, Band <strong>{m.band}</strong></> : null}{m.min_hours !== null && Object.keys(m.bands).length <= 1 ? <>, minimum <strong className="mono">{Math.round(m.min_hours * 10) / 10} h</strong> a day</> : null}</p>
@@ -244,4 +247,72 @@ export function NercRow({ text, name }: { text: string; name: string }) {
   }
   const [feeder, station, ...rest] = parts
   return <div className="nerc"><dl><dt>Feeder</dt><dd>{mark(feeder)}</dd>{station && <><dt>Station</dt><dd>{mark(station)}</dd></>}{rest.length > 0 && <><dt>Serving</dt><dd>{mark(rest.join(' | '))}</dd></>}</dl></div>
+}
+
+const STATE_CITY: Record<string, CityId> = { Borno: 'maiduguri', Yobe: 'damaturu', Adamawa: 'yola' }
+
+/** Brief 13: the facility's critical service-hours in a line outage, today and with the outage-ready system. */
+export function OutagePanel({ outage, facility }: { outage: FacilityOutage; facility: Facility }) {
+  const [days, setDays] = useState<OutageDays>(DEFAULT_DAYS)
+  const w = outage.by_days[String(days)]
+  const fx = outage.outage_ready_fix
+  const cityId = STATE_CITY[facility.state]
+  const site = useAsync(async () => {
+    if (!cityId) return null
+    const s = await b13.sites(cityId)
+    return s.data.features.find((f) => f.properties.facility_id === facility.id)?.properties ?? null
+  }, [cityId, facility.id])
+  const services = w?.by_service ? Object.values(w.by_service) : []
+  return (
+    <section className="stack">
+      <div className="row between" style={{ alignItems: 'flex-end' }}>
+        <div>
+          <h2 style={{ margin: 0 }}>In a line outage: critical service-hours kept</h2>
+          <p className="muted" style={{ margin: '4px 0 0' }}>The grid is off for the whole window. Each critical service (delivery room, oxygen, suction, lights, the vaccine fridge) counts the hours it is needed and the hours it runs.</p>
+        </div>
+        <Segmented id="fo-days" label="Line outage" value={days} onChange={setDays} options={OUTAGE_DAYS.map((d) => ({ value: d, label: `${d} days` }))} />
+      </div>
+      {!w ? <p className="muted">No {days}-day figures for this facility.</p> : (
+        <>
+          <div className="metrics">
+            <div className="card"><div className="kicker">Kept today, no backup</div><div className="metric s-risk">{share(w.share_today)}</div>
+              <p className="small muted" style={{ margin: 0 }}>{full(w.hours_today.p)} of {full(w.needed_h)} service-hours in {daysWords(days)}</p></div>
+            <div className="card"><div className="kicker">With the outage-ready system</div><div className="metric s-cell">{w.orfix ? share(w.orfix.share_kept) : 'n/a'}</div>
+              <p className="small muted" style={{ margin: 0 }}>{w.orfix ? <>{full(w.orfix.hours_kept.p)} hours; 5th to 95th percentile {full(w.orfix.hours_kept.lo)} to {full(w.orfix.hours_kept.hi)}</> : w.orfix_note ?? 'not computed'}</p></div>
+            <div className="card"><div className="kicker">With the everyday fix only</div><div className="metric">{share(w.share_with)}</div>
+              <p className="small muted" style={{ margin: 0 }}>the cold-chain fix and a clinic system sized for the promised supply, shown for comparison</p></div>
+            {w.orfix && <div className="card"><div className="kicker">Diesel avoided</div><div className="metric">{full(w.orfix.diesel_l_avoided.mid)}<small> L</small></div>
+              <p className="small muted" style={{ margin: 0 }}>range {full(w.orfix.diesel_l_avoided.lo)} to {full(w.orfix.diesel_l_avoided.hi)} L: what a generator would burn for the same hours</p></div>}
+          </div>
+          <div className="grid2">
+            <div className="card stack">
+              <h3 style={{ margin: 0 }}>The outage-ready system</h3>
+              {fx ? (
+                <>
+                  <p style={{ margin: 0 }}>{fx.label}: <strong className="mono">{fx.pv_kwp} kWp</strong> PV, <strong className="mono">{fx.battery_kwh} kWh</strong> battery.</p>
+                  <table className="table"><tbody>
+                    <tr><th scope="row">Capital cost</th><td className="mono">{ngn(fx.capex_ngn.p)}<br /><span className="muted">{ngn(fx.capex_ngn.lo)} to {ngn(fx.capex_ngn.hi)}</span></td></tr>
+                    <tr><th scope="row">Sizing rule</th><td>95% of critical hours at the 5th percentile in a {fx.days}-day outage; the sun recharges it each day</td></tr>
+                  </tbody></table>
+                </>
+              ) : <p className="small muted" style={{ margin: 0 }}>{outage.outage_ready_fix_note ?? 'No outage-ready system was sized for this facility.'}</p>}
+              {site.data ? (
+                <p className="small" style={{ margin: 0 }}>Number <span className="mono">{site.data.rank ?? 'n/a'}</span> in the city's plan order. <Link to={`/site/${site.data.id}?city=${cityId}`}>Siting card, security and the outage night</Link>.</p>
+              ) : <p className="small muted" style={{ margin: 0 }}>Outside the three cities built so far (Maiduguri, Damaturu, Yola), so it has no siting card yet.</p>}
+            </div>
+            {services.length > 0 && (
+              <div className="card stack">
+                <h3 style={{ margin: 0 }}>What runs today, by service</h3>
+                <div className="table-scroll"><table className="table">
+                  <thead><tr><th>Service</th><th>Needed, h</th><th>Runs today, h</th></tr></thead>
+                  <tbody>{services.map((x) => <tr key={x.name}><td>{x.name}</td><td className="mono">{full(x.needed_h)}</td><td className="mono">{full(x.today_h)}</td></tr>)}</tbody>
+                </table></div>
+                <p className="small muted" style={{ margin: 0 }}>{outage.labels?.hours ? `${outage.labels.hours[0].toUpperCase()}${outage.labels.hours.slice(1)}.` : ''} Loads are the SEforALL Type 2 priority-1 archetype; no facility has been metered.</p>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </section>
+  )
 }

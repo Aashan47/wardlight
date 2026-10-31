@@ -100,7 +100,7 @@ export const api = {
     return r.json()
   },
 
-  recordings: () => MODE === 'live' ? get<{ recordings: { name: string; agent: string; label: string; what: string; question: string | null; facility_id: string | null }[] }>(`${BASE}/agent/recordings`) : Promise.resolve({ recordings: [] }),
+  recordings: () => MODE === 'live' ? get<{ recordings: { name: string; agent: string; label: string; what: string; question: string | null; facility_id: string | null; site_id?: string | null; city?: string | null; brief?: number | null }[] }>(`${BASE}/agent/recordings`) : Promise.resolve({ recordings: [] }),
 
   /** URLs a facility sheet needs offline (warmed into the service worker cache). */
   facilityUrls: (id: string) => MODE === 'live'

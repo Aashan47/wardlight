@@ -12,12 +12,12 @@ export function FeederPage({ id }: { id: string }) {
   if (!data) return null
   return (
     <article>
-      <p className="small"><Link to="/">Overview</Link> / feeder</p>
+      <p className="small"><Link to="/facilities">Health facilities</Link> / feeder</p>
       <div className="row between">
         <div><p className="kicker">{data.disco} feeder</p><h1 className="mono" style={{ marginBottom: 4 }}>{data.name}</h1></div>
         {data.sample ? <SampleBadge /> : <span className="tag s-cell">Real NERC row</span>}
       </div>
-      {data.band && <p>Band <strong>{data.band}</strong>, minimum <strong className="mono">{data.min_hours} h</strong> a day. <span className="tag s-sun">Promised, not measured</span></p>}
+      {data.band && <p>Band <strong>{data.band}</strong>, minimum <strong className="mono">{data.min_hours} h</strong> a day. <span className="tag s-sun">Promised hours, never measured</span></p>}
 
       <section className="grid2">
         <div className="card stack">
@@ -73,8 +73,7 @@ function Served({ s }: { s: ServedSummary }) {
         <div className="chips">{(Object.entries(s.by_tier) as [Tier, number][]).map(([t, n]) => <span key={t} className="chip">{TIER[t]?.label ?? t}: {num(n)}</span>)}</div>
         <div className="chips">{Object.entries(s.by_level).map(([l, n]) => <span key={l} className="chip">{l}: {num(n)}</span>)}</div>
         <p className="small muted" style={{ margin: 0 }}>{s.type_rule}.</p>
-        <div><div className="kicker">Vaccine doses a year at these facilities</div><div className="counter">{num(s.doses_year)}</div>
-          <p className="small muted" style={{ margin: '4px 0 0' }}>{num(s.doses_year_facilities)} facilities with a figure; {num(s.doses_year_shared_with_other_feeders)} of these doses sit at facilities also matched to other feeder rows. {s.doses_note}.</p></div>
+        <p className="small muted" style={{ margin: 0 }}>When the line into the city is cut, this feeder delivers nothing, and each of these facilities keeps only what its own system holds. Open a facility for its outage hours.</p>
       </div>
       <div className="card stack">
         <h3 style={{ margin: 0 }}>Promised against measured hours</h3>

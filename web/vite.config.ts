@@ -7,6 +7,9 @@ import { join, relative, resolve } from 'node:path'
 // Sample fixtures live outside the web app, in data/fixtures/web. Served at /fixtures/ in dev and
 // copied into the build, so the app runs with no API until VITE_API_BASE is set.
 const FIXTURES = resolve(__dirname, '../data/fixtures/web')
+// Brief 13: the engine stream's recorded outputs (real engine runs, not synthetic), served at /fixtures/brief13/ and
+// shipped with every build as the fallback when the live API does not answer.
+const B13 = resolve(__dirname, '../data/fixtures/brief13')
 const USE_FIXTURES = process.env.VITE_FIXTURES === '1'
 
 function walk(dir: string): string[] {
@@ -21,6 +24,12 @@ function fixtures(): Plugin {
   return {
     name: 'wardlight-fixtures',
     configureServer(server) {
+      server.middlewares.use('/fixtures/brief13', (req, res) => {
+        const file = join(B13, decodeURIComponent((req.url ?? '').split('?')[0]))
+        if (!file.startsWith(B13) || !existsSync(file) || statSync(file).isDirectory()) { res.statusCode = 404; res.end(); return }
+        res.setHeader('Content-Type', 'application/json')
+        res.end(readFileSync(file))
+      })
       server.middlewares.use('/fixtures', (req, res, next) => {
         const file = join(FIXTURES, decodeURIComponent((req.url ?? '').split('?')[0]))
         if (!file.startsWith(FIXTURES) || !existsSync(file) || statSync(file).isDirectory()) return next()
@@ -29,6 +38,9 @@ function fixtures(): Plugin {
       })
     },
     generateBundle() {
+      for (const file of walk(B13)) {
+        this.emitFile({ type: 'asset', fileName: `fixtures/brief13/${relative(B13, file)}`, source: readFileSync(file) })
+      }
       if (!USE_FIXTURES) return // live builds ship no sample files
       for (const file of walk(FIXTURES)) {
         this.emitFile({ type: 'asset', fileName: `fixtures/${relative(FIXTURES, file)}`, source: readFileSync(file) })
@@ -47,7 +59,7 @@ export default defineConfig({
       manifest: {
         name: 'Wardlight',
         short_name: 'Wardlight',
-        description: 'Will the vaccine fridge stay at 2 to 8 °C through the night? Facility sheets that work offline.',
+        description: 'Critical power when the line is cut: which hospitals, water pumps and cold rooms keep running in Maiduguri, and what on-site solar keeps the rest running without diesel.',
         theme_color: '#0E1420',
         background_color: '#F7F6F2',
         display: 'standalone',

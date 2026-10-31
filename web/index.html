@@ -5,11 +5,13 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0E1420" />
-    <meta name="description" content="Wardlight: will a clinic's vaccine fridge stay at 2 to 8 °C through the night on the grid it is promised, and what is the cheapest solar and battery system that would keep it there." />
+    <meta name="theme-color" content="#0B1018" />
+    <meta name="description" content="Wardlight: if the 330 kV line to Maiduguri is cut for weeks, which hospitals, water pumps and market cold rooms keep running, and what on-site solar and storage would keep the rest running without diesel." />
     <title>Wardlight</title>
     <script>
-      try { var t = localStorage.getItem('wl-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t) } catch (e) {}
+      // dark first: the night is the subject; the light theme is one click away and remembered
+      var t = null; try { t = localStorage.getItem('wl-theme') } catch (e) {}
+      document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark')
     </script>
   </head>
   <body>

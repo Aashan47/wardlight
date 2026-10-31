@@ -131,7 +131,7 @@ export function CappedNote({ r, short }: { r: CapFields; short?: boolean }) {
 export function VerifiedNote({ v }: { v: { verified?: boolean; checked_by?: string | null; how?: string | null; verified_by?: string; verified_how?: string; verified_method?: string } }) {
   if (v.verified) {
     const by = v.checked_by ?? v.verified_by, how = v.how ?? v.verified_how ?? v.verified_method
-    return <span><span className="tag s-cell"><Icon name="check" size={13} />Checked by eye{by ? ` by ${by}` : ''}</span>{how && <span className="small muted"> {how}.</span>}</span>
+    return <span><span className="tag tag-wrap s-cell"><Icon name="check" size={13} />Checked by eye{by ? ` by ${by}` : ''}</span>{how && <span className="small muted"> {how}.</span>}</span>
   }
-  return <span className="tag s-unknown">Read by OCR, not checked by eye</span>
+  return <span className="tag tag-wrap s-unknown">Read by OCR; nobody has checked it by eye</span>
 }

@@ -36,7 +36,7 @@ async function still() {
 }
 
 const ROUTES = [
-  ['overview', '/'],
+  ['overview', '/facilities'],
   ['facility', '/facility/WL-0001'],
   ['facility-refused', null],
   ['plan', '/plan'],
@@ -59,6 +59,7 @@ async function matrix() {
         const b = await chromium.launch({ headless: true, args: gl ? GL_ON : GL_OFF })
         const ctx = await b.newContext({ viewport: { width, height: width < 600 ? 844 : 1000 }, colorScheme: scheme, deviceScaleFactor: 1, serviceWorkers: 'block' })
         const path = path0 ?? `/facility/${refused}`
+        await ctx.addInitScript((s) => { try { localStorage.setItem('wl-theme', s) } catch { /* blocked */ } }, scheme)
         const p = await ctx.newPage()
         const errors = []
         p.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()) })
