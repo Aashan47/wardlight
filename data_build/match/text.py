@@ -46,6 +46,9 @@ ABBREV = {
     "COLL": "COLLEGE",
     "HQTRS": "HEADQUARTERS",
     "QTR": "QUARTERS",
+    # Amendment 4: FTH, as FMC above. Named teaching-hospital acronyms (UMTH, AKTH) are built from the
+    # facility names themselves, see teaching_hospital_acronyms().
+    "FTH": "FEDERAL TEACHING HOSPITAL",
 }
 
 # A segment that contains one of these (after expansion) is read as naming a health facility.
@@ -241,3 +244,31 @@ def state_key(s: object) -> str:
     if c.startswith("FCT") or c in {"ABUJA", "FEDERAL CAPITAL TERRITORY"}:
         return "FCT"
     return c
+
+
+# Amendment 4: acronyms of teaching hospitals, built from GRID3's own names.
+ACRONYM_STOP = {"OF", "AND", "THE", "FOR"}
+ACRONYM_MIN_LEN = 4
+# English words an acronym must never be read as, though initials could spell them.
+ACRONYM_NOT_WORDS = {
+    "SOUTH", "NORTH", "MOUTH", "YOUTH", "BOOTH", "TEETH", "TOOTH", "WORTH", "BIRTH", "EARTH", "HEALTH",
+    "DEPTH", "FAITH", "CLOTH", "SMITH", "KEITH", "RUTH", "BETH", "MOTH", "BATH", "PATH", "MATH", "BOTH",
+}
+
+
+def teaching_hospital_acronyms(name: str) -> set[str]:
+    """Initials of a cleaned teaching-hospital name up to its first HOSPITAL, skipping OF, AND, THE, FOR and
+    tokens under 3 letters: "UNIVERSITY OF MAIDUGURI TEACHING HOSPITAL" gives UMTH, "YO YOBE STATE
+    UNIVERSITY TEACHING HOSPITAL DAMATURU" gives YSUTH. None when a type word follows HOSPITAL (an annex
+    such as "... TEACHING HOSPITAL URBAN HEALTH CENTRE" is another facility) or the result is under 4
+    letters."""
+    toks = name.split()
+    if "HOSPITAL" not in toks:
+        return set()
+    h = toks.index("HOSPITAL")
+    if "TEACHING" not in toks[:h] or any(t in TYPE_WORDS for t in toks[h + 1:]):
+        return set()
+    core = [t for t in toks[: h + 1] if t not in ACRONYM_STOP and len(t) >= 3 and t.isalpha()]
+    acr = "".join(t[0] for t in core)
+    return {acr} if len(acr) >= ACRONYM_MIN_LEN and acr not in ACRONYM_NOT_WORDS else set()
+

@@ -24,6 +24,8 @@ CRITICAL_LOAD_HOURS_PER_DAY = float(sum(ld.hours_per_day for ld in LD.critical()
 def benefit(df: pd.DataFrame, metric: str = "doses", outage_days: int = 7) -> pd.Series:
     if metric == "outage_hours":
         return df[f"out{outage_days}_hours_with"] - df[f"out{outage_days}_hours_today"]
+    if metric == "orfix_hours":
+        return df.orfix_hours_kept - df[f"out{outage_days}_hours_today"]
     if metric == "doses":
         return df.doses_with_system - df.doses_protected_today
     if metric == "load_hours":
@@ -45,6 +47,8 @@ def rank(results: pd.DataFrame, budget_ngn: float, metric: str = "doses", state:
     # since both keep critical services running through the outage
     if metric == "outage_hours":
         df["cost_ngn"] = df.capex_ngn.astype(float) + df.get("clinic_capex_ngn", 0.0)
+    elif metric == "orfix_hours":
+        df["cost_ngn"] = df.orfix_capex_ngn.astype(float)
     else:
         cost_col = "clinic_capex_ngn" if metric == "load_hours" and "clinic_capex_ngn" in df else "capex_ngn"
         df["cost_ngn"] = df[cost_col].astype(float)
@@ -70,7 +74,8 @@ def rank(results: pd.DataFrame, budget_ngn: float, metric: str = "doses", state:
     ranked["funded"] = funded
     ranked["rank"] = np.arange(1, len(ranked) + 1)
     unit = {"doses": "doses/yr protected", "load_hours": "critical load-hours/yr restored",
-            "outage_hours": f"critical service-hours kept in a {outage_days}-day outage"}[metric]
+            "outage_hours": f"critical service-hours kept in a {outage_days}-day outage",
+            "orfix_hours": f"critical service-hours kept in a {outage_days}-day outage (outage-ready fix)"}[metric]
     ranked["reason"] = [
         f"{b:,.0f} {unit} for N{c:,.0f} ({s:,.1f} per N1m); fridge held {ft:.0%} of days today (domestic-fridge "
         f"scenario), {fw:.0%} with the fix; tier {t}"

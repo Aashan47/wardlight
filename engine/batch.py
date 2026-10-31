@@ -100,8 +100,12 @@ def run_key(point: tuple[int, int], bands, cfg: SM.SimConfig, loads=None) -> dic
     cec = E.clinic_economics(cs.chosen.pv_kwp, cs.chosen.battery_kwh, clinic_off, diesel_ok)
     clinic = SM.ClinicSystem(cs.chosen.pv_kwp, cs.chosen.battery_kwh)
     outages = [OU.simulate_outage(pp, d, crit, clinic, cc.chosen.fix, cc.chosen.code, cfg) for d in OU.DEFAULT_DAYS]
+    orfix = {d: OU.size_outage_ready(pp, crit, offgrid, cfg, days=d) for d in OU.ORFIX_SIZED_FOR}
+    o7 = orfix[OU.OR_DAYS]
+    orfix_eval = [OU.simulate_outage(pp, d, crit, SM.ClinicSystem(o7.pv_kwp, o7.battery_kwh), o7.fridge_kind,
+                                     o7.fridge_code, cfg) for d in OU.ORFIX_EVAL_DAYS]
     return {"sim": r, "coldchain": cc, "clinic": cs, "clinic_econ": cec, "diesel_counted": diesel_ok,
-            "outages": outages}
+            "outages": outages, "orfix": orfix, "orfix_eval": orfix_eval}
 
 
 def _iv(x: SM.Interval | None, name: str) -> dict:
@@ -167,6 +171,10 @@ def _row(uid: str, tier: str, out: dict, doses_yr: float, synthetic: bool) -> di
     row["diesel_counted"] = out["diesel_counted"]
     for o in out.get("outages", []):
         row.update(OU.columns(o))
+    for d, o in out.get("orfix", {}).items():
+        row.update(OU.orfix_columns(o, OU.orfix_prefix(d)))
+    for r_ in out.get("orfix_eval", []):
+        row.update(OU.orfix_eval_columns(r_, OU.orfix_prefix(OU.OR_DAYS)))
     row["weather_point"] = f"{r.weather_point[0]},{r.weather_point[1]}"
     row["supply_known"] = r.supply_known
     row["supply_calibrated"] = r.supply_calibrated
@@ -243,7 +251,8 @@ def run(matches_path=None, limit: int | None = None, workers: int = 1, n_draws: 
             "input_synthetic": synthetic, "n_draws": n_draws, "weather_years": list(cfg.years),
             "supply": asdict(cfg.shortfall), "supply_calibration": supply_meta, "target": TARGET, "runtime_s": round(time.perf_counter() - t0, 1),
             "catchments": "present" if cat is not None else "missing: doses are NaN",
-            "facilities_capped": int(res.capped.sum()), "cap_pop": C.CATCHMENT_CAP_POP.value}
+            "facilities_capped": int(res.capped.sum()), "cap_pop": C.CATCHMENT_CAP_POP.value,
+            "gen_l_per_kwh": [C.GEN_L_PER_KWH.value, C.GEN_L_PER_KWH.lo, C.GEN_L_PER_KWH.hi]}
     return res, meta
 
 

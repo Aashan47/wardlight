@@ -9,8 +9,8 @@
 - Life-cycle (SEforALL p.16): O&M 5% of capex a year, 15-year life, inverter and battery replacement at year 10
   costing 15% of capex. No discounting (stated).
 - Diesel counterfactual: the energy the systems deliver while the grid is off, as if a generator had supplied
-  it, at GEN_L_PER_KWH (UNVERIFIED placeholder range) and the diesel price range (NBS Oct 2024 to a
-  news-reported May 2026 figure). CO2 2.697 kg/L (EPA, DERIVED).
+  it, at GEN_L_PER_KWH (clinic-set curve, DERIVED from Cummins sheets) and the diesel price (NBS May 2026 point, N3,277.47 via four
+  outlets, VERIFIED_SECONDARY; NBS Oct 2024 as the low end). CO2 2.697 kg/L (EPA, DERIVED).
 - Naira at the CBN central rate of 27 Oct 2026, N1,352.371 per USD; the date travels with every conversion.
 """
 
@@ -121,7 +121,7 @@ class Economics:
     fx_date: str = C.FX_DATE
     notes: tuple[str, ...] = (
         "diesel counterfactual: the energy the systems deliver while the grid is off, as if a generator had run",
-        "generator litres per kWh is an UNVERIFIED placeholder range; diesel price range NBS Oct 2024 to May 2026 news",
+        "generator litres per kWh: clinic-set curve 0.40 to 0.73 (DERIVED from Cummins sheets); diesel price NBS May 2026 (N3,277.47, via four outlets), NBS Oct 2024 as the low end",
         "undiscounted; SEforALL O&M 5%/yr, 15-year life, 15% replacement at year 10",
     )
 

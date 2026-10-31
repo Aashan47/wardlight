@@ -332,3 +332,39 @@ def test_amendment3_candidate_must_be_in_the_rows_state():
     ])
     m, _ = match(f, rows, grid_for(f))
     assert by_id(m)["SYN_000"]["tier"] != "a_named", "UMUAHIA is in Abia; a Madonna Hospital in Anambra is not it"
+
+
+def test_amendment4_acronyms_from_names():
+    from data_build.match.text import teaching_hospital_acronyms as acr
+    assert acr(clean("University Of Maiduguri Teaching Hospital")) == {"UMTH"}
+    assert acr(clean("Yo Yobe State University Teaching Hospital Damaturu")) == {"YSUTH"}
+    assert acr(clean("Aminu Kano Teaching Hospital")) == {"AKTH"}
+    assert acr(clean("University Of Maiduguri Teaching Hospital Urban Health Centre")) == set()
+    assert acr(clean("General Hospital Maiduguri")) == set()
+
+
+@needs_naija
+def test_amendment4_umth_tier_a_and_shared_acronym_refused():
+    rows = pd.DataFrame([
+        _row("YEDC", "Y.pdf", 17, "33KV CAMPUS", "33KV CAMPUS", "UNIVERSITY OF MAIDUGURI, UMTH"),
+        _row("YEDC", "Y.pdf", 23, "11KV POWER HOUSE", "UMTH STAFF QUARTERS", "BAMA ROAD MAIDUGURI"),
+        _row("IBEDC", "I.pdf", 217, "UITH 11KV FEEDER", "SAWMILL ISS", "AGBOOBA, OJA TUNTUN", band="C"),
+    ])
+    f = fac([
+        {"facility_name": "University Of Maiduguri Teaching Hospital", "state_standard": "Borno",
+         "lga_standard": "Jere", "ward_standard": "Mashamari"},
+        {"facility_name": "University Of Maiduguri Teaching Hospital Urban Health Centre",
+         "state_standard": "Borno", "lga_standard": "Maiduguri", "ward_standard": "Bolori I"},
+        {"facility_name": "University Of Ilorin Teaching Hospital", "state_standard": "Oyo", "lga_standard": "Irepo",
+         "ward_standard": "Iba"},
+        {"facility_name": "University Of Ibadan Teaching Hospital", "state_standard": "Kwara",
+         "lga_standard": "Ilorin West", "ward_standard": "Oko Erin"},
+    ])
+    m, _ = match(f, rows, grid_for(f))
+    r = by_id(m)
+    assert r["SYN_000"]["tier"] == "a_named"
+    ev = json.loads(r["SYN_000"]["evidence"])
+    assert ev["sn"] == "17" and ev["nerc_text"].startswith("UMTH (acronym of") and "UMTH" in ev["row_text"]
+    assert json.loads(r["SYN_000"]["feeder_ids"]) == ["Y.pdf#p1#sn17"], "staff quarters row is not the hospital"
+    assert r["SYN_001"]["tier"] != "a_named", "an annex health centre is another facility"
+    assert r["SYN_002"]["tier"] != "a_named" and r["SYN_003"]["tier"] != "a_named", "UITH is shared by two states"

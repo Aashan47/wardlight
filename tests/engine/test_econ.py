@@ -27,10 +27,10 @@ def test_lifecycle_and_monthly():
 
 def test_diesel_and_co2_fixed_vector():
     litres = E.diesel_litres_per_year(1000)
-    assert (litres.lo, litres.hi) == pytest.approx((303, 454))
-    assert E.co2_kg(litres).lo == pytest.approx(303 * 2.697)
+    assert (litres.lo, litres.hi) == pytest.approx((400, 730))  # clinic-set curve, Cummins C17/C22 D5
+    assert E.co2_kg(litres).lo == pytest.approx(400 * 2.697)
     m = E.diesel_cost_ngn_per_month(litres)
-    assert m.lo == pytest.approx(303 * 1441.28 / 12) and m.hi == pytest.approx(454 * 3277.47 / 12)
+    assert m.lo == pytest.approx(400 * 1441.28 / 12) and m.hi == pytest.approx(730 * 3277.47 / 12)
 
 
 def test_payback():
@@ -48,6 +48,6 @@ def test_economics_bundle():
 def test_clinic_line_counts_diesel_only_where_plausible():
     on = E.clinic_economics(1.0, 7.2, 1000, diesel_plausible=True)
     off = E.clinic_economics(1.0, 7.2, 1000, diesel_plausible=False)
-    assert on.diesel_l_per_year.lo == pytest.approx(303) and off.diesel_l_per_year.hi == 0
+    assert on.diesel_l_per_year.lo == pytest.approx(400) and off.diesel_l_per_year.hi == 0
     assert math.isinf(off.payback_months.point)
     assert on.capex_usd.point == off.capex_usd.point == pytest.approx(6000)

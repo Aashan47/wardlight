@@ -1,7 +1,7 @@
 [project]
 name = "wardlight"
 version = "0.0.0"
-description = "Vaccine-fridge uptime and solar sizing for health facilities, from public data."
+description = "Which critical sites in a grid-isolated city to put on their own solar and battery, from public data."
 requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.115",
@@ -14,6 +14,8 @@ dependencies = [
   "rapidfuzz>=3.9",
   "pytesseract>=0.3.13",
   "pypdfium2>=4.30",
+  "scipy>=1.14",
+  "pyarrow>=17",
 ]
 
 [build-system]
@@ -21,10 +23,12 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["api", "engine", "data_build"]
+packages = ["api", "engine", "agents", "data_build"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.3", "ruff>=0.6"]
+# only for rebuilding the data from the raw downloads (data_build/)
+build = ["rasterio>=1.4", "affine>=2.4", "opencv-python-headless>=4.10"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

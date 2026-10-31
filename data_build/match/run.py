@@ -88,7 +88,7 @@ def _write_doc_block(m: pd.DataFrame, s: pd.DataFrame, rows_path: Path) -> None:
     ev = m["evidence"].map(json.loads)
     lines = [
         start,
-        (f"**Current run** (after amendment 3), on `{rows_path.name}` SHA-256 `{_sha(rows_path)}`; "
+        (f"**Current run** (after amendment 4), on `{rows_path.name}` SHA-256 `{_sha(rows_path)}`; "
         f"`matches.parquet` SHA-256 `{_sha(paths.MATCHES)}`."),
         "",
         "| Tier | Facilities | Share |",

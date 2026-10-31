@@ -87,7 +87,7 @@ def test_generator_and_diesel_ranges():
     pp = SM.prepare(9, 7, "OFFGRID", CFG)
     r = O.simulate_outage(pp, 7, CRIT, SM.ClinicSystem(10, 72), "ii", "E003-040e", CFG)
     kwh = 7 * LD.daily_kwh(CRIT) + 0.54 / 24 * 168
-    assert r.generator_litres.lo == pytest.approx(0.303 * kwh) and r.generator_litres.hi == pytest.approx(0.454 * kwh)
+    assert r.generator_litres.lo == pytest.approx(0.40 * kwh) and r.generator_litres.hi == pytest.approx(0.73 * kwh)
     assert r.diesel_l_avoided.point == pytest.approx(r.generator_litres.point, rel=1e-6)  # everything covered
 
 
@@ -106,3 +106,93 @@ def test_columns_aggregate_and_rank():
     r = PL.rank(res, budget_ngn=4e6, metric="outage_hours", outage_days=7)
     assert r.unique_id.tolist() == ["a", "c", "b"] and r.funded.tolist() == [True, True, False]
     assert "7-day outage" in r.reason.iloc[0]
+
+
+# ---- outage-ready fix, city view, T5-style check
+
+@needs_nasa
+def test_outage_ready_fix_meets_target_and_beats_the_normal_fix():
+    pp = SM.prepare(9, 7, "C", CFG)
+    o = O.size_outage_ready(pp, CRIT, offgrid=False, cfg=CFG)
+    assert o.target_met and o.category == "ii+c" and o.crit_share.lo >= 0.95
+    assert o.fridge_share_lo >= 0.95 and o.battery_kwh == pytest.approx(o.pv_kwp * 7.2)
+    normal = O.simulate_outage(pp, 7, CRIT, SM.ClinicSystem(0.95, 6.84), "i", "E003-089e", CFG)
+    assert o.result.with_system.point >= normal.with_system.point
+    assert o.capex_ngn.point == pytest.approx(o.capex_usd.point * 1352.371)
+    # the next smaller size on the curve misses the target: the choice is the smallest that passes
+    smaller = [c for c in o.curve if c[0] < o.pv_kwp]
+    assert all(c[2] < 0.95 for c in smaller)
+
+
+@needs_nasa
+def test_longer_outages_never_need_a_smaller_system():
+    pp = SM.prepare(9, 7, "C", CFG)
+    sizes = [O.size_outage_ready(pp, CRIT, False, CFG, days=d).pv_kwp for d in (3, 7, 14)]
+    assert sizes == sorted(sizes)
+
+
+@needs_nasa
+def test_unreachable_outage_target_is_flagged():
+    pp = SM.prepare(9, 7, "C", CFG)
+    o = O.size_outage_ready(pp, CRIT, False, CFG, kwp_grid=[0.1, 0.2])
+    assert not o.target_met and o.category == "none"
+
+
+def test_orfix_columns_and_city_aggregation():
+    res = pd.DataFrame({
+        "unique_id": ["a", "b", "c"], "orfix_days": [7] * 3, "orfix_needed_h": [343.0] * 3,
+        "out7_hours_today": [0.0, 10.0, 0.0], "orfix_hours_kept": [343.0, 300.0, 340.0],
+        "orfix_diesel_l_avoided": [14.0] * 3, "orfix_diesel_l_avoided_lo": [11.0] * 3,
+        "orfix_diesel_l_avoided_hi": [17.0] * 3, "orfix_capex_ngn": [2e7, 1e7, 2e7],
+        "orfix_capex_ngn_lo": [1.8e7] * 3, "orfix_capex_ngn_hi": [2.2e7] * 3,
+        "uptime_today": [0.0] * 3, "uptime_with_system": [1.0] * 3})
+    fac = pd.DataFrame({"unique_id": ["a", "b", "c", "d"], "facility_name": list("ABCD"),
+                        "facility_level": ["Primary", "Primary", "Secondary", "Primary"],
+                        "state_standard": ["Kano", "Kano", "Kano", "Oyo"],
+                        "lga_standard": ["Nassarawa", "Fagge", "Nassarawa", "Ibadan North"]})
+    city = O.aggregate_city("kano", ["Nassarawa", "fagge"], res, fac, budget_ngn=3e7)
+    assert city["facilities"] == 3 and city["by_level"] == {"Primary": 2, "Secondary": 1}
+    assert city["service_hours_with_orfix"] == 983 and city["service_hours_today"] == 10
+    assert city["diesel_l_avoided"]["lo"] == 33 and city["capex_ngn"]["point"] == 5e7
+    ranked = city["ranked"]
+    assert ranked.unique_id.tolist() == ["b", "a", "c"]  # 29.0, 17.15 and 17.0 hours per N1m
+    assert ranked.funded.tolist() == [True, True, False]
+    empty = O.aggregate_city("Lagos", None, res, fac)
+    assert empty["facilities"] == 0
+
+
+@needs_nasa
+def test_t5_outage_runs_and_reports_seforall_comparison():
+    rows = O.t5_outage(sites=((9.0, 7.5, {"C": 1.0}),), cfg=CFG)
+    r = rows[0]
+    assert r["full_load_kwh_day"] == pytest.approx(36.046) and r["full_kwp"] > r["critical_kwp"]
+    assert isinstance(r["full_inside_seforall"], bool)
+
+
+def test_forty_day_window_and_default_city():
+    assert 40 in O.DEFAULT_DAYS and O.ORFIX_SIZED_FOR == (7, 40)
+    assert O.orfix_prefix(7) == "orfix_" and O.orfix_prefix(40) == "orfix40_"
+    assert O.MAIDUGURI == ("Borno", ("Maiduguri", "Jere"))
+    m, _ = O.window_mask(4, 8760, 40, seed=1)
+    assert (m.sum(axis=1) == 960).all()
+
+
+def test_city_view_picks_the_system_for_the_window():
+    base = {"orfix_days": 7, "uptime_today": 0.0, "uptime_with_system": 1.0}
+    res = pd.DataFrame([{**base, "unique_id": u, "out40_hours_today": 0.0, "out40_needed_h": 1960.0,
+                         "out14_hours_today": 0.0, "out14_needed_h": 686.0,
+                         "orfix40_hours_kept": 1900.0, "orfix40_capex_ngn": 3e7, "orfix40_capex_ngn_lo": 3e7,
+                         "orfix40_capex_ngn_hi": 3e7, "orfix40_diesel_l_avoided": 80.0,
+                         "orfix40_diesel_l_avoided_lo": 64.0, "orfix40_diesel_l_avoided_hi": 96.0,
+                         "orfix_at14_hours_kept": 680.0, "orfix_at14_diesel_l_avoided": 27.0,
+                         "orfix_at14_diesel_l_avoided_lo": 22.0, "orfix_at14_diesel_l_avoided_hi": 33.0,
+                         "orfix_capex_ngn": 2e7, "orfix_capex_ngn_lo": 2e7, "orfix_capex_ngn_hi": 2e7}
+                        for u in ("a", "b")])
+    fac = pd.DataFrame({"unique_id": ["a", "b"], "facility_name": ["A", "B"], "facility_level": ["Primary"] * 2,
+                        "state_standard": ["Borno"] * 2, "lga_standard": ["Maiduguri", "Jere"]})
+    c40 = O.aggregate_city(results=res, facilities=fac, days=40)
+    assert c40["system_sized_for_days"] == 40 and c40["service_hours_with_orfix"] == 3800
+    assert c40["capex_ngn"]["point"] == 6e7 and c40["diesel_l_avoided"]["lo"] == 128
+    c14 = O.aggregate_city(results=res, facilities=fac, days=14)
+    assert c14["system_sized_for_days"] == 7 and c14["service_hours_with_orfix"] == 1360
+    assert c14["capex_ngn"]["point"] == 4e7 and c14["share_today"] == 0

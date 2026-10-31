@@ -17,8 +17,10 @@ from rapidfuzz import fuzz, process
 
 from . import footprint, regulators
 from .text import (
+    ACRONYM_MIN_LEN,
     FACILITY_NOUNS,
     IMPLIES_HOSPITAL,
+    NON_FACILITY,
     ROAD_WORDS,
     STATE_NAMES,
     clean,
@@ -28,6 +30,7 @@ from .text import (
     place_is_usable,
     segments,
     state_key,
+    teaching_hospital_acronyms,
     type_tokens,
     ward_core,
 )
@@ -92,6 +95,7 @@ class Index:
     by_state: dict[str, np.ndarray] = field(default_factory=dict)
     gaz: dict[str, dict[str, list[tuple[int, str, str]]]] = field(default_factory=dict)
     state_names: dict[str, set[str]] = field(default_factory=dict)  # place or LGA core -> states, for tier (a)
+    acronyms: dict[str, dict[str, list[int]]] = field(default_factory=dict)  # state -> acronym -> facilities
 
 
 def prepare_facilities(fac: pd.DataFrame) -> Index:
@@ -131,6 +135,9 @@ def prepare_facilities(fac: pd.DataFrame) -> Index:
     for st in idx.by_state:
         idx.state_names.setdefault(st, set()).add(st)
     idx.state_names.setdefault("ABUJA", set()).add("FCT")
+    for i, (st, nm) in enumerate(zip(f["state_key"], f["name_clean"])):
+        for acr in teaching_hospital_acronyms(nm):
+            idx.acronyms.setdefault(st, {}).setdefault(acr, []).append(i)
     return idx
 
 
@@ -314,7 +321,53 @@ def tier_a_hits(rows: pd.DataFrame, idx: Index) -> tuple[dict[int, list[Hit]], l
             for fi, sc in res["accepted"]:
                 label = m.text if m.context is None else f"{m.text} (context from {m.context})"
                 hits[fi].append(Hit(ri, "facility_name", f.loc[fi, "facility_name"], label, m.field, sc))
+    for ri, r in rows.iterrows():
+        for acr, fld, accepted, outcome in acronym_matches(r, idx):
+            if outcome.startswith("ambiguous"):
+                ambiguous.append({"row_key": r["row_key"], "mention": acr, "outcome": outcome})
+            for fi in accepted:
+                label = f"{acr} (acronym of {f.loc[fi, 'facility_name']})"
+                hits[fi].append(Hit(ri, "facility_name", f.loc[fi, "facility_name"], label, fld, 100.0))
     return hits, ambiguous
+
+
+def acronym_matches(r, idx: Index) -> list[tuple[str, str, list[int], str]]:
+    """Amendment 4: a row token equal to a teaching hospital's acronym (UMTH) in the DisCo's states. Items
+    that are roads, quarters, estates or landmarks are skipped ("UMTH STAFF QUARTERS", "UBTH ESTATE"); a
+    token that is also a place name is never an acronym; the state check, the cross-state rule and the
+    3-candidate cap apply as for named mentions. Returns (acronym, field, accepted facilities, outcome)."""
+    f = idx.fac
+    out = []
+    seen = set()
+    for fld in A_FIELDS:
+        for seg in segments(r[fld]):
+            toks = seg.split()
+            if is_road(seg) or set(toks) & NON_FACILITY:
+                continue
+            for tok in toks:
+                if tok in seen or not (ACRONYM_MIN_LEN <= len(tok) <= 7) or tok in idx.state_names:
+                    continue
+                cands = [fi for s in r["states"] for fi in idx.acronyms.get(s, {}).get(tok, [])]
+                if not cands:
+                    continue
+                seen.add(tok)
+                # an acronym is weaker than a name: one shared by facilities in two of the DisCo's states is
+                # refused before any state check (UITH: Ilorin's hospital filed under Oyo, Ibadan's under Kwara)
+                if len({f.loc[fi, "state_key"] for fi in cands}) > 1:
+                    out.append((tok, fld, [], f"ambiguous: acronym {tok} names facilities in several states"))
+                    continue
+                rs = row_states(r, idx)
+                if rs:
+                    kept = [fi for fi in cands if f.loc[fi, "state_key"] in rs]
+                    if not kept:
+                        out.append((tok, fld, [], "row's places are in other states"))
+                        continue
+                    cands = kept
+                if len(cands) > A_MAX_CANDIDATES:
+                    out.append((tok, fld, [], f"ambiguous: {len(cands)} candidates"))
+                    continue
+                out.append((tok, fld, cands, "matched"))
+    return out
 
 
 def _ngrams(seg: str):

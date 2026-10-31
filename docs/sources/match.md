@@ -225,6 +225,36 @@ change; it is kept unopened at `data/work/T2_SAMPLE_v4_superseded.csv` (SHA-256 
 without an S/N fell from 24 to 1); the final run, its T2 draw and the audit below all used the new file,
 whose hash is in section 9.
 
+### Amendment 4 (after amendment 3's run, which the main session repeated on agent A's updated rows; requested by the coordinator before any T2 row was checked)
+
+Reason: the YEDC order names the University of Maiduguri Teaching Hospital only as "UMTH" (YEDC p11 S/N 17,
+"UNIVERSITY OF MAIDUGURI, UMTH", Band A), so the hospital fell to `c_lga_mixture` with band C. Changes:
+- **Acronyms built from GRID3's own names.** A teaching hospital's acronym is the initials of its cleaned
+  name up to its first HOSPITAL, skipping OF, AND, THE, FOR and tokens under 3 letters ("University Of
+  Maiduguri Teaching Hospital" gives UMTH; "Yo Yobe State University Teaching Hospital Damaturu" gives
+  YSUTH). None is built when a type word follows HOSPITAL (an annex such as "... Teaching Hospital Urban
+  Health Centre" is another facility), when it is under 4 letters, or when it spells an English word.
+- A row token equal to such an acronym, in an item that is not a road, quarters, estate or landmark, is a
+  tier (a) mention; a token that is also a place name never is. An acronym shared by facilities in more
+  than one of the DisCo's states is refused before any state check (UITH: GRID3 files "University Of
+  Ilorin Teaching Hospital" under Oyo and "University Of Ibadan Teaching Hospital" under Kwara, and the
+  state check alone picked the Oyo record for an Ilorin feeder). Then the state check, the cross-state rule
+  and the 3-candidate cap apply as for named mentions. The evidence reads "UMTH (acronym of ...)".
+- FTH is expanded to FEDERAL TEACHING HOSPITAL, as FMC already was to FEDERAL MEDICAL CENTRE.
+
+Effect, measured against the same rows and the same code with acronyms switched off (which reproduces the
+previous T2 draw exactly): 7 facilities change tier and nothing else changes. University of Maiduguri
+Teaching Hospital (both GRID3 records) moves from `c_lga_mixture` band C to tier (a) Band A on YEDC p11
+S/N 17; University of Nigeria Teaching Hospital (two records) from tier (b) to tier (a) on EEDC p13 S/N 83
+("UNTH"); Jos University Teaching Hospital (two GRID3 v2.0 records) from `c_lga_mixture` to tier (a) on
+JED p12 S/N 49 ("OLD JUTH", the hospital's old site; S/N 60 "JUTH PERMANENT SITE" is the other JUTH row);
+University of Calabar Teaching Hospital from tier (b) band E to tier (a) band B on PHED p14 S/N 94
+("UCTH"). Yobe State University Teaching Hospital (both records) was already tier (a) on YEDC p11 S/N 29
+and now also carries the YSUTH acronym evidence. UITH (IBEDC p19 S/N 217) is refused as a shared acronym.
+Because 4 facilities joined the tier (a) and (b) population, the T2 draw changed: it was redrawn with seed
+20261031 before any row was checked, and the previous draw is kept unopened at
+`data/work/T2_SAMPLE_v5_superseded.csv` (SHA-256 9bdd4b10...).
+
 <!-- tier-a-audit:start -->
 79 rows mention a keyword; 88 audit lines (one per mention, or one per row without a mention); 22 rows give at least one tier (a) match.
 
@@ -340,21 +370,21 @@ name, location, streets and hours agree on 30 of 30 rows after cleaning; **A rea
 ## 9. Runs and T2
 
 <!-- current-run:start -->
-**Current run** (after amendment 3), on `nerc_rows.parquet` SHA-256 `a0b8a933cc93a37dce00d47921956f50f1ba39ebcef086dacc0d7f2d9500d4c9`; `matches.parquet` SHA-256 `7d90696e79639c0325cb363679387fe25f9064b46826a99b4f13fd4d93a3eeae`.
+**Current run** (after amendment 4), on `nerc_rows.parquet` SHA-256 `a0b8a933cc93a37dce00d47921956f50f1ba39ebcef086dacc0d7f2d9500d4c9`; `matches.parquet` SHA-256 `bae764011daf24ce5347615a01e4aa66271c53b58951c95f2f14de906260dcfa`.
 
 | Tier | Facilities | Share |
 |---|---:|---:|
-| a_named | 23 | 0.0% |
-| b_place | 9,765 | 16.0% |
-| c_lga_mixture | 26,402 | 43.3% |
+| a_named | 30 | 0.0% |
+| b_place | 9,762 | 16.0% |
+| c_lga_mixture | 26,398 | 43.3% |
 | c_unit_mixture | 6,824 | 11.2% |
 | d_refused | 8,938 | 14.7% |
 | offgrid | 9,057 | 14.8% |
 | total | 61,009 | |
 
-Tier (b) by level: ward_standard 9,410, settlement_name 355. `c_unit_mixture` by business unit: 35. Refusal reasons: state regulator 8,938. Tier (a) or (b) in states that have left NERC: 2,051; more than 5 km from a line: 473.
+Tier (b) by level: ward_standard 9,407, settlement_name 355. `c_unit_mixture` by business unit: 35. Refusal reasons: state regulator 8,938. Tier (a) or (b) in states that have left NERC: 2,053; more than 5 km from a line: 473.
 
-**T2 sample:** `docs/T2_SAMPLE.csv`, 100 rows drawn with `pandas.DataFrame.sample(random_state=20261031)` from the tier (a) and (b) matches sorted by `unique_id` (b_place 100; by level ward_standard 96, settlement_name 4); SHA-256 `9bdd4b10e687b6578802e87c0b151fd577caabb5d64f04c08325699da1492a61`. **Unchecked**: `correct`, `checked_by` and `note` are empty for a human to fill by comparing the facility's fields with `row_text` and the page image. Tier (a) matches are few; check all of them as well, outside T2.
+**T2 sample:** `docs/T2_SAMPLE.csv`, 100 rows drawn with `pandas.DataFrame.sample(random_state=20261031)` from the tier (a) and (b) matches sorted by `unique_id` (b_place 99, a_named 1; by level ward_standard 93, settlement_name 6, facility_name 1); SHA-256 `20dbc01aa04cecf395ed4bc23c9fada94deaf9157bd547c1ca0d5a4d80b8bdaa`. **Unchecked**: `correct`, `checked_by` and `note` are empty for a human to fill by comparing the facility's fields with `row_text` and the page image. Tier (a) matches are few; check all of them as well, outside T2.
 <!-- current-run:end -->
 
 **Superseded run (amendment 1 only)**, on agent A's `nerc_rows.parquet` of 14:53 PKT (2,188 rows, SHA-256

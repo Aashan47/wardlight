@@ -160,19 +160,56 @@ FX_NGN_PER_USD = Const(
 )
 FX_DATE = "2026-10-27"
 DIESEL_NGN_PER_L = Const(
-    1441.28, "NGN per litre",
-    f"{SV} 4 rows 1-2: lo = NBS Oct 2024 (VERIFIED, two years old); hi = N3,277.47 May 2026, news-reported only "
-    "(UNVERIFIED)",
-    "UNVERIFIED", lo=1441.28, hi=3277.47,
-    note="Point default is the newest NBS-hosted price; the range is what is shown.",
+    3277.47, "NGN per litre",
+    "NBS Diesel Price Watch May 2026 via 21st Century Chronicle, Legit, The Sun; four outlets agree (N3,277.47 per "
+    "litre, national average, up 86.40% from N1,758.26 in May 2025; brief 13 ref. 10, Legit.ng). The NBS page itself "
+    f"was not opened (blocked). lo = NBS Oct 2024, N1,441.28 ({SV} 4 rows 1-2), kept only as the low end",
+    "VERIFIED_SECONDARY", lo=1441.28, hi=3277.47,
+    note="National average. Borno April 2026 was N2,684.95 (Legit.ng, NBS); Borno was not in May 2026's top 10 "
+         "(tenth: N3,388.85). North-West zone May 2026: N3,313.60.",
 )
 GEN_L_PER_KWH = Const(
-    0.378, "litres per kWh",
-    f"{SV} 4 row 10: vendor chart, 20 kW set, 0.303 L/kWh at full load to 0.454 at 1/4 load (DERIVED, low grade); "
-    "no published figure for 5-10 kVA",
-    "UNVERIFIED", lo=0.303, hi=0.454,
-    note="Placeholder range; a small clinic set likely sits at or above the high end.",
+    0.55, "litres per kWh",
+    "Clinic set (15 to 20 kVA at 20 to 50% load): Cummins C17 D5 (DS338) and C22 D5 (DS340) prime fuel tables, "
+    "0.63 to 0.73 L/kWh at 1/4 load and 0.40 to 0.47 at 1/2 load; point = interpolation at about 1/3 load; A2EI "
+    "(2022) measured Nigerian market sets at 22% average load (docs/sources/brief13-sources.md Q1). Replaces the "
+    f"earlier UNVERIFIED vendor-chart range 0.303 to 0.454 ({SV} 4 row 10)",
+    "DERIVED", lo=0.40, hi=0.73,
+    note="Spec sheets are VERIFIED primary; the load fraction is the derived step. Used for health facilities.",
 )
+GEN_L_PER_KWH_MID = Const(
+    0.34, "litres per kWh",
+    "20 to 60 kVA set at 50 to 100% load: Cummins C22 D5 1/2 to full and C90 D5 (DS380) 1/4 to full prime tables, "
+    "HOMER Pro 3.16 manual worked example 0.31 to 0.34 (docs/sources/brief13-sources.md Q1)",
+    "DERIVED", lo=0.31, hi=0.40,
+    note="Used for boreholes, market cold rooms and the water works. A set idling at 1/4 load burns up to 0.63.",
+)
+GEN_OM_USD_PER_KWH = Const(
+    0.03, "USD per kWh",
+    "NESG and Heinrich Boell Stiftung, 'Comparison of Costs of Electricity Generation in Nigeria' (June 2017), Annex "
+    "'Diesel off-grid' 10 kW set: 'Variable O & M $/kWh ... 0,03' (REEEP and NESP 2016 data); brief13-sources Q2",
+    "VERIFIED_SECONDARY", note="2016 data; no current Nigerian figure was found.",
+)
+GEN_LIFE_YEARS = Const(
+    10.0, "years", "same NESG/Boell Annex: 'Technical lifetime yr ... 10' (diesel off-grid, REEEP and NESP 2016)",
+    "VERIFIED_SECONDARY",
+)
+GENSET_SRC = ("Zit Electronics (Nigerian online retailer), Perkins soundproof diesel sets, https://www.zit.ng/collections/"
+              "perkins, accessed 31 Oct 2026 (one retailer, Lagos prices, delivery to Maiduguri not included); "
+              "brief13-sources Q2")
+GENSET_15KVA_NGN = Const(8_300_000.0, "NGN per set", GENSET_SRC + ": 'Perkins 15Kva ... N8,300,000'", "VERIFIED_SECONDARY")
+GENSET_20KVA_NGN = Const(9_300_000.0, "NGN per set", GENSET_SRC + ": 'Perkins UK 20kva ... N9,300,000'",
+                         "VERIFIED_SECONDARY")
+GENSET_30KVA_NGN = Const(9_960_000.0, "NGN per set", GENSET_SRC + ": 'Perkins UK 30Kva ... N9,960,000'",
+                         "VERIFIED_SECONDARY")
+GENSET_40KVA_NGN = Const(10_945_000.0, "NGN per set", GENSET_SRC + ": 'Perkins UK 40kva ... N10,945,000'",
+                         "VERIFIED_SECONDARY")
+GENSET_50KVA_NGN = Const(12_900_000.0, "NGN per set", GENSET_SRC + ": 'Perkins UK 50KVA ... N12,900,000'",
+                         "VERIFIED_SECONDARY")
+GENSET_100KVA_NGN = Const(24_400_000.0, "NGN per set", GENSET_SRC + ": 'Perkins UK 100kva ... N24,400,000'",
+                          "VERIFIED_SECONDARY")
+GENSET_POWER_FACTOR = Const(0.8, "kW per kVA", "no source opened; the usual rating power factor of a diesel set",
+                            "ASSUMPTION", lo=0.8, hi=0.8)
 CO2_KG_PER_L_DIESEL = Const(2.697, "kg CO2 per litre", f"{SV} 4 row 6, EPA 10.21 kg/gal / 3.785 L/gal", "DERIVED")
 EUR_NGN_CBN = Const(
     1508.0289, "NGN per EUR",
@@ -226,6 +263,118 @@ CATCHMENT_CAP_POP = Const(
     "end caps every facility's catchment",
     "VERIFIED", lo=10000.0, hi=20000.0,
     note="Applied to all facility levels (a scenario choice for hospitals); population above the cap is reported.",
+)
+
+# ---------------------------------------------------------------- brief 13: water, cold chain, gas plant, roofs
+# One place for the values a research stream is still sourcing (pump head and efficiency, cold-room energy, the
+# water works load). Each is a labelled range; replace the value, range, source and status together.
+B13_IMMAP = ("iMMAP, 'Water sources for eleven hotspot LGAs in Borno State', March 2019, via HDX, CC BY "
+             "(data-local/water/borno11/)")
+WATER_DENSITY_KG_M3 = Const(1000.0, "kg/m3", "physical constant (fresh water, rounded)", "DERIVED")
+STANDARD_GRAVITY_M_S2 = Const(9.80665, "m/s2", "physical constant (standard gravity, exact by definition)", "DERIVED")
+BH_PUMP_HEAD_M = Const(
+    40.0, "m total dynamic head (upper aquifer)",
+    "built from USGS Open-File Report 72-61 (Maiduguri GRA upper-aquifer water table about 16 m below ground, "
+    "1963 to 1968) and the World Bank 'Solar Pumping: The Basics' (2018) TDH method (static level + drawdown + tank "
+    "elevation + 10% losses, x 110%); brief13-sources Q4",
+    "ASSUMPTION", lo=30.0, hi=70.0,
+    note="Upper-aquifer boreholes. Deep lower-aquifer ('ruwan zafi') boreholes are sub-artesian to artesian and "
+         "differ; the survey does not say which aquifer a borehole taps.",
+)
+BH_PUMP_EFF = Const(
+    0.45, "wire-to-water efficiency",
+    "World Bank 'Solar Pumping: The Basics' (2018): 'A typical pumping system would have a maximum efficiency of 60% "
+    "at optimal operating point'; small sets run below it (brief13-sources Q4)",
+    "ASSUMPTION", lo=0.40, hi=0.60,
+)
+BH_DEFAULT_HOURS = Const(
+    8.0, "pumping hours per day",
+    f"{B13_IMMAP}: the most common recorded 'Operating Hours' (109 of 166 rows in Maiduguri + Jere); used only "
+    "where the survey left the field blank",
+    "ASSUMPTION", lo=4.0, hi=12.0,
+)
+PUMP_WINDOW_CENTRE_H = Const(
+    12.0, "local hour", "no source opened; pumping hours are placed centred on midday", "ASSUMPTION", lo=10.0, hi=14.0,
+)
+SOLAR_BH_ARRAY_KWP_PER_KW = Const(
+    1.5, "kWp of existing array per kW of pump",
+    "no source opened; the survey records the solar boreholes but not their array size", "ASSUMPTION",
+    lo=1.2, hi=2.0, note="Today a solar borehole pumps in the hours its array output covers the pump.",
+)
+WATER_WORKS_KW = Const(
+    100.0, "kW, continuous critical process load",
+    "no source found (brief13-sources Q4: water works power or diesel not found); partner needed (the operator). "
+    "Archetype for the OSM-mapped treatment site (4 clarifiers and a wastewater plant, ways 1318961730 to 1318961734)",
+    "ASSUMPTION", lo=30.0, hi=300.0,
+)
+COLDHUB_PV_KWP = Const(
+    5.5, "kWp per cold room",
+    "ColdHubs text on deutschland.de (26 May 2017): 'rooftop solar panels generating approximately 5.5kw, connected "
+    "to a set of deep-cycle, long lasting batteries'; room 10 x 10 x 7 ft, about 2 to 3 t in 150 crates "
+    "(brief13-sources Q3)",
+    "VERIFIED_SECONDARY",
+    note="No kWh/day or battery size is published; the daily load is DERIVED as this array's mean daily yield at the "
+         "market from the engine's NASA POWER PV model (an upper end of what the unit can run).",
+)
+COLDHUB_CAPEX_USD = Const(
+    40_000.0, "USD per unit",
+    "IFPRI Food Security Portal (16 Jul 2023), summary of a peer-reviewed study of 7 ColdHubs units in Northeast "
+    "Nigeria markets (Dec 2020 to Jan 2021): 'The construction of each cold storage unit cost approximately 40,000 "
+    "USD, while operational costs were around 150 USD per month' (brief13-sources Q3)",
+    "VERIFIED_SECONDARY",
+)
+COLDHUB_FEE_NGN_PER_CRATE_DAY = Const(
+    100.0, "NGN per crate per day",
+    "IFPRI (2023): 'Agents paid rental fees of N100 ... per day per crate'; ColdHubs Bodija Market page: a trader "
+    "quotes 'N250 per crate' (period not stated); brief13-sources Q3",
+    "VERIFIED_SECONDARY", lo=100.0, hi=250.0,
+)
+WATER_L_PER_PERSON_DAY = Const(
+    15.0, "litres per person per day",
+    "Sphere Handbook, fourth edition (2018), water supply standard 2.1 (UNICEF-hosted copy, "
+    "https://www.unicef.org/media/61556/file): 'Minimum of 15 litres per person per day'; brief13-sources Q4",
+    "VERIFIED",
+    note="A minimum, never a maximum: Sphere notes 50 L may be the urban minimum, so people served is an upper count.",
+)
+MEPP_SUPPORT_NGN_PER_MONTH = Const(
+    2.0e9, "NGN per month",
+    "Channels TV / Leadership / Arise News, 23 Apr 2026, March 2026 to December 2028: Arise News (24 Apr 2026) quotes "
+    "Governor Zulum, 'N2 billion monthly OPEX intervention funding from March 2026 to December 2028, totaling N68 "
+    "billion'; ThisDay (29 Apr 2026) the same; brief 13 refs 5 and 6; brief13-sources Q5",
+    "VERIFIED_SECONDARY",
+)
+MEPP_CAPACITY_MW = Const(
+    50.0, "MW", "OSM way 1288148118 'plant:output:electricity=50 MW'; brief 13 ('a 50 MW gas plant')",
+    "VERIFIED_SECONDARY",
+)
+MEPP_AVG_DELIVERED_MW = Const(
+    14.2, "MW average delivered",
+    "News Agency of Nigeria via Peoples Gazette (23 Feb 2025): MEPP 'is generating 32-MW with a daily average "
+    "capacity of 14.20MW as at December 2024' (not attributed to a named official); brief13-sources Q5",
+    "VERIFIED_SECONDARY", lo=14.2, hi=50.0,
+    note="Range up to the 50 MW nameplate: support per kWh is lowest if the plant ran flat out.",
+)
+MEPP_SRC_NAN = ("News Agency of Nigeria via Peoples Gazette, 'Firm proposes 50MW gas plant to boost power in Borno' "
+                "(23 Feb 2025): 'MEPP is operating at unsuitable tariff of 6.2USc/kWh paid by NBET vs. Cost tariff of "
+                "15.88USc/kWh for an average of 41MW CCPP as at Sep. 2024'; brief13-sources Q5")
+MEPP_COST_TARIFF_USC_PER_KWH = Const(15.88, "US cents per kWh", MEPP_SRC_NAN + " (cost-reflective tariff)",
+                                     "VERIFIED_SECONDARY")
+MEPP_NBET_PAID_USC_PER_KWH = Const(6.2, "US cents per kWh", MEPP_SRC_NAN + " (paid by NBET)", "VERIFIED_SECONDARY")
+MEPP_FUEL = ("natural gas delivered by road tanker (plant manager quoted by HumAngle, 22 Mar 2024; Global Energy "
+             "Monitor lists natural gas, diesel second)")
+MEPP_OSM_NOTE = "the plant's OSM fuel tag disagrees with the plant manager and GEM; it is replaced by the sourced fuel"
+MEPP_TARIFF_NOTE = ("MEPP cost tariff 15.88 US cents/kWh against 6.2 US cents/kWh paid by NBET (Sep 2024; NAN via "
+                    "Peoples Gazette, 23 Feb 2025)")
+ROOF_NEAREST_M = Const(
+    30.0, "m", "no source opened; a point site with no building around it takes the single nearest OSM building "
+               "within this distance as its own roof", "ASSUMPTION", lo=20.0, hi=50.0,
+)
+ROOF_USABLE_FRACTION = Const(
+    0.5, "share of footprint usable for PV", "no source opened", "ASSUMPTION", lo=0.3, hi=0.7,
+)
+PV_KWP_PER_M2 = Const(
+    0.15, "kWp per m2 of usable roof", "no source opened (about 20% module efficiency with row spacing)",
+    "ASSUMPTION", lo=0.12, hi=0.20,
 )
 
 # ---------------------------------------------------------------- registry
