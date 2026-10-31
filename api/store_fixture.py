@@ -87,7 +87,7 @@ class FixtureStore:
                 "trace": c["trace_pqs_sdd"] if pqs else c["trace"], "sample": True,
                 "snapped": pv != req["pv_kwp"] or bat != req["battery_kwh"], "cached": False}
 
-    def plan(self, state, budget_ngn, target) -> dict:
+    def plan(self, state, budget_ngn, target, metric="doses", days=None) -> dict:
         p = dict(self._load("plan.json"))
         if state and state.lower() != str(p.get("state", "")).lower():
             raise NotFound(f"the fixture plan covers {p.get('state')} only")
@@ -98,8 +98,8 @@ class FixtureStore:
         p["ranked"] = rows
         return p
 
-    def brief(self, state, budget_ngn, metric="doses") -> dict:
-        if metric not in ("doses", "load_hours"):
+    def brief(self, state, budget_ngn, metric="doses", days=None) -> dict:
+        if metric not in ("doses", "load_hours", "outage_hours"):
             raise BadInput("metric must be 'doses' or 'load_hours'")
         p = self.plan(state, budget_ngn, None)
         budget = float(budget_ngn) if budget_ngn is not None else float(p.get("budget_ngn_max") or 0)
@@ -115,6 +115,12 @@ class FixtureStore:
                                  "why": "sample"}],
                 "scenarios": [], "assumptions": [], "sources": self.health().get("sources", []),
                 "currency_note": p.get("currency_note")}
+
+    def city(self, state, lgas, days, limit=500) -> dict:
+        raise NotFound("the city outage view needs the engine's outage columns; fixture mode has none")
+
+    def outage_trace(self, fid, days) -> dict:
+        raise NotFound("the outage trace needs the engine; fixture mode has none")
 
     def feeder(self, fid: str) -> dict:
         if not SAFE_ID.match(fid or ""):

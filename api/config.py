@@ -44,9 +44,15 @@ class Settings:
     agent_daily_cap: int = field(default_factory=lambda: _int("WARDLIGHT_AGENT_DAILY_CAP", 40))
     # agent F's modules are only called when this is on; otherwise recorded sessions are replayed
     agent_live: bool = field(default_factory=lambda: _flag("WARDLIGHT_AGENT_LIVE"))
+    # "all": recorded, scripted and (with agent_live) live runs; "replay": recorded sessions only. A scripted or live
+    # run builds agent F's Toolbox, measured at about 1 GB resident, so a small server runs "replay".
+    agent_runs: str = field(default_factory=lambda: os.environ.get("WARDLIGHT_AGENT_RUNS", "all").strip().lower())
     whatif_draws: int = field(default_factory=lambda: _int("WARDLIGHT_WHATIF_DRAWS", 32))
     # Cloudflare sets CF-Connecting-IP; trust it only behind the tunnel
     trust_cf_header: bool = field(default_factory=lambda: _flag("WARDLIGHT_TRUST_CF", True))
+    # where the on-disk store (api/store_build.py) is kept; None = WARDLIGHT_CACHE_DIR or a temp folder
+    cache_dir: Path | None = field(default_factory=lambda: Path(os.environ["WARDLIGHT_CACHE_DIR"])
+                                   if os.environ.get("WARDLIGHT_CACHE_DIR") else None)
 
 
 def settings() -> Settings:

@@ -20,6 +20,8 @@ names, quotes and labels comes from `api/sources.py`, which lists only sources a
 | POST | `/api/facilities/{id}/simulate` | `SimulateResponse` plus costs, labels, timings | engine call (`api/whatif.py`) |
 | GET | `/api/plan?state=&budget_ngn=&target=` | `Plan` | `engine.plan.rank` on parquet rows |
 | GET | `/api/plan/brief?state=&budget_ngn=&metric=` | investment brief (JSON); `&format=csv` or `/api/plan/brief.csv` for the funded list as CSV | `engine.plan.rank`, parquet, engine constants |
+| GET | `/api/city?state=&lgas=&days=` | brief 13 city view: totals and facilities ranked by service-hours gained | parquet sums; `engine.outage.aggregate_city` (or `aggregate`) |
+| GET | `/api/facilities/{id}/outage_trace?days=` | hourly trace across one outage window, for the 3D night | engine call (`api/outage_api.py`) |
 | GET | `/api/feeders/{id}` | `Feeder` plus `served_summary` | `nerc_rows.parquet`, naija-grid history, `matches.parquet`, `nerc_shortfalls.parquet` |
 | GET | `/api/results` | `Results` (T1 to T9) | files in `data/work/` and `docs/`, and engine calls for T3 |
 | GET | `/api/evidence/crops/{name}` | the NERC row crop (PNG) | `data/work/nerc_crops/` |
@@ -128,6 +130,32 @@ current match are not ranked. Default state Edo; `budget_ngn` defaults to the to
 `score` = doses gained per N1m of the fix; `cumulative_ngn` = running sum of `cost_ngn` in rank order;
 `fix` is the `FixCategory`.
 
+## Brief 13: line outages (`api/outage_api.py`)
+
+The metric: hours of critical service maintained during a line outage, and diesel litres avoided. The engine's
+batch writes, per outage length N (3, 7 and 14 days), `out{N}_*` columns (`engine/outage.py`): service-hours
+needed, kept today (no solar, household fridge, clinic loads on grid), kept today with a PQS ice-lined fridge, kept
+with the recommended fix, the energy the systems deliver, generator litres in a labelled generator scenario, and
+diesel litres avoided, each with its 5th to 95th percentile. The outage-ready fix (`orfix_*`) is one system per
+facility sized for `orfix_days`; its service-hours kept and diesel avoided fill that duration's block. Until a data
+build carries `orfix_*` the blocks say so and the fields are null.
+
+- Facility detail: `outage.by_days[N]` with every figure above, per-service hours, scenarios and labels, plus
+  `outage.outage_ready_fix`. List rows: `out{N}_needed_h`, `out{N}_today_h`, `out{N}_with_h`, `out{N}_orfix_h`,
+  `out{N}_diesel_l_avoided`.
+- `/api/city`: a city is a state plus optional LGAs (comma-separated). Totals are sums of per-facility medians
+  (lo and hi are sums of per-facility percentiles, wider than a joint interval), refused matches left out. The
+  list is ranked by service-hours gained (with minus today), then cost. `engine_aggregate` is the engine's own
+  `aggregate_city` when the outage-ready fix exists, else `aggregate` by state.
+- `/api/facilities/{id}/outage_trace`: the engine places the window (`window_mask`, seed + 1000 + days) and turns
+  the grid off in it; the draw shown is the one whose service-hours kept with the recommended systems is closest
+  to the median over draws. Hourly grid, solar, critical load, battery share, and room states with the systems
+  (`rooms`) and today (`rooms_today`), 12 hours either side of the window.
+- `/api/plan` and `/api/plan/brief` accept `metric=outage_hours` (cost: the cold-chain fix plus the clinic system)
+  and `metric=orfix_hours` (cost: the outage-ready fix, only when the columns exist), with `days`.
+- `/api/summary` leads with `headline_metric`: the brief 13 totals per outage length over every facility with a
+  result and a known supply.
+
 ## Data version
 
 `data_version` is the agents' own definition, `agents.tools.WardlightData.version`: the first 12 hex characters of
@@ -216,7 +244,45 @@ service runs one worker.
 rooms, 2 kWp and 14.4 kWh, `pqs_sdd`), cache off, over HTTP to a local uvicorn. On the build laptop (Apple
 silicon, 15 cores), while other jobs held the load average at about 14 to 24, after the ring began choosing a
 representative draw: **p50 0.48 s, p95 0.50 s, max 0.67 s**, no cache hits. An earlier run, before that change and
-at a load average of 14 to 16, gave p50 0.50 s, p95 0.73 s, max 0.78 s. This is not the PREREG measurement, which names the deployed server.
+at a load average of 14 to 16, gave p50 0.50 s, p95 0.73 s, max 0.78 s. After the move to the on-disk store, at
+a load average of 42 to 57 from other jobs: p50 1.10 s, p95 1.25 s, max 1.34 s, of which the engine itself took
+1.07 s at the median; the API's own share, including the SQLite row read, is about 30 ms. That run is not a clean
+measurement. Re-measured at a load average of 3.5 to 6, same method and store: **p50 0.49 s, p95 0.63 s, max
+0.66 s**, engine median 0.48 s. PREREG's T6 names the deployed server, still to be measured there. This is not the PREREG measurement, which names the deployed server.
+
+## Memory
+
+The production VM has 952 MB of RAM shared with three other services. Measured with `deploy/mem_api.py` on the build
+laptop (Apple silicon): `deploy/run.sh` on real data, RSS from `ps` after `/api/health` answers, then after one
+what-if and one agent replay (a recorded planner session streamed at speed 0).
+
+| | After start | After a what-if | After an agent replay | Peak, scripted planner | Peak, verifier | Peak, watcher |
+|---|---|---|---|---|---|---|
+| Before | 2,656 MB | 2,658 MB | 2,658 MB | 1,044 MB (separate run) | | |
+| After the store | 222 MB | 250 MB | 250 MB | | | |
+| After the agents share it | 278 MB | 290 MB | 290 MB | 304 MB | 322 MB | 345 MB |
+
+The last row is one process, the runs in that order, measured with `deploy/mem_api.py --agents` at a load average
+of about 4. It is higher at start than the row above because the data build now carries 40-day outages and the
+outage-ready fix, and because the core keeps the match columns agent F's tools filter on.
+
+What changed:
+- The merged table (facilities, matches, facility_results with about 150 columns, catchments) is no longer held in
+  memory. `api/store_build.py` writes it once per data version, in a child process, to an on-disk store: each
+  facility's full row as compressed JSON in SQLite (about 270 MB on disk), the feeder-row index, a core table of
+  the 97 columns the routes filter, rank and sum on, the gzipped facility list, and the precomputed summary and
+  supply calibration. The API loads only the core (about 60 MB) and reads full rows from SQLite per request.
+- Evidence JSON, per-service hours, system specs and labels stay on disk. The unfiltered facility list is served
+  from its gzipped file.
+- Core strings are plain Python strings; columns that never enter a ranking or a money sum are float32; Arrow uses
+  the system allocator and its pool is released after loading.
+- Agent F's tools read the same store: `agents.tools.WardlightData(store=...)` takes the API's store object and
+  serves `table`, `facilities`, `matches`, `nerc_rows` and `version` from the store's slim columns (renamed to the
+  agents' names and tier rule), and reads a facility's full row from disk only when a tool returns it (`row`,
+  `enrich`). No second copy of the frames is loaded. The watcher gets naija-grid caps for its two months only.
+- The builder itself peaks at about 800 MB, so it should run on the Mac and its four files be copied to the VM
+  (`deploy/README.md`).
+- `WARDLIGHT_AGENT_RUNS=replay` remains as a guard that serves recorded sessions only; the unit runs all modes.
 
 ## Packages
 

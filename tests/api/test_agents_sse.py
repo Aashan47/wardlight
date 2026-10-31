@@ -159,3 +159,18 @@ def test_agent_f_recordings_replay_valid(tmp_path):
         assert len(data) == r["n_events"], r["name"]
         assert EV.validate(data) == [], r["name"]
         assert data[-1]["recorded"] is True
+
+
+def test_replay_only_mode_refuses_new_runs(fixture_root):
+    """Replay mode refuses the brief 1 runs that need the 1 GB toolbox. Amended 31 Oct 2026: the brief 13 planner,
+    site verifier and line watcher read only the small city build, so they still run (scripted, no model)."""
+    hub = AgentHub(make_settings(fixtures=fixture_root, agent_runs="replay"), fixture=False)
+    r = hub.start("verifier", {"facility_id": "SN_NOT_RECORDED", "replies": ["1"]}, speed=0)
+    r.wait(10**6, 2.0)
+    assert r.mode == "unavailable" and "recorded agent sessions only" in r.meta["reason"]
+    r13 = hub.start("planner", {"question": "a question with no recording"}, speed=0)
+    r13.wait(10**6, 5.0)
+    assert r13.mode == "scripted"
+    rec = hub.start("planner", {"question": Q}, want_recorded=True, speed=0)
+    rec.wait(10**6, 2.0)
+    assert rec.mode == "recorded"

@@ -6,7 +6,9 @@ Run:  uvicorn --factory api.main:create_app --host 127.0.0.1 --port 8000   (from
 
 from __future__ import annotations
 
+import contextvars
 import csv
+import gzip
 import importlib
 import io
 import math
@@ -27,6 +29,7 @@ from .config import settings as load_settings
 from .errors import BadInput, NotFound
 from .limits import BodySizeLimit, RateLimiter, visitor
 
+request_accept: contextvars.ContextVar[str] = contextvars.ContextVar("accept_encoding", default="")
 RoomKey = Literal["fridge", "delivery", "oxygen", "lab", "ward"]
 ROOMS = ("fridge", "delivery", "oxygen", "lab", "ward")
 PV_STEP, BAT_STEP = 0.05, 0.1
@@ -69,7 +72,7 @@ def create_app(s: Settings | None = None) -> FastAPI:
         from .store_live import LiveStore
 
         store = LiveStore(s)
-    hub = AgentHub(s, s.fixture)
+    hub = AgentHub(s, s.fixture, store=store)
     limiter = RateLimiter({"read": s.rate_read, "simulate": s.rate_simulate, "agent": s.rate_agent,
                            "telephony": s.rate_telephony})
 
@@ -93,6 +96,12 @@ def create_app(s: Settings | None = None) -> FastAPI:
             headers["X-Cache"] = cache
         if max_age:
             headers["Cache-Control"] = f"public, max-age={max_age}"
+        if hasattr(data, "path") and str(data.path).endswith(".gz"):
+            if "gzip" in request_accept.get().lower():
+                return FileResponse(data.path, media_type="application/json",
+                                    headers={**headers, "Content-Encoding": "gzip", "Vary": "Accept-Encoding"})
+            with gzip.open(data.path, "rb") as f:
+                return Response(content=f.read(), media_type="application/json", headers=headers)
         if isinstance(data, (bytes, bytearray)):
             return Response(content=bytes(data), media_type="application/json", headers=headers)
         return JSONResponse(_clean(data), headers=headers)
@@ -113,6 +122,7 @@ def create_app(s: Settings | None = None) -> FastAPI:
         h = store.health()
         h["sms_ussd"] = {"sandbox": True, "sends": False}
         h["agents"] = {"cap": hub.cap(), "live_enabled": bool(s.agent_live and not s.fixture),
+                       "runs": "replay" if (s.fixture or s.agent_runs == "replay") else "all",
                        "recordings": len(hub.recordings())}
         return ok(h, max_age=0)
 
@@ -127,6 +137,7 @@ def create_app(s: Settings | None = None) -> FastAPI:
                    tier: str | None = Query(None, max_length=20), limit_: int | None = Query(None, alias="limit",
                                                                                             ge=1, le=100_000)):
         limit(request, "read")
+        request_accept.set(request.headers.get("accept-encoding", ""))
         return ok(store.facilities(state, lga, q, tier, limit_))
 
     @app.get("/api/facilities/{fid}")
@@ -149,13 +160,15 @@ def create_app(s: Settings | None = None) -> FastAPI:
 
     @app.get("/api/plan")
     def plan(request: Request, state: str | None = Query(None, max_length=60),
+             metric: Literal["doses", "load_hours", "outage_hours", "orfix_hours"] = "doses",
+             days: int | None = Query(None, ge=1, le=60),
              budget_ngn: float | None = Query(None, ge=0, le=1e13), target: float | None = Query(None, ge=0, le=1)):
         limit(request, "read")
-        return ok(store.plan(state, budget_ngn, target))
+        return ok(store.plan(state, budget_ngn, target, metric, days))
 
-    def _brief(request: Request, state, budget_ngn, metric, fmt):
+    def _brief(request: Request, state, budget_ngn, metric, fmt, days=None):
         limit(request, "read")
-        b = store.brief(state, budget_ngn, metric)
+        b = store.brief(state, budget_ngn, metric, days)
         if fmt == "csv":
             name = re.sub(r"[^A-Za-z0-9]+", "-", b["state"]).strip("-").lower()
             return Response(brief_csv(b), media_type="text/csv; charset=utf-8",
@@ -166,15 +179,31 @@ def create_app(s: Settings | None = None) -> FastAPI:
     @app.get("/api/plan/brief")
     def plan_brief(request: Request, state: str | None = Query(None, max_length=60),
                    budget_ngn: float | None = Query(None, ge=0, le=1e13),
-                   metric: Literal["doses", "load_hours"] = "doses",
+                   metric: Literal["doses", "load_hours", "outage_hours", "orfix_hours"] = "doses",
+                   days: int | None = Query(None, ge=1, le=60),
                    format: Literal["json", "csv"] = "json"):
-        return _brief(request, state, budget_ngn, metric, format)
+        return _brief(request, state, budget_ngn, metric, format, days)
 
     @app.get("/api/plan/brief.csv")
     def plan_brief_csv(request: Request, state: str | None = Query(None, max_length=60),
                        budget_ngn: float | None = Query(None, ge=0, le=1e13),
-                       metric: Literal["doses", "load_hours"] = "doses"):
-        return _brief(request, state, budget_ngn, metric, "csv")
+                       metric: Literal["doses", "load_hours", "outage_hours", "orfix_hours"] = "doses",
+                   days: int | None = Query(None, ge=1, le=60)):
+        return _brief(request, state, budget_ngn, metric, "csv", days)
+
+    @app.get("/api/city")
+    def city(request: Request, state: str | None = Query(None, max_length=60),
+             lgas: str | None = Query(None, max_length=600), days: int | None = Query(None, ge=1, le=60),
+             limit_: int = Query(500, alias="limit", ge=1, le=5000)):
+        limit(request, "read")
+        return ok(store.city(state, lgas, days, limit_))
+
+    @app.get("/api/facilities/{fid}/outage_trace")
+    def outage_trace(request: Request, fid: str, days: int | None = Query(None, ge=1, le=60)):
+        limit(request, "simulate")
+        t0 = time.perf_counter()
+        out = store.outage_trace(fid, days)
+        return ok({**out, "api_ms": round((time.perf_counter() - t0) * 1000, 1)}, max_age=0)
 
     @app.get("/api/feeders/{fid}")
     def feeder(request: Request, fid: str):
@@ -278,7 +307,8 @@ def create_app(s: Settings | None = None) -> FastAPI:
         limit(request, "telephony", "tel:" + (form.get("phoneNumber") or visitor(request, s.trust_cf_header)))
         if not form.get("sessionId"):
             raise HTTPException(422, "sessionId is required (Africa's Talking USSD callback)")
-        reply = TEL.ussd_reply(store, form.get("text", ""), None if s.fixture else _verifier_ussd)
+        reply = TEL.ussd_reply(store, form.get("text", ""),
+                               None if (s.fixture or s.agent_runs == "replay") else _verifier_ussd)
         return PlainTextResponse(reply, headers={"X-Sandbox": "true"})
 
     @app.post("/api/sms/inbound")
@@ -290,6 +320,17 @@ def create_app(s: Settings | None = None) -> FastAPI:
         reply = TEL.sms_reply(store, form.get("text", ""))
         return ok({"sandbox": True, "sent": False, "to": form.get("from"), "reply": reply, "chars": len(reply),
                    "note": "sandbox: the reply is returned here and not sent; no SMS API is called"}, max_age=0)
+
+    # ------------------------------------------------------------ brief 13: city metrics, sites, corridor, siting
+
+    from .brief13_api import Brief13Files
+    from .brief13_api import register as register_brief13
+
+    app.state.brief13 = Brief13Files((s.fixtures if s.fixture else s.work) / "brief13")
+    register_brief13(app, app.state.brief13, limit, ok)
+    from .agent13 import register as register_agent13  # brief 13 plan, site verifier, line watcher
+
+    register_agent13(app, hub, limit, ok, _sse_response)
 
     @app.api_route("/api/{rest:path}", methods=["GET", "POST"])
     def api_404(rest: str):

@@ -10,7 +10,9 @@ import hashlib
 import json
 import math
 import re
+import sqlite3
 import threading
+import zlib
 from pathlib import Path
 
 import numpy as np
@@ -19,10 +21,13 @@ import pandas as pd
 from engine import coldchain as CC
 from engine import constants as C
 from engine import fridge as F
+from engine import outage as OU
 from engine import plan as PL
 from engine import supply as SP
 
+from . import outage_api as OA
 from . import results as R
+from . import store_build as SB
 from . import whatif as W
 from .config import Settings
 from .errors import BadInput, NotFound
@@ -35,6 +40,7 @@ WHO_PAYS = ["State Primary Health Care Board (state budget)",
             "Donor or development partner (for example a Solar for Health programme); lease-to-own as an option"]
 MAINTAINS = ("Not modelled: the payer's local installer or the state cold-chain officer would maintain it; no "
              "maintenance arrangement is sourced")
+METRICS = ("doses", "load_hours", "outage_hours", "orfix_hours")
 SCENARIO_HEADLINE = "household or non-PQS fridge"
 UPTIME_SCENARIOS = {"uptime_today": SCENARIO_HEADLINE, "uptime_today_pqs": "PQS ice-lined fridge",
                     "uptime_with_system": "with the recommended cold-chain fix"}
@@ -101,6 +107,104 @@ def catchment_fields(row) -> dict:
             "doses_demand_uncapped": num(row.get("doses_demand_uncapped"), 0)}
 
 
+def _read_core(path: Path) -> pd.DataFrame:
+    """The core table with plain Python strings (kept out of Arrow's memory pool, which is then released)."""
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    tb = pq.read_table(path, use_threads=False)
+    t = tb.to_pandas(self_destruct=True, split_blocks=True, use_threads=False)
+    del tb
+    for c in t.columns:
+        if str(t[c].dtype) in ("str", "string"):
+            t[c] = t[c].astype(object)
+    pa.default_memory_pool().release_unused()
+    return t
+
+
+def list_frame_from(t: pd.DataFrame) -> pd.DataFrame:
+    """The facility list rows (FacilityListItem plus catchment and outage fields) from the core table."""
+    t = t.copy()
+    for c in t.columns:  # float32 core columns: widen before rounding so the JSON carries no float noise
+        if t[c].dtype == np.float32:
+            t[c] = t[c].astype(np.float64)
+    out = {
+        "id": t.unique_id, "name": t.facility_name, "type": t.facility_type,
+        "lat": t.latitude.round(5), "lon": t.longitude.round(5), "state": t.state_standard,
+        "lga": t.lga_standard, "tier": t.tier, "p_fridge_survives": t.uptime_today.round(4), "code": t.code,
+        "scenario": SCENARIO_HEADLINE,
+        "capped": t.capped.astype("boolean"), "catchment_pop": t.catchment_pop.round(0),
+        "pop_above_cap": t.pop_above_cap.round(0), "doses_demand_uncapped": t.doses_demand_uncapped.round(0),
+    }
+    has_orfix = {"orfix_hours_kept", "orfix_days"} <= set(t.columns)
+    for d in OA.durations(t.columns):
+        p = f"out{d}_"
+        out[f"{p}needed_h"] = t[f"{p}needed_h"].round(1)
+        out[f"{p}today_h"] = t[f"{p}hours_today"].round(1)
+        out[f"{p}with_h"] = t[f"{p}hours_with"].round(1)
+        out[f"{p}orfix_h"] = t.orfix_hours_kept.where(t.orfix_days == d).round(1) if has_orfix else np.nan
+        out[f"{p}diesel_l_avoided"] = t[f"{p}diesel_l_avoided"].round(2)
+    return pd.DataFrame(out)
+
+
+def build_summary(t: pd.DataFrame) -> dict:
+    """The /api/summary payload from the core table (computed once, by the store builder)."""
+    by_state = []
+    for st, g in t.groupby("state_standard"):
+        by_state.append({"state": st, "total": len(g),
+                         "tiers": {k: int(v) for k, v in g.tier.value_counts().items()},
+                         "with_results": int(g.has_result.sum())})
+    ref = t[t.tier == "d_refused"]
+    reasons = ref.refusal_reason.astype(object).fillna("no match row")
+    refusals = [{"reason": k, "count": int(v)} for k, v in reasons.value_counts().items()]
+    res = t[t.has_result]
+    fixes = {k: int(v) for k, v in res.fix_category.value_counts().items()}
+
+    def ssum(col):
+        return num(res[col].sum(skipna=True))
+
+    tiers = {k: int(v) for k, v in t.tier.value_counts().items()}
+    return {
+        "headline_metric": outage_headline(res, OA.durations(t.columns)),
+        "sample": False, "by_state": by_state, "tiers": tiers, "refusals": refusals,
+        "headline": {"facilities": len(t),
+                     "matched": int(t.tier.isin(["a_named", "b_place", "c_lga_mixture", "c_unit_mixture"]).sum()),
+                     "refused": int((t.tier == "d_refused").sum()), "offgrid": int((t.tier == "offgrid").sum()),
+                     "with_results": len(res),
+                     "no_coordinates": int(t.latitude.isna().sum()),
+                     "by_source_version": {k: int(v) for k, v in t.source_version.value_counts().items()}},
+        "fixes": {"counts": fixes, "labels": dict(CC.FIX_LABEL)},
+        "doses_year": {"protected_today_domestic": ssum("doses_protected_today"),
+                       "protected_today_pqs_ice_lined": ssum("doses_protected_today_pqs"),
+                       "protected_with_fix": ssum("doses_with_system"),
+                       "note": "ESTIMATE: sums over facilities with results (WorldPop catchment capped at "
+                               "20,000 people, crude birth rate, unofficial schedule)"},
+        "uptime_median": {"today_domestic": num(res.uptime_today.median()),
+                          "today_pqs_ice_lined": num(res.uptime_today_pqs.median()),
+                          "with_fix": num(res.uptime_with_system.median()),
+                          "label": "share of days a year the vaccine fridge holds 2 to 8 degC"},
+        "quotes": QUOTES,
+        "coverage_note": "GRID3 v3.0 covers 24 of 37 states; the other 13 come from GRID3 v2.0, each facility "
+                         "labelled with its source version",
+    }
+
+
+def outage_headline(res: pd.DataFrame, out_days: list[int]) -> dict:
+    res = res[res.tier != "d_refused"]
+    return {"brief": 13, "metric": OA.METRIC_TEXT, "default_days": 7 if 7 in out_days else
+            (out_days[0] if out_days else None),
+            "by_days": {str(d): OA.city_totals(res, d, None) for d in out_days},
+            "scope": "all facilities with results whose grid supply is known (refused matches left out)",
+            "scenarios": OA.SCENARIOS}
+
+
+class GzFile:
+    """A gzipped JSON file served as is (Content-Encoding: gzip)."""
+
+    def __init__(self, path: Path):
+        self.path = path
+
+
 class LiveStore:
     fixture = False
 
@@ -111,34 +215,18 @@ class LiveStore:
         missing = [n for n in need if not (work / f"{n}.parquet").exists()]
         if missing:
             raise RuntimeError(f"data/work is missing {missing}; run the data build or set WARDLIGHT_FIXTURE=1")
-        fac = pd.read_parquet(work / "facilities.parquet")
-        fac = fac.sort_values("latitude", na_position="last").drop_duplicates("unique_id")
-        m = pd.read_parquet(work / "matches.parquet")
-        r = pd.read_parquet(work / "facility_results.parquet").rename(columns={"tier": "result_tier"})
-        # catchment figures come from catchments.parquet; the copies the batch carries are kept under result_*
-        r = r.rename(columns={c: f"result_{c}" for c in ("catchment_pop", "catchment_pop_raw", "pop_above_cap")
-                              if c in r})
-        cat = (pd.read_parquet(work / "catchments.parquet")[["unique_id", "catchment_pop", "pop_above_cap"]]
-               if (work / "catchments.parquet").exists() else None)
-        t = fac.merge(m.rename(columns={c: f"m_{c}" for c in m.columns if c != "unique_id"}), on="unique_id",
-                      how="left").merge(r, on="unique_id", how="left")
-        if cat is not None:
-            t = t.merge(cat, on="unique_id", how="left")
-        else:
-            t["catchment_pop"] = np.nan
-            t["pop_above_cap"] = np.nan
-        for col in ("capped", "doses_demand_uncapped"):
+        # the merged table lives on disk (api/store_build.py, built once per data version in a child process);
+        # memory holds only the core columns the routes filter, rank and sum on
+        self.files = SB.ensure(work, s.cache_dir)
+        t = _read_core(self.files["core"])
+        for col in ("capped", "doses_demand_uncapped", "catchment_pop", "pop_above_cap"):
             if col not in t:
                 t[col] = np.nan
-        # the current match decides the tier; the result's own tier is kept, and a difference marks it stale
-        t["tier"] = t["m_tier"].where(t["m_tier"].notna(), t["result_tier"]).fillna("d_refused")
-        t["results_stale"] = t["result_tier"].notna() & (t["result_tier"] != t["tier"])
-        t["has_result"] = t["uptime_with_system"].notna()
-        t = t.sort_values("unique_id").reset_index(drop=True)
-        t["code"] = np.arange(1, len(t) + 1)  # SMS / USSD code: position in the sorted id list
-        self.t = t
+        self.t = t  # sorted by unique_id; code = position + 1 (the SMS / USSD code)
         self.idx = {u: i for i, u in enumerate(t.unique_id)}
-        self.data_version = self._version(work)
+        self.db_path = self.files["sqlite"]
+        self._db_local = threading.local()
+        self.data_version = self.files["version"]
         mt, rt = (work / "matches.parquet").stat().st_mtime, (work / "facility_results.parquet").stat().st_mtime
         self.staleness = {"results_older_than_matches": bool(rt < mt),
                           "facilities_tier_changed_since_results": int(t.results_stale.sum()),
@@ -154,23 +242,22 @@ class LiveStore:
         self.nerc_by_slug = {k: i for i, k in enumerate(n.slug)}
         self.urls = nerc_urls(s.data_local / "MANIFEST.md")
         self.checks = self._load_checks()
-
-        # feeder -> facilities
-        fx = t[["unique_id", "m_feeder_ids"]].copy()
-        fx["fid"] = fx.m_feeder_ids.map(lambda x: jload(x, []))
-        fx = fx.explode("fid").dropna(subset=["fid"])
-        self.feeder_fac: dict[str, list[str]] = fx.groupby("fid").unique_id.apply(list).to_dict()
+        self.out_days = OA.durations(t.columns)
+        self.orfix_per, self.orfix_fix = OA.orfix_columns(t.columns)
 
         self._naija = None
         self._naija_lock = threading.Lock()
-        self.shortfall, self.supply_meta = SP.calibrated_from_work(work)
+        if meta_cal := json.loads(self.files["meta"].read_text()).get("supply"):
+            self.shortfall, self.supply_meta = SP.ShortfallParams(**meta_cal["params"]), meta_cal["meta"]
+        else:
+            self.shortfall, self.supply_meta = SP.calibrated_from_work(work)
         self.cache = Cache(s.cache_entries)
         sf = work / "nerc_shortfalls.parquet"
         self.shortfalls = pd.read_parquet(sf) if sf.exists() else pd.DataFrame(
             columns=["disco", "order_file", "page", "feeder_name", "period", "measured_avg_hours", "action"])
         self.shortfalls["name_norm"] = self.shortfalls.feeder_name.map(_norm)
-        self._list_json: bytes | None = None
-        self._summary = self._build_summary()
+        meta = json.loads(self.files["meta"].read_text())
+        self._summary = meta.get("summary") or build_summary(t)
         self._results = None
 
     # ------------------------------------------------------------ basics
@@ -231,24 +318,47 @@ class LiveStore:
                 return code - 1
         raise NotFound(f"no facility '{fid}'")
 
+    def _db(self) -> sqlite3.Connection:
+        con = getattr(self._db_local, "con", None)
+        if con is None:
+            con = sqlite3.connect(f"file:{self.db_path}?mode=ro", uri=True, check_same_thread=False)
+            self._db_local.con = con
+        return con
+
+    def _row(self, i: int) -> dict:
+        """The full merged row (every column of the four tables plus derived fields) for position i."""
+        hit = self._db().execute("SELECT row FROM fac WHERE code = ?", (int(i) + 1,)).fetchone()
+        if hit is None:
+            raise NotFound(f"no facility at position {i}")
+        return json.loads(zlib.decompress(hit[0]))
+
+    def _rows(self, uids) -> dict[str, dict]:
+        uids = list(uids)
+        out: dict[str, dict] = {}
+        for k in range(0, len(uids), 500):
+            part = uids[k:k + 500]
+            marks = ",".join("?" * len(part))
+            q = f"SELECT unique_id, row FROM fac WHERE unique_id IN ({marks})"
+            out.update({u: json.loads(zlib.decompress(r)) for u, r in self._db().execute(q, part)})
+        return out
+
+    @property
+    def core(self) -> pd.DataFrame:
+        """The slim in-memory columns (shared with agent F's tools through agents.tools.WardlightData(store=...))."""
+        return self.t
+
+    def full_rows(self, uids) -> dict[str, dict]:
+        return self._rows(uids)
+
+    def feeder_facilities(self, row_key: str) -> list[str]:
+        return [u for (u,) in self._db().execute("SELECT unique_id FROM feeder_fac WHERE row_key = ? "
+                                                  "ORDER BY unique_id", (row_key,))]
+
     # ------------------------------------------------------------ list and summary
 
-    def _list_frame(self) -> pd.DataFrame:
-        t = self.t
-        return pd.DataFrame({
-            "id": t.unique_id, "name": t.facility_name, "type": t.facility_type,
-            "lat": t.latitude.round(5), "lon": t.longitude.round(5), "state": t.state_standard,
-            "lga": t.lga_standard, "tier": t.tier, "p_fridge_survives": t.uptime_today.round(4), "code": t.code,
-            "scenario": SCENARIO_HEADLINE,
-            "capped": t.capped.astype("boolean"), "catchment_pop": t.catchment_pop.round(0),
-            "pop_above_cap": t.pop_above_cap.round(0), "doses_demand_uncapped": t.doses_demand_uncapped.round(0),
-        })
-
-    def facilities(self, state=None, lga=None, q=None, tier=None, limit=None) -> list[dict] | bytes:
+    def facilities(self, state=None, lga=None, q=None, tier=None, limit=None) -> list[dict] | GzFile:
         if not any([state, lga, q, tier, limit]):
-            if self._list_json is None:
-                self._list_json = self._list_frame().to_json(orient="records").encode()
-            return self._list_json
+            return GzFile(self.files["list"])  # built with the store; served from disk
         t = self.t
         mask = pd.Series(True, index=t.index)
         if state:
@@ -265,53 +375,102 @@ class LiveStore:
                      | t.unique_id.str.lower().str.contains(ql, regex=False)
                      | t.lga_standard.str.lower().str.contains(ql, regex=False)
                      | (t.code.astype(str) == ql.lstrip("wl-").lstrip("0")))
-        f = self._list_frame()[mask.to_numpy()]
+        f = list_frame_from(t[mask.to_numpy()])
         if limit:
             f = f.head(int(limit))
         return json.loads(f.to_json(orient="records"))
 
-    def _build_summary(self) -> dict:
-        t = self.t
-        by_state = []
-        for st, g in t.groupby("state_standard"):
-            by_state.append({"state": st, "total": len(g),
-                             "tiers": {k: int(v) for k, v in g.tier.value_counts().items()},
-                             "with_results": int(g.has_result.sum())})
-        ref = t[t.tier == "d_refused"]
-        reasons = ref.m_reason.fillna("no match row").map(lambda s: s.split(";")[0].strip())
-        refusals = [{"reason": k, "count": int(v)} for k, v in reasons.value_counts().items()]
-        res = t[t.has_result]
-        fixes = {k: int(v) for k, v in res.fix_category.value_counts().items()}
-
-        def ssum(col):
-            return num(res[col].sum(skipna=True))
-
-        tiers = {k: int(v) for k, v in t.tier.value_counts().items()}
-        return {
-            "sample": False, "by_state": by_state, "tiers": tiers, "refusals": refusals,
-            "headline": {"facilities": len(t),
-                         "matched": int(t.tier.isin(["a_named", "b_place", "c_lga_mixture", "c_unit_mixture"]).sum()),
-                         "refused": int((t.tier == "d_refused").sum()), "offgrid": int((t.tier == "offgrid").sum()),
-                         "with_results": len(res),
-                         "no_coordinates": int(t.latitude.isna().sum()),
-                         "by_source_version": {k: int(v) for k, v in t.source_version.value_counts().items()}},
-            "fixes": {"counts": fixes, "labels": dict(CC.FIX_LABEL)},
-            "doses_year": {"protected_today_domestic": ssum("doses_protected_today"),
-                           "protected_today_pqs_ice_lined": ssum("doses_protected_today_pqs"),
-                           "protected_with_fix": ssum("doses_with_system"),
-                           "note": "ESTIMATE: sums over facilities with results (WorldPop catchment capped at "
-                                   "20,000 people, crude birth rate, unofficial schedule)"},
-            "uptime_median": {"today_domestic": num(res.uptime_today.median()),
-                              "today_pqs_ice_lined": num(res.uptime_today_pqs.median()),
-                              "with_fix": num(res.uptime_with_system.median()),
-                              "label": "share of days a year the vaccine fridge holds 2 to 8 degC"},
-            "quotes": QUOTES,
-            "coverage_note": "GRID3 v3.0 covers 24 of 37 states; the other 13 come from GRID3 v2.0, each facility "
-                             "labelled with its source version",
-        }
-
     def summary(self) -> dict:
         return self._summary
+
+    # ------------------------------------------------------------ brief 13: city and outage trace
+
+    def _days(self, days) -> int:
+        d = int(days) if days is not None else (7 if 7 in self.out_days else (self.out_days or [0])[0])
+        if d not in self.out_days:
+            raise BadInput(f"outage days must be one of {self.out_days}")
+        return d
+
+    def city(self, state: str | None, lgas: str | None, days: int | None, limit: int = 500) -> dict:
+        d = self._days(days)
+        st = self._state(state)
+        key = "city:" + input_hash([st, lgas, d, self.data_version])
+        hit = self.cache.get(key)
+        if hit is not None:
+            return hit
+        df = self.t[(self.t.state_standard == st) & self.t.has_result].copy()
+        want = [x.strip().lower() for x in (lgas or "").split(",") if x.strip()]
+        if want:
+            known = {x.lower(): x for x in df.lga_standard.dropna().unique()}
+            bad = [x for x in want if x not in known]
+            if bad:
+                raise NotFound(f"no LGA {bad} in {st}")
+            df = df[df.lga_standard.str.lower().isin(want)]
+        df = df[df.tier != "d_refused"]
+        p = f"out{d}_"
+        engine_agg = None
+        has_orfix = "orfix_hours_kept" in self.t.columns
+        if hasattr(OU, "aggregate_city") and has_orfix:
+            agg = OU.aggregate_city(st, [x for x in df.lga_standard.unique()] if want else None,
+                                    results=df.drop(columns=["facility_name", "facility_level", "lga_standard"]),
+                                    facilities=self.t[["unique_id", "facility_name", "facility_level",
+                                                       "lga_standard", "state_standard"]])
+            rk = agg.pop("ranked", None)
+            engine_agg = {**agg, "ranked_top": [] if rk is None or not len(rk) else [
+                {"id": x.unique_id, "rank": None if pd.isna(x["rank"]) else int(x["rank"]),
+                 "benefit": num(x.benefit, 1), "cost_ngn": num(x.cost_ngn, 0), "reason": x.reason}
+                for _, x in rk.head(limit).iterrows()]}
+        else:
+            agg = OU.aggregate(df.drop(columns=["state_standard", "lga_standard"]),
+                               self.t[["unique_id", "state_standard", "lga_standard"]], days=d,
+                               by=("state_standard",))
+            engine_agg = agg.to_dict("records")
+        df["gain_h"] = df[f"{p}hours_with"] - df[f"{p}hours_today"]
+        df["cost_ngn"] = df.capex_ngn.astype(float) + df.clinic_capex_ngn.fillna(0.0)
+        df = df.sort_values(["gain_h", "cost_ngn", "unique_id"], ascending=[False, True, True])
+        rows = [{"rank": i + 1, "id": r.unique_id, "code": int(r.code), "name": r.facility_name,
+                 "lga": r.lga_standard, "type": r.facility_type, "tier": r.tier, "lat": num(r.latitude, 5),
+                 "lon": num(r.longitude, 5), "needed_h": num(r[f"{p}needed_h"], 1),
+                 "today_h": num(r[f"{p}hours_today"], 1), "with_h": num(r[f"{p}hours_with"], 1),
+                 "gain_h": num(r.gain_h, 1), "diesel_l_avoided": num(r[f"{p}diesel_l_avoided"], 2),
+                 "fix": FIX_CATEGORY.get(r.fix_category), "cost_ngn": num(r.cost_ngn, 0),
+                 "scenario": OA.SCENARIOS["hours_today"]}
+                for i, (_, r) in enumerate(df.head(limit).iterrows())]
+        out = {"sample": False, "state": st, "lgas": sorted(df.lga_standard.unique().tolist()) if want else None,
+               "days": d, "metric": OA.METRIC_TEXT, "totals": OA.city_totals(df, d, self.orfix_per.get(d)),
+               "engine_aggregate": engine_agg,
+               "engine_aggregate_source": "engine.outage.aggregate_city" if hasattr(OU, "aggregate_city")
+               and has_orfix else "engine.outage.aggregate by state (no outage-ready fix columns in this build)",
+               "ranked": rows, "ranked_rule": "service-hours gained in the outage (with - today), then cost; refused "
+                                              "matches left out", "ranked_total": len(df),
+               "scenarios": OA.SCENARIOS}
+        self.cache.put(key, out)
+        return out
+
+    def outage_trace(self, fid: str, days: int | None) -> dict:
+        d = self._days(days)
+        i = self.resolve(fid)
+        row = self._row(i)
+        lat, lon = num(row.get("latitude")), num(row.get("longitude"))
+        if lat is None or not row.get("has_result"):
+            raise BadInput("this facility has no engine result (no coordinates), so no outage can be simulated")
+        bands = self._bands_obj(row)
+        fridge = jload(row.get("system_fridge"), {}) or {}
+        clinic = jload(row.get("system_clinic"), {}) or {}
+        from engine import solar as S
+
+        point = S.nearest_point(lat, lon)
+        key = "otrace:" + input_hash([point, bands, d, fridge.get("code"), clinic.get("pv_kwp"),
+                                      clinic.get("battery_kwh"), self.data_version])
+        hit = self.cache.get(key)
+        if hit is not None:
+            return hit
+        out = OA.trace(float(point[0]), float(point[1]), bands, d, float(clinic.get("pv_kwp") or 0),
+                       float(clinic.get("battery_kwh") or 0), row.get("fix_category"), fridge.get("code"),
+                       self.shortfall, self.s.whatif_draws)
+        out.update({"id": row["unique_id"], "sample": False, "headline": OA.block(row, d, self.orfix_per.get(d))})
+        self.cache.put(key, out)
+        return out
 
     # ------------------------------------------------------------ facility record
 
@@ -391,7 +550,7 @@ class LiveStore:
 
     def facility(self, fid: str) -> dict:
         i = self.resolve(fid)
-        row = self.t.iloc[i].to_dict()
+        row = self._row(i)
         lat, lon = num(row.get("latitude")), num(row.get("longitude"))
         match = self._match(row)
         facility = {"id": row["unique_id"], "code": int(row["code"]), "name": row["facility_name"],
@@ -423,6 +582,7 @@ class LiveStore:
                          "(0.90 to 0.99)",
         }
         rec["fix"] = self._fix(row, bands, fridge)
+        rec["outage"] = OA.outage_for(row, self.out_days, self.orfix_per, self.orfix_fix)
         rec["survival_today"], rec["survival_with_system"] = self._survival(row)
         rec["brief_metric"] = {
             "uptime_today": _iv(row, "uptime_today"), "uptime_today_pqs": _iv(row, "uptime_today_pqs"),
@@ -557,7 +717,7 @@ class LiveStore:
 
     def simulate(self, fid: str, req: dict) -> dict:
         i = self.resolve(fid)
-        row = self.t.iloc[i].to_dict()
+        row = self._row(i)
         lat, lon = num(row.get("latitude")), num(row.get("longitude"))
         if lat is None or lon is None:
             raise BadInput("this facility has no coordinates in the registry, so it cannot be simulated")
@@ -590,22 +750,28 @@ class LiveStore:
                 return s_
         raise NotFound(f"no state '{state}' in the facility registry")
 
-    def plan(self, state: str | None, budget_ngn: float | None, target: float | None) -> dict:
+    def plan(self, state: str | None, budget_ngn: float | None, target: float | None, metric: str = "doses",
+             days: int | None = None) -> dict:
+        if metric not in METRICS:
+            raise BadInput(f"metric must be one of {METRICS}")
+        d = self._days(days) if metric in ("outage_hours", "orfix_hours") else None
+        self._need_orfix(metric)
         if target is not None and abs(float(target) - PLAN_TARGET) > 1e-9:
             raise BadInput(f"results are precomputed at target {PLAN_TARGET}; another target needs an engine batch "
                            "re-run")
         st = self._state(state)
-        key = "plan:" + input_hash([st, budget_ngn, self.data_version])
+        key = "plan:" + input_hash([st, budget_ngn, metric, d, self.data_version])
         hit = self.cache.get(key)
         if hit is not None:
             return hit
         df = self.t[(self.t.state_standard == st) & self.t.has_result].copy()
         df["state"] = df.state_standard
         # a facility refused under the current match has no "today" figure, whatever an older result says
-        df.loc[df.tier == "d_refused", ["doses_protected_today", "uptime_today"]] = np.nan
-        budget = float(budget_ngn) if budget_ngn is not None else float(df.capex_ngn.sum(skipna=True))
-        ranked = PL.rank(df, budget, "doses")
-        summ = PL.summary(ranked, "doses")
+        df.loc[df.tier == "d_refused", ["doses_protected_today", "uptime_today", "crit_uptime_today",
+                                        *[f"out{x}_hours_today" for x in self.out_days]]] = np.nan
+        budget = float(budget_ngn) if budget_ngn is not None else float(self._cost(df, metric).sum(skipna=True))
+        ranked = PL.rank(df, budget, metric, outage_days=d or 7)
+        summ = PL.summary(ranked, metric)
         rk = ranked[ranked["rank"].notna()]
         rows = []
         for _, r in rk.iterrows():
@@ -622,11 +788,12 @@ class LiveStore:
                 "scenario": SCENARIO_HEADLINE, "scenarios": UPTIME_SCENARIOS,
                 "doses_protected_gain": num(r.benefit, 0), "score": num(r.benefit_per_mngn, 1), "reason": r.reason,
                 **catchment_fields(r),
+                "outage": OA.compact(r, [d], self.orfix_per).get(str(d)) if d else None,
             })
         nr = ranked[ranked["rank"].isna()]
         refused_all = self.t[(self.t.state_standard == st) & ~self.t.has_result]
         out = {
-            "sample": False, "state": st, "target": PLAN_TARGET, "metric": "doses",
+            "sample": False, "state": st, "target": PLAN_TARGET, "metric": metric, "outage_days": d,
             "budget_ngn": budget, "budget_ngn_max": num(rk.cum_cost_ngn.max(), 0) if len(rk) else 0,
             "currency_note": f"Converted at N{C.FX_NGN_PER_USD.value:,.2f} per USD, CBN central rate, {C.FX_DATE}",
             "ranked": rows,
@@ -666,11 +833,27 @@ class LiveStore:
         return {"kind": "tier_evidence", "file": None, "url": src if isinstance(src, str) and src.startswith("http")
                 else None, "page": None, "sn": None, "row_text": None, "text": text}
 
-    def brief(self, state: str | None, budget_ngn: float | None, metric: str = "doses") -> dict:
-        if metric not in ("doses", "load_hours"):
-            raise BadInput("metric must be 'doses' or 'load_hours'")
+    def _need_orfix(self, metric: str) -> None:
+        if metric == "orfix_hours" and "orfix_hours_kept" not in self.t.columns:
+            raise BadInput("metric orfix_hours needs the outage-ready fix columns, which this data build lacks")
+
+    @staticmethod
+    def _cost(df, metric: str):
+        """The cost engine.plan.rank uses for this metric."""
+        if metric == "orfix_hours":
+            return df.orfix_capex_ngn.astype(float)
+        if metric == "outage_hours":
+            return df.capex_ngn.astype(float) + df.clinic_capex_ngn.fillna(0.0)
+        return df["clinic_capex_ngn" if metric == "load_hours" else "capex_ngn"]
+
+    def brief(self, state: str | None, budget_ngn: float | None, metric: str = "doses",
+              days: int | None = None) -> dict:
+        if metric not in METRICS:
+            raise BadInput(f"metric must be one of {METRICS}")
+        d = self._days(days) if metric in ("outage_hours", "orfix_hours") else None
+        self._need_orfix(metric)
         st = self._state(state)
-        key = "brief:" + input_hash([st, budget_ngn, metric, self.data_version])
+        key = "brief:" + input_hash([st, budget_ngn, metric, d, self.data_version])
         hit = self.cache.get(key)
         if hit is not None:
             return hit
@@ -678,32 +861,35 @@ class LiveStore:
         df = all_st[all_st.has_result].copy()
         df["state"] = df.state_standard
         refused_now = df.tier == "d_refused"
-        df.loc[refused_now, ["doses_protected_today", "uptime_today", "crit_uptime_today"]] = np.nan
-        cost_col = "clinic_capex_ngn" if metric == "load_hours" else "capex_ngn"
-        budget = float(budget_ngn) if budget_ngn is not None else float(df[cost_col].sum(skipna=True))
-        ranked = PL.rank(df, budget, metric)
+        df.loc[refused_now, ["doses_protected_today", "uptime_today", "crit_uptime_today",
+                             *[f"out{x}_hours_today" for x in self.out_days]]] = np.nan
+        budget = float(budget_ngn) if budget_ngn is not None else float(self._cost(df, metric).sum(skipna=True))
+        ranked = PL.rank(df, budget, metric, outage_days=d or 7)
         summ = PL.summary(ranked, metric)
         rk = ranked[ranked["rank"].notna()]
         fund = rk[rk.funded]
-        unit = "vaccine doses protected a year (estimate)" if metric == "doses" else \
-            "critical load-hours restored a year"
+        unit = {"doses": "vaccine doses protected a year (estimate)",
+                "load_hours": "critical load-hours restored a year",
+                "outage_hours": f"critical service-hours kept in a {d}-day line outage",
+                "orfix_hours": f"critical service-hours kept in a {d}-day line outage (outage-ready fix)"}[metric]
         rows = []
+        full = self._rows(fund.unique_id)
         for _, r in fund.iterrows():
-            fridge = jload(r.get("system_fridge"), {}) or {}
-            clinic = jload(r.get("system_clinic"), {}) or {}
+            fr = full.get(r.unique_id, {})
             rows.append({
                 "rank": int(r["rank"]), "id": r.unique_id, "code": int(r.code), "name": r.facility_name,
                 "lga": r.lga_standard, "type": r.facility_type, "tier": r.tier,
-                "fix": FIX_CATEGORY.get(r.fix_category), "fix_label": r.fix_label, "fix_model": fridge.get("name"),
-                "clinic_system": ({"pv_kwp": num(clinic.get("pv_kwp")), "battery_kwh": num(clinic.get("battery_kwh"))}
-                                  if metric == "load_hours" else None),
+                "fix": FIX_CATEGORY.get(r.fix_category), "fix_label": r.fix_label, "fix_model": r.fix_model if isinstance(r.fix_model, str) else None,
+                "clinic_system": ({"pv_kwp": num(r.clinic_pv_kwp), "battery_kwh": num(r.clinic_battery_kwh)}
+                                  if metric in ("load_hours", "outage_hours", "orfix_hours") else None),
+                "outage": OA.compact(r, [d], self.orfix_per).get(str(d)) if d else None,
                 "cost_ngn": num(r.cost_ngn, 0), "cumulative_ngn": num(r.cum_cost_ngn, 0),
                 "benefit": num(r.benefit, 1), "benefit_unit": unit, "benefit_per_mngn": num(r.benefit_per_mngn, 1),
                 "doses_year": num(r.doses_per_year, 0), "doses_gain": num(r.doses_gain, 0),
                 "uptime_today": num(r.uptime_today, 4), "uptime_with_fix": num(r.uptime_with_system, 4),
                 "scenario": SCENARIO_HEADLINE,
                 "scenarios": {"uptime_today": SCENARIO_HEADLINE, "uptime_with_fix": UPTIME_SCENARIOS["uptime_with_system"]},
-                "results_stale": bool(r.get("results_stale")), "citation": self._citation(r),
+                "results_stale": bool(r.get("results_stale")), "citation": self._citation(fr),
                 **catchment_fields(r),
             })
         unfunded = rk[~rk.funded]
@@ -743,8 +929,11 @@ class LiveStore:
                                       "are counted at the cap, and doses_demand_uncapped shows the demand above it"},
             "not_reached": not_reached,
             "method": ("engine.plan.rank: benefit per naira, greedy under the budget, skipping a facility that does "
-                       "not fit; benefit is " + unit + ("; cost is the cold-chain fix" if metric == "doses" else
-                                                         "; cost is the separate clinic system")),
+                       "not fit; benefit is " + unit + {"doses": "; cost is the cold-chain fix",
+                                                         "load_hours": "; cost is the separate clinic system",
+                                                         "outage_hours": "; cost is the cold-chain fix plus the "
+                                                                         "clinic system",
+                                                         "orfix_hours": "; cost is the outage-ready fix"}[metric]),
             "scenarios": [
                 {"key": "domestic", "headline": True, "text": "today: a household or non-PQS fridge (4 h at 2 to 8 "
                  "degC without power, range 1.5 to 6 h, NIST lab test), because today's equipment is unknown"},
@@ -812,26 +1001,28 @@ class LiveStore:
             else:
                 note += "; no naija-grid feeder of the same name in this DisCo"
         facs = []
-        for u in self.feeder_fac.get(r.row_key, []):
-            fr = self.t.iloc[self.idx[u]]
-            ev = jload(fr.m_evidence, {}) or {}
-            how = f"{fr.m_reason}" + (f" (matched on {ev.get('matched_on')}: '{ev.get('facility_value')}' ~ "
-                                      f"'{ev.get('nerc_text')}')" if ev.get("matched_on") else "")
-            facs.append({"id": u, "name": fr.facility_name, "tier": fr.tier, "how": how})
+        uids = self.feeder_facilities(r.row_key)
+        full = self._rows(uids)
+        for u in uids:
+            fr = full[u]
+            ev = jload(fr.get("m_evidence"), {}) or {}
+            how = f"{fr.get('m_reason')}" + (f" (matched on {ev.get('matched_on')}: '{ev.get('facility_value')}' ~ "
+                                             f"'{ev.get('nerc_text')}')" if ev.get("matched_on") else "")
+            facs.append({"id": u, "name": fr.get("facility_name"), "tier": fr.get("tier"), "how": how})
         return {"sample": False, "id": r.slug, "row_key": r.row_key, "name": r.feeder_name, "disco": r.disco,
                 "band": r.band, "min_hours": num(r.min_hours), "band_history": history, "history_note": note,
                 "rows": rows, "facilities": facs, "promised_not_measured": True,
-                "served_summary": self.served_summary(r)}
+                "served_summary": self.served_summary(r, uids)}
 
-    def served_summary(self, r) -> dict:
+    def served_summary(self, r, uids: list[str] | None = None) -> dict:
         """Who depends on this feeder row, and how its promise compares with any measured hours."""
-        uids = self.feeder_fac.get(r.row_key, [])
+        uids = self.feeder_facilities(r.row_key) if uids is None else uids
         f = self.t.iloc[[self.idx[u] for u in uids]] if uids else self.t.iloc[0:0]
-        typ = f.facility_type.fillna("").str.lower()
+        typ = f.facility_type.astype(object).fillna("").astype(str).str.lower()
         hosp = typ.str.contains("hospital")
         phc = typ.str.contains("primary health") | typ.str.contains("health post") | typ.str.contains(
             "health center") | typ.str.contains("health centre")
-        n_feeders = f.m_feeder_ids.map(lambda x: len(jload(x, []) or []))
+        n_feeders = f.n_feeders
         doses = f.doses_per_year
         promised = num(r.min_hours)
         meas = self.shortfalls[(self.shortfalls.disco == r.disco)
@@ -853,7 +1044,8 @@ class LiveStore:
         return {
             "facilities": len(f),
             "by_tier": {k: int(v) for k, v in f.tier.value_counts().items()},
-            "by_level": {(k or "not stated"): int(v) for k, v in f.facility_level.fillna("").value_counts().items()},
+            "by_level": {(k or "not stated"): int(v) for k, v in
+                         f.facility_level.astype(object).fillna("").value_counts().items()},
             "hospitals": int(hosp.sum()), "phcs": int(phc.sum()),
             "type_rule": "hospital: facility_type contains 'hospital'; PHC: primary health centre or clinic, health "
                          "post, health centre",
@@ -889,9 +1081,9 @@ class LiveStore:
             i = self.resolve(code)
         except NotFound:
             return None
-        row = self.t.iloc[i]
-        return {"id": row.unique_id, "code": int(row.code), "name": row.facility_name, "tier": row.tier,
-                "has_result": bool(row.has_result), "fix_category": row.get("fix_category"),
+        row = self._row(i)
+        return {"id": row["unique_id"], "code": int(row["code"]), "name": row["facility_name"], "tier": row["tier"],
+                "has_result": bool(row.get("has_result")), "fix_category": row.get("fix_category"),
                 "fix_label": row.get("fix_label"), "capex_ngn": num(row.get("capex_ngn")),
                 "uptime_today": num(row.get("uptime_today")), "uptime_today_pqs": num(row.get("uptime_today_pqs")),
                 "uptime_with_system": num(row.get("uptime_with_system")), "reason": row.get("m_reason")}

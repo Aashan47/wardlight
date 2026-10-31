@@ -13,6 +13,11 @@ How a run is chosen (mode):
             as code (it has no model);
 - unavailable: nothing can run (an `error` then a `done` event, recorded false, model "none").
 Every non-recorded run counts against the daily cap. Recorded replays are free and do not count.
+
+Brief 13 (31 Oct 2026): the planner runs over the city tools (agents.tools13, agents.fake13 when scripted); the
+verifier takes a site id (agents.verifier13) and the watcher a city (agents.watcher13, TCN's 2024 line-cut
+statements). These read the small city build only (a few MB, not the 1 GB brief 1 toolbox), so they also run when
+WARDLIGHT_AGENT_RUNS=replay. The brief 1 verifier (a facility id) and watcher (two NERC months) stay as they were.
 """
 
 from __future__ import annotations
@@ -86,14 +91,16 @@ def _try_import(name: str):
 
 
 class AgentHub:
-    def __init__(self, s: Settings, fixture: bool):
+    def __init__(self, s: Settings, fixture: bool, store=None):
         self.s = s
+        self.store = store
         self.fixture = fixture
         self.runs: dict[str, Run] = {}
         self._lock = threading.Lock()
         self._day = ""
         self._used = 0
         self._toolbox = None
+        self._city13 = None
         self._recordings: list[dict] | None = None
 
     # ------------------------------------------------------------ cap
@@ -133,14 +140,17 @@ class AgentHub:
                     continue
                 q = (rec.get("output") or {}).get("question") or rec.get("question")
                 fac = rec.get("facility") or {}
+                site = rec.get("site") or {}
                 out.append({"name": p.stem, "agent": agent, "label": rec.get("label"), "what": rec.get("what"),
                             "question": q, "facility_id": fac.get("unique_id") if isinstance(fac, dict) else None,
+                            "site_id": site.get("id") if isinstance(site, dict) else None,
+                            "city": rec.get("city"), "brief": rec.get("brief"),
                             "n_events": len(rec["events"]), "path": p})
             self._recordings = out
         return self._recordings
 
     def find_recording(self, agent: str, name: str | None = None, question: str | None = None,
-                       facility_id: str | None = None) -> dict | None:
+                       facility_id: str | None = None, site_id: str | None = None) -> dict | None:
         recs = [r for r in self.recordings() if r["agent"] == agent]
         if name:
             return next((r for r in recs if r["name"] == name), None)
@@ -149,6 +159,8 @@ class AgentHub:
             return next((r for r in recs if r["question"] and " ".join(r["question"].split()).casefold() == q), None)
         if facility_id:
             return next((r for r in recs if r["facility_id"] == facility_id), None)
+        if site_id:
+            return next((r for r in recs if r["site_id"] == site_id), None)
         return recs[0] if recs else None
 
     # ------------------------------------------------------------ producers
@@ -167,10 +179,25 @@ class AgentHub:
             yield e
 
     def toolbox(self):
-        if self._toolbox is None:
-            tools = importlib.import_module("agents.tools")
-            self._toolbox = tools.Toolbox()
+        """Agent F's Toolbox, built on first non-replay use (never for a replay). With the API's live store it
+        shares that store (one set of slim columns in memory, full rows from disk, one data version); without one
+        it reads its own frames, pruned to the columns agent F's code names."""
+        with self._lock:
+            if self._toolbox is None:
+                if self.store is not None and hasattr(self.store, "full_rows"):
+                    tools = importlib.import_module("agents.tools")
+                    self._toolbox = tools.Toolbox(data=tools.WardlightData(work_dir=self.s.work, store=self.store))
+                else:
+                    self._toolbox = _lean_toolbox(self.s.work)
         return self._toolbox
+
+    def city13(self):
+        """The brief 13 city build (agents.city13), read on first use: the fixtures in fixture mode, else work."""
+        with self._lock:
+            if self._city13 is None:
+                c13 = importlib.import_module("agents.city13")
+                self._city13 = c13.City13Data((self.s.fixtures if self.fixture else self.s.work) / "brief13")
+        return self._city13
 
     def _planner_client(self):
         if self.s.agent_live:
@@ -180,15 +207,21 @@ class AgentHub:
                     return llm.OpenAICompatClient.from_env(), "live"
                 except Exception:  # noqa: BLE001, S110 - not configured: fall through to scripted
                     pass
-        fake = _try_import("agents.fake")
+        fake = _try_import("agents.fake13")
         if fake is not None:
-            return fake.RuleBasedPlannerModel(), "scripted"
+            return fake.RuleBasedCityPlannerModel(), "scripted"
         return None, "unavailable"
 
     def _producer(self, agent: str, inputs: dict) -> tuple[Callable[[], Iterator[dict]] | None, str, str | None]:
         """(event generator factory, mode, reason when unavailable) for a non-recorded run."""
         if self.fixture:
             return None, "unavailable", "fixture mode runs recorded sessions only"
+        b13 = self._producer13(agent, inputs)
+        if b13 is not None:
+            return b13
+        if self.s.agent_runs == "replay":
+            return None, "unavailable", ("this server runs recorded agent sessions only (WARDLIGHT_AGENT_RUNS=replay): "
+                                         "a new run needs more memory than it has")
         if agent == "planner":
             mod = _try_import("agents.planner")
             client, mode = self._planner_client()
@@ -209,9 +242,34 @@ class AgentHub:
             if mod is None:
                 return None, "unavailable", "agents.watcher is not available"
             return (lambda: mod.run_events(inputs["old"], inputs["new"], data=self.toolbox().data,
+                                           caps=_two_month_caps(mod, inputs["old"], inputs["new"]),
                                            n_draws=int(inputs.get("n_draws", 16)),
                                            max_keys=inputs.get("max_keys"))), "scripted", None
         return None, "unavailable", f"unknown agent {agent}"
+
+    def _producer13(self, agent: str, inputs: dict):
+        """Brief 13 producers (small memory, allowed in replay mode); None when the inputs are brief 1's."""
+        if agent == "planner":
+            mod, t13 = _try_import("agents.planner"), _try_import("agents.tools13")
+            client, mode = self._planner_client()
+            if mod is None or t13 is None or client is None:
+                return None, "unavailable", "the brief 13 planner is not available"
+            if mode == "live" and self.s.agent_runs == "replay":
+                client, mode = _try_import("agents.fake13").RuleBasedCityPlannerModel(), "scripted"
+            return (lambda: mod.run_events(inputs["question"], client, t13.Toolbox13(self.city13()))), mode, None
+        if agent == "verifier" and inputs.get("site_id"):
+            mod = _try_import("agents.verifier13")
+            if mod is None:
+                return None, "unavailable", "agents.verifier13 is not available"
+            return (lambda: mod.run_events(self.city13(), inputs["site_id"], list(inputs.get("replies") or []))), \
+                "scripted", None
+        if agent == "watcher" and inputs.get("city"):
+            mod = _try_import("agents.watcher13")
+            if mod is None:
+                return None, "unavailable", "agents.watcher13 is not available"
+            return (lambda: mod.run_events(inputs["city"], float(inputs.get("budget_ngn") or mod.DEFAULT_BUDGET),
+                                           data=self.city13())), "scripted", None
+        return None
 
     # ------------------------------------------------------------ start
 
@@ -221,14 +279,17 @@ class AgentHub:
         cap = self.cap()
         rec = None
         if want_recorded or recording or self.fixture:
-            rec = self.find_recording(agent, recording, inputs.get("question"), inputs.get("facility_id"))
-            if rec is None and not inputs.get("question") and not inputs.get("facility_id") and not recording:
+            rec = self.find_recording(agent, recording, inputs.get("question"), inputs.get("facility_id"),
+                                      inputs.get("site_id"))
+            if rec is None and not inputs.get("question") and not inputs.get("facility_id") \
+                    and not inputs.get("site_id") and not recording:
                 rec = self.find_recording(agent)
         gen_factory, mode, why = (None, "recorded", None) if rec else self._producer(agent, inputs)
         cap_reached = False
         if rec is None and gen_factory is not None and not self._take():
             cap_reached = True
-            rec = self.find_recording(agent, None, inputs.get("question"), inputs.get("facility_id"))
+            rec = self.find_recording(agent, None, inputs.get("question"), inputs.get("facility_id"),
+                                      inputs.get("site_id"))
             gen_factory, mode = None, "recorded" if rec else "unavailable"
             why = None if rec else "the daily cap of agent runs is spent and no recording fits this request"
         meta = {"cap": self.cap() if not cap_reached else {**cap, "remaining": 0}, "cap_reached": cap_reached,
@@ -284,3 +345,43 @@ class AgentHub:
                 return
             if not evs:
                 yield b": keep-alive\n\n"
+
+
+def _lean_toolbox(work: Path):
+    import re
+
+    import pyarrow.parquet as pq
+
+    tools = importlib.import_module("agents.tools")
+    root = Path(tools.__file__).resolve().parent
+    words: set[str] = set()
+    for f in root.glob("*.py"):
+        words |= set(re.findall(r"[\"']([a-z][a-z0-9_]+)[\"']", f.read_text(encoding="utf-8")))
+
+    def read(name: str, prune: bool):
+        p = work / f"{name}.parquet"
+        cols = pq.ParquetFile(p).schema.names
+        if prune:
+            cols = [c for c in cols if c in words or c == "unique_id" or re.match(r"^(out\d+_|orfix_)", c)]
+        return pq.read_table(p, columns=cols).to_pandas()
+
+    data = tools.WardlightData(work_dir=work, facilities=read("facilities", False), matches=read("matches", False),
+                               results=read("facility_results", True), nerc_rows=read("nerc_rows", False))
+    from .store_build import data_version
+
+    data.__dict__["version"] = data_version(work)  # cached_property: the file-based id, as for uninjected data
+    return tools.Toolbox(data=data)
+
+
+def _two_month_caps(watcher, old: str, new: str):
+    """naija-grid caps for the two months the watcher compares, read in chunks (the full file is about 19 MB of
+    text). Same columns and join as agents.watcher.load_caps; the watcher reads no other month."""
+    import pandas as pd
+
+    naija = Path(watcher.NAIJA)
+    cols = ["feeder_id", "disco", "state", "order_month", "band", "source_file", "source_page"]
+    parts = [c[c.order_month.isin([old, new])]
+             for c in pd.read_csv(naija / "caps_long.csv", dtype=str, usecols=cols, chunksize=50_000)]
+    caps = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame(columns=cols)
+    f = pd.read_csv(naija / "feeders.csv", dtype=str, usecols=["feeder_id", "feeder_raw", "business_unit"])
+    return caps.merge(f, on="feeder_id", how="left")

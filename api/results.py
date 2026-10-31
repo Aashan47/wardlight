@@ -140,12 +140,16 @@ def _t7(store) -> dict:
 
 
 def _agents(s: Settings, tid: str) -> dict:
-    for name in (f"{tid.lower()}_results.json", f"{tid.lower()}.json", "agent_eval.json"):
-        d = _read_json(s.work / name)
+    # docs/agent_results.json carries the live T8/T9 result (docs/RESULTS.md); files in data/work, if any, come first
+    cands = [(s.work / n, f"data/work/{n}") for n in (f"{tid.lower()}_results.json", f"{tid.lower()}.json",
+                                                       "agent_eval.json")]
+    cands.append((s.docs / "agent_results.json", "docs/agent_results.json and docs/RESULTS.md"))
+    for path, label in cands:
+        d = _read_json(path)
         if d and isinstance(d, dict) and (tid in d or tid.lower() in d):
             v = d.get(tid) or d.get(tid.lower())
             if isinstance(v, dict) and "result" in v and "status" in v:
-                return {"result": v["result"], "status": v["status"], "source": f"data/work/{name}"}
+                return {"result": v["result"], "status": v["status"], "source": label}
     return {"result": None, "status": "not_run", "source": "no agent evaluation file in data/work yet"}
 
 

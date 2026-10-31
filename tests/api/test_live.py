@@ -139,7 +139,8 @@ def test_ussd_live(live_client, ids):
 @pytest.mark.skipif(importlib.util.find_spec("agents.planner") is None, reason="agent F's planner not present")
 def test_planner_scripted_run_streams_real_events(live_client):
     r = live_client.post("/api/agent/plan", params={"stream": True},
-                         json={"question": "I have N80 million for Kano this year. Protect the most vaccine doses."})
+                         json={"question": "The line to Maiduguri is cut for two months. I have N2 billion. "
+                                               "Keep the most critical services running: hospitals, water and cold chain."})
     evs = sse_events(r.text)
     types = [e["event"] for e in evs]
     assert types[0] == "plan" and types[-1] == "done"
