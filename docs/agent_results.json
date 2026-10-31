@@ -1,0 +1,11 @@
+{
+  "note": "T8 and T9 on the brief 13 planner (PREREG amendment of 31 Oct 2026: questions C01 to C16, T9 target at least 15 of 16). Scored with python -m agents.evaluate on data/runs/live13-2026-10-31 (run 1, the result) and data/runs/live13-2026-10-31-run2. Full write-up in docs/RESULTS.md.",
+  "T8": {
+    "status": "hit",
+    "result": "Live model (openai/gpt-oss-120b on Nebius), questions C01 to C16: 219 of 219 numbers traced to a tool result in run 1 (the result), and 287 of 287 in run 2 after fixes. Details in docs/RESULTS.md"
+  },
+  "T9": {
+    "status": "miss",
+    "result": "Amended target: at least 15 of 16. Run 1 (the result): 11 of 16, a miss. After general fixes, run 2 on the same questions: 15 of 16; it is not a held-out test. Details in docs/RESULTS.md"
+  }
+}
