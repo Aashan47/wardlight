@@ -1,0 +1,26 @@
+# systemd unit used on the Oracle test and the Azure host (azure_up.sh rewrites the user and home path).
+[Unit]
+Description=Wardlight API, 127.0.0.1:8422 behind the Cloudflare tunnel
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/wardlight/app
+Environment=PYTHONUNBUFFERED=1
+Environment=WARDLIGHT_WORK=/home/ubuntu/wardlight/app/data/work
+Environment=WARDLIGHT_DATA_LOCAL=/home/ubuntu/wardlight/data-local
+Environment=WARDLIGHT_CACHE_DIR=/home/ubuntu/wardlight/cache
+Environment=WARDLIGHT_TRUST_CF=1
+Environment=WARDLIGHT_AGENT_LIVE=0
+Environment=WARDLIGHT_AGENT_DAILY_CAP=40
+EnvironmentFile=-/home/ubuntu/wardlight/env
+ExecStart=/home/ubuntu/wardlight/.venv/bin/python -m uvicorn --factory api.main:create_app --host 127.0.0.1 --port 8422 --workers 1
+Restart=on-failure
+RestartSec=5
+MemoryHigh=1500M
+MemoryMax=2000M
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

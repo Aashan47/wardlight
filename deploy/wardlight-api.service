@@ -15,19 +15,28 @@ Environment=PYTHONUNBUFFERED=1
 Environment=WARDLIGHT_FIXTURE=0
 Environment=WARDLIGHT_TRUST_CF=1
 Environment=WARDLIGHT_AGENT_LIVE=0
+# live, scripted and recorded agent runs: the agents share the API's store (measured peak 345 MB, the watcher)
+Environment=WARDLIGHT_AGENT_RUNS=all
 Environment=WARDLIGHT_AGENT_DAILY_CAP=40
 Environment=WARDLIGHT_RATE_READ=240
 Environment=WARDLIGHT_RATE_SIMULATE=30
 Environment=WARDLIGHT_RATE_AGENT=6
 Environment=WARDLIGHT_RATE_TELEPHONY=60
 Environment=WARDLIGHT_MAX_BODY_BYTES=16384
+# the on-disk store (api/store_build.py) lives here and survives restarts; build it on the Mac and copy it in
+Environment=WARDLIGHT_CACHE_DIR=/var/lib/wardlight
+Environment=ARROW_DEFAULT_MEMORY_POOL=system
+Environment=MALLOC_ARENA_MAX=2
 EnvironmentFile=-/etc/wardlight/api.env
 # One worker on purpose: the rate limiter, the what-if cache, agent runs and the daily cap live in process memory.
 ExecStart=/opt/wardlight/build/wardlight/deploy/run.sh
 Restart=on-failure
 RestartSec=3
 TimeoutStartSec=120
-MemoryMax=3G
+StateDirectory=wardlight
+# measured: about 280 MB after start, 290 MB after a what-if and a replay, 345 MB peak in a watcher run
+MemoryHigh=400M
+MemoryMax=600M
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict

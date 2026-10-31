@@ -1,21 +1,49 @@
-node_modules/
+# environments and dependencies
 .venv/
+venv/
+node_modules/
+web/node_modules/
 __pycache__/
 *.pyc
+*.egg-info/
 .pytest_cache/
-.env
-*.key
+.ruff_cache/
 .DS_Store
-# raw downloads stay outside git (see docs/SOURCES.md for URLs and hashes)
+
+# secrets: never commit any .env file or key
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+id_rsa*
+id_ed25519*
+
+# data that stays outside git (sources, licences and hashes: docs/SOURCES.md and docs/sources/)
 data/raw/
 data/work/
+data-local/
+store/
+*.sqlite
+*.sqlite-journal
+*.parquet
+*.pkl
+*.gpkg
+*.tif
+*.tiff
+*.pbf
+*.osm
+*.osm.bz2
+
+# build output and local screenshots
 web/dist/
+web/screenshots/
+web/scripts/.tmp*
+
 # demo video renders, voice clips and licensed music never go in git
 video/raw/
 video/voice/
 video/*.mp4
 video/*.m4a
 *.mp3
-*.egg-info/
-web/screenshots/
-web/node_modules/
+*.wav
