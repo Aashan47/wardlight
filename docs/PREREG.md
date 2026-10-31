@@ -32,3 +32,19 @@ public grid map where it cannot, and is otherwise refused.
   on it carry a warning.
 - T3 below target: the supply interval is widened until the back-test passes, and the widening is reported.
 - Any refusal is a result, never hidden.
+
+## Amendment, 31 Oct 2026: T8 and T9 move to the brief 13 planner
+
+The product was re-targeted from brief 1 to brief 13 on 31 Oct 2026 (`../../13-BRIEF-RETARGET.md`). T8 and T9 above
+named 20 brief 1 questions and `plan.rank`. Neither had a reported result. From this date they are measured on the
+16 brief 13 questions C01 to C16 in `docs/AGENT_QUESTIONS.md` (amendment of the same date), fixed before any live run
+of the brief 13 planner: T8 keeps its target (100% of numbers traced); T9 checks the plan against
+`agents.city13.plan` with a target of at least 15 of 16 (the original 90%, rounded up). The rows above are not
+edited, so the original wording stays on record.
+
+
+## Amendment, 31 Oct 2026 (afternoon): first live result
+
+T8 and T9 were run live on C01 to C16; results, misses included, are in `docs/RESULTS.md`. Run 1 (the result): T8
+pass, T9 11 of 16, below target. Run 2 after general fixes: T8 pass, T9 15 of 16; it is not a held-out test. No target
+or question was changed.

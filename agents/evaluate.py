@@ -142,10 +142,119 @@ def evaluate_run(records: dict[str, dict], toolbox: Toolbox | None = None,
             "rows": rows}
 
 
+# ---------------------------------------------------------------- brief 13 (amendment of 31 Oct 2026)
+
+
+def load_questions13(path: Path = QUESTIONS_MD) -> list[dict]:
+    """C01 to C16: the brief 13 set, from the second json block (```json brief13) and its table."""
+    text = path.read_text()
+    block = re.search(r"```json brief13\n(.*?)\n```", text, re.DOTALL)
+    if not block:
+        raise ValueError("AGENT_QUESTIONS.md has no brief13 json block")
+    specs = json.loads(block.group(1))
+    table = {}
+    for line in text.splitlines():
+        m = re.match(r"\|\s*(C\d\d)\s*\|\s*(.+?)\s*\|\s*(plan|refuse[^|]*?)\s*\|", line)
+        if m:
+            table[m.group(1)] = (m.group(2), m.group(3).strip())
+    if set(table) != {s["id"] for s in specs}:
+        raise ValueError("the brief 13 question table and its json block list different ids")
+    for s in specs:
+        q, kind = table[s["id"]]
+        if not kind.startswith(s["kind"]):
+            raise ValueError(f"{s['id']}: table kind '{kind}' disagrees with json kind '{s['kind']}'")
+        s["question"] = q
+    return specs
+
+
+def _calls(record: dict, name: str) -> list[dict]:
+    out = []
+    for m in record["transcript"]:
+        for tc in m.get("tool_calls") or []:
+            if tc["function"]["name"] == name:
+                try:
+                    out.append(json.loads(tc["function"]["arguments"]))
+                except ValueError:
+                    pass
+    return out
+
+
+def check_t9_city(spec: dict, record: dict, toolbox) -> dict:
+    """T9 for brief 13: the plan matches agents.city13.plan run fresh with the expected arguments."""
+    from . import city13 as C13
+
+    out = record["output"]
+    calls = _calls(record, "rank_city_plan")
+    if spec["kind"] == "refuse":
+        ok = (out["status"] == "refused" and (out.get("refusal") or {}).get("reason") == spec["reason"]
+              and not calls)
+        return {"ok": ok, "why": None if ok else f"status {out['status']}, refusal {out.get('refusal')}, "
+                                                 f"plan calls {len(calls)}"}
+    if out["status"] != "answered":
+        return {"ok": False, "why": f"status {out['status']}"}
+    data = toolbox.data
+    fx = float((data.constant(spec["city"], "FX_NGN_PER_USD") or {}).get("value") or 0.0)
+    expected = float(spec["budget"]) * (fx if spec["currency"] == "USD" else 1.0)
+    want_secs = data.resolve_sectors(spec["sectors"])
+
+    def matches(a: dict) -> bool:
+        try:
+            c = data.resolve_city(a.get("city"))
+            secs = data.resolve_sectors(a.get("sectors"))
+        except C13.CityDataError:
+            return False
+        cur = (a.get("currency") or "NGN").upper()
+        b = float(a.get("budget", 0)) * (fx if cur == "USD" else 1.0)
+        return (c == spec["city"] and int(a.get("days", 60)) == spec["days"] and secs == want_secs
+                and abs(b - expected) <= 1.0)
+
+    if not any(matches(a) for a in calls):
+        return {"ok": False, "why": f"no rank_city_plan call with the expected arguments; calls: {calls}"}
+    fresh = C13.plan(data, spec["city"], expected, spec["days"], spec["sectors"])
+    want = {f["id"] for f in fresh["funded"]}
+    got = {f["unique_id"] for f in out["funded"]}
+    problems = []
+    if got != want:
+        problems.append(f"funded set differs from city13.plan ({len(got)} vs {len(want)})")
+    if out["totals"].get("spent_ngn", float("inf")) > expected + 1e-6:
+        problems.append("spent more than the budget")
+    return {"ok": not problems, "why": "; ".join(problems) or None}
+
+
+def evaluate_run13(records: dict[str, dict], toolbox=None, questions: list[dict] | None = None) -> dict:
+    from .tools13 import Toolbox13
+
+    toolbox = toolbox or Toolbox13()
+    questions = questions or load_questions13()
+    rows, n_total, n_traced = [], 0, 0
+    for spec in questions:
+        rec = records.get(spec["id"])
+        if rec is None:
+            rows.append({"id": spec["id"], "t8": None, "t9": {"ok": False, "why": "no record"}})
+            continue
+        t8 = check_t8(rec)
+        t9 = check_t9_city(spec, rec, toolbox)
+        n_total += t8["n_total"]
+        n_traced += t8["n_traced"]
+        rows.append({"id": spec["id"], "status": rec["output"]["status"], "t8": t8, "t9": t9,
+                     "model": rec["output"]["model"], "client_kind": rec["output"]["client_kind"]})
+    t9_pass = sum(r["t9"]["ok"] for r in rows)
+    kinds = {r.get("client_kind") for r in rows}
+    return {"t8": {"numbers": n_total, "traced": n_traced, "share": (n_traced / n_total) if n_total else None,
+                   "pass": n_total == n_traced},
+            "t9": {"passed": t9_pass, "of": len(rows), "target": 15, "pass": t9_pass >= 15},
+            "counts_as_prereg_result": kinds == {"live"} or kinds == {"live", "none"},
+            "rows": rows}
+
+
 def main(argv=None) -> int:
     run_dir = Path((argv or sys.argv[1:])[0])
-    recs = {p.stem: json.loads(p.read_text()) for p in run_dir.glob("Q*.json")}
-    res = evaluate_run(recs)
+    recs = {p.stem: json.loads(p.read_text()) for p in run_dir.glob("C*.json")}
+    if recs:  # brief 13 set (amendment of 31 Oct 2026)
+        res = evaluate_run13(recs)
+    else:
+        recs = {p.stem: json.loads(p.read_text()) for p in run_dir.glob("Q*.json")}
+        res = evaluate_run(recs)
     print(json.dumps({k: v for k, v in res.items() if k != "rows"}, indent=1))
     for r in res["rows"]:
         print(r["id"], r.get("status"), "T8", (r["t8"] or {}).get("ok"), "T9", r["t9"]["ok"], r["t9"].get("why") or "")

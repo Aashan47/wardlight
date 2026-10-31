@@ -63,9 +63,20 @@ REFUSAL_TEXT = {
                     "facilities, from its own data.",
     "data_cannot_support": "Wardlight's data cannot answer this question.",
 }
+NO_TOOLS_TEXT = ("That reply has no tool result behind it, so it cannot be shown. Answer the question with the tools, "
+                 "or call the refuse tool with a reason and an explanation.")
 MEDICAL_RULE = re.compile(
     r"\b(what dose|how many doses should|which vaccine should|symptoms?|diagnos\w*|prescri\w*|side effects?|"
     r"should (i|she|he|my child|the baby) (take|get|receive)|treatment for|is it safe to (give|take))\b", re.IGNORECASE)
+# Wardlight never forecasts attacks or names targets: refused by rule, so it never depends on the model's judgement
+ATTACK_RULE = re.compile(
+    r"\b(predict|forecast)\w*\b[^.?!]*\b(attack|vandal|sabotag|bomb|insurgen|target)\w*"
+    r"|\b(attack|vandal|sabotag|bomb|hit|target)\w*\s+next\b"
+    r"|\b(which|where)\s+(\w+\s+){0,8}?(will|is likely to|are likely to)\s+(be\s+)?"
+    r"(the\s+)?((insurgen\w*\s+|militant\w*\s+|they\s+)?(attack|vandal|sabotag|bomb|target)\w*"
+    r"|(insurgen\w*|militant\w*|they)\s+hit)", re.IGNORECASE)  # "be hit hardest by a cut" is a fair question
+ATTACK_TEXT = (" Wardlight has no incident records to forecast from, and it does not name sites or towers as "
+               "targets.")
 
 PLAN_STEPS = [
     {"id": "scope", "title": "Check the question is in scope"},
@@ -79,7 +90,7 @@ PLAN_STEPS = [
 @dataclass
 class Budget:
     max_steps: int = 8
-    max_tokens: int = 24000
+    max_tokens: int = 40000  # live run 31 Oct: a normal brief 13 plan with three tool calls used about 20,000
     max_tool_calls: int = 10
     max_tool_result_chars: int = 10000
     max_answer_tokens: int = 900
@@ -87,8 +98,11 @@ class Budget:
 
 
 def scope_prefilter(question: str) -> str | None:
-    """'out_of_scope' for clear requests for medical advice; None otherwise (the model decides the rest)."""
-    return "out_of_scope" if MEDICAL_RULE.search(question or "") else None
+    """'out_of_scope' for clear requests for medical advice, 'data_cannot_support' for attack forecasts and
+    targets; None otherwise (the model decides the rest)."""
+    if MEDICAL_RULE.search(question or ""):
+        return "out_of_scope"
+    return "data_cannot_support" if ATTACK_RULE.search(question or "") else None
 
 
 def fit_result(res: dict, max_chars: int) -> str:
@@ -172,9 +186,14 @@ def run_events(question: str, client: ChatClient | None, toolbox: Toolbox | None
     """The planner as a generator of events. When `result` is a dict, the final record is stored in it."""
     budget = budget or Budget()
     toolbox = toolbox or Toolbox()
+    # the toolbox brings its own prompt, specs, refusal wording and summaries (brief 13: agents.tools13.Toolbox13)
+    system_prompt = getattr(toolbox, "system_prompt", SYSTEM_PROMPT)
+    refusal_text = getattr(toolbox, "refusal_text", REFUSAL_TEXT)
+    summarise = getattr(toolbox, "summary", _summary)
+    specs = toolbox.specs() if hasattr(toolbox, "specs") else TOOL_SPECS
     log = EV.EventLog()
     session = Session()
-    transcript: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": question}]
+    transcript: list[dict] = [{"role": "system", "content": system_prompt}, {"role": "user", "content": question}]
     tool_contents: list[str] = []
     usage = {"steps": 0, "prompt_tokens": 0, "completion_tokens": 0, "tool_calls": 0}
     status, answer, refusal, report = "budget_exhausted", BUDGET_TEXT, None, None
@@ -185,8 +204,9 @@ def run_events(question: str, client: ChatClient | None, toolbox: Toolbox | None
     yield log.emit("step_start", id="scope")
     rule = scope_prefilter(question)
     if rule:
-        status, refusal = "refused", {"reason": rule, "by": "rule", "explanation": REFUSAL_TEXT[rule]}
-        answer = REFUSAL_TEXT[rule] + " For medical questions, ask a health worker."
+        status, refusal = "refused", {"reason": rule, "by": "rule", "explanation": refusal_text[rule]}
+        answer = refusal_text[rule] + (" For medical questions, ask a health worker." if rule == "out_of_scope"
+                                       else ATTACK_TEXT)
         kind_used = "none"
     else:
         kind_used = kind
@@ -194,14 +214,14 @@ def run_events(question: str, client: ChatClient | None, toolbox: Toolbox | None
             raise LLMError("no model client")
         yield log.emit("step_start", id="gather")
         retries = budget.retries
-        drafting = False
+        drafting = nudged = False
         while usage["steps"] < budget.max_steps:
             used = usage["prompt_tokens"] + usage["completion_tokens"]
             if used + estimate_tokens(transcript) > budget.max_tokens:
                 yield log.emit("error", message="token budget for this session is spent")
                 break
             try:
-                resp = client.chat(transcript, TOOL_SPECS, budget.max_answer_tokens)
+                resp = client.chat(transcript, specs, budget.max_answer_tokens)
             except LLMError as e:
                 yield log.emit("error", message=f"model call failed: {e}")
                 status, answer = "budget_exhausted", "No answer is shown: the model call failed."
@@ -238,7 +258,7 @@ def run_events(question: str, client: ChatClient | None, toolbox: Toolbox | None
                     content = fit_result(res, budget.max_tool_result_chars)
                     tool_contents.append(content)
                     transcript.append({"role": "tool", "tool_call_id": tc["id"], "content": content})
-                    summ, rows = _summary(name, res)
+                    summ, rows = summarise(name, res)
                     yield log.emit("tool_result", id=tc["id"], summary=summ, rows=rows, ms=log.ms() - t_call,
                                    ok="error" not in res)
                     if name == "refuse" and res.get("refused"):
@@ -248,13 +268,18 @@ def run_events(question: str, client: ChatClient | None, toolbox: Toolbox | None
                         reason = res["reason"]
                         status = "refused"
                         refusal = {"reason": reason, "by": "model", "explanation": expl if rep.ok else
-                                   REFUSAL_TEXT[reason]}
+                                   refusal_text[reason]}
                         answer = refusal["explanation"]
                         stop = True
                 if stop:
                     break
                 continue
-            # a final draft
+            # a final draft. One with no tool result behind it (a bare "I can't help", or a refusal typed as text)
+            # goes back once: answer from the tools, or call refuse
+            if not tool_contents and not nudged:
+                nudged = True
+                transcript.append({"role": "user", "content": NO_TOOLS_TEXT})
+                continue
             draft = G.normalise(msg.get("content") or "")
             if not drafting:
                 drafting = True

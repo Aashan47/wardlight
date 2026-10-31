@@ -55,7 +55,7 @@ TENS_WORDS = {"twenty": 20, "thirty": 30, "forty": 40, "fifty": 50, "sixty": 60,
               "ninety": 90}
 WORD_SCALES = {"hundred": 100, "thousand": 1e3, "million": 1e6, "billion": 1e9}
 
-STRIP_CHARS = "()[]{}\"'*_`|<>;:!?,.~≈≥≤#"
+STRIP_CHARS = "()[]{}\"'*_`|<>;:!?,.~≈≥≤#“”‘’«»"  # curly quotes too: live models write “0”
 CITE_RE = re.compile(r"\[(S\d+(?:\s*[,;]\s*S\d+)*)\]")
 # gpt-oss writes citations as 【S1】 or 【S1†L3-L5】, glued to the number before them; and uses non-ASCII hyphens.
 _LENTICULAR_RE = re.compile(r"\u3010\s*(S\d+)[^\u3011]*\u3011")

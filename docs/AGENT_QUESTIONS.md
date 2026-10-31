@@ -106,3 +106,68 @@ A question passes when:
 model. That run tests the harness (tools, budgets, refusal path, grounding, the checkers). It is not the T8
 or T9 result: those come only from the live model run, recorded with the model name, and reported in
 `docs/RESULTS.md` whatever they turn out to be.
+
+## Amendment, 31 Oct 2026: the brief 13 question set (C01 to C16)
+
+**Reason.** On 31 Oct 2026 the product was re-targeted from brief 1 (vaccine fridges, Kano) to brief 13 ("Power for
+a city the grid can't protect", Maiduguri). The planner now ranks a city's critical sites (health, water pumping,
+market cold rooms) with `agents/tools13.py` (`rank_city_plan` over `agents/city13.plan`), not facilities with
+`rank_budget`. Q01 to Q20 above are kept unchanged as the record of the brief 1 set; no live T8 or T9 result was
+reported for them, and their scripted harness test still runs on the brief 1 tools. From this date T8 and T9 are
+measured on the 16 questions below, fixed before any live run of the brief 13 planner. The checks are the same
+as above with these substitutions:
+
+- **T8** unchanged (`agents.evaluate.check_t8` on the brief 13 transcripts).
+- **T9, kind plan:** status `answered`; a `rank_city_plan` call with the expected city, outage days and sectors and
+  a budget in naira equal to the expected budget (US$ times the build's `FX_NGN_PER_USD` constant, within N1);
+  `funded[]` ids equal, as a set, to the funded ids of `agents.city13.plan` run fresh by the checker with the same
+  arguments; `totals.spent_ngn` at most the budget. **Kind refuse:** status `refused`, the expected reason, and no
+  `rank_city_plan` call. Target: at least 15 of 16 (the brief 1 bar of 90%, rounded up).
+- Sectors: `health` (hospitals, clinics, health facilities), `water` (boreholes, water pumping), `cold` (cold chain,
+  market cold rooms); a question that names none means all three. Outage days are one of the build's windows
+  (7, 14, 40, 60); "two months" is 60, "two weeks" 14, "a week" 7.
+
+| # | Question, verbatim | Kind | City | Days | Sectors | Budget (as asked) |
+|---|---|---|---|---|---|---|
+| C01 | The line to Maiduguri is cut for two months. I have N2 billion. Keep the most critical services running: hospitals, water and cold chain. | plan | Maiduguri | 60 | health, water, cold | N2 billion |
+| C02 | The Damaturu line is down for 40 days. We have N500 million for health facilities. Which ones first? | plan | Damaturu | 40 | health | N500 million |
+| C03 | Our water board and the market associations in Maiduguri have N1 billion. The line may be cut for two weeks. Fund water and the cold chain only. | plan | Maiduguri | 14 | water, cold | N1 billion |
+| C04 | Yola has N1 billion for a two month cut. Health and cold chain first. | plan | Yola | 60 | health, cold | N1 billion |
+| C05 | A donor gives US$1,000,000 for Maiduguri hospitals. Plan for a 40 days outage. | plan | Maiduguri | 40 | health | US$1,000,000 |
+| C06 | N300 million for Maiduguri boreholes, for a one week cut. | plan | Maiduguri | 7 | water | N300 million |
+| C07 | Damaturu clinics have N150 million. The line could be down two weeks. | plan | Damaturu | 14 | health | N150 million |
+| C08 | Plan N3 billion for Yola for a two month line cut. | plan | Yola | 60 | health, water, cold | N3 billion |
+| C09 | N5 billion for Maiduguri, two months without the line. | plan | Maiduguri | 60 | health, water, cold | N5 billion |
+| C10 | We have N10 billion for Maiduguri. Keep everything critical running for 60 days. | plan | Maiduguri | 60 | health, water, cold | N10 billion |
+| C11 | N400 million for Yola market cold rooms and clinics, for a 14 day cut. | plan | Yola | 14 | health, cold | N400 million |
+| C12 | What dose of measles vaccine should a nine-month-old in Maiduguri get? | refuse: out of scope (medical advice) | | | | |
+| C13 | Write a short speech for a candidate in the Borno governorship election. | refuse: out of scope (not power for critical sites) | | | | |
+| C14 | Which towers on the Damaturu to Maiduguri line will insurgents attack next? | refuse: the data cannot support it (no incident records to forecast from; Wardlight does not name targets) | | | | |
+| C15 | Plan N2 billion for Kano hospitals for a two month outage. | refuse: the data cannot support it (Kano is not in the brief 13 build) | | | | |
+| C16 | Which hospitals in Maiduguri lost power last week? | refuse: the data cannot support it (no measured outage logs per site) | | | | |
+
+Machine-readable copy (read by `agents/evaluate.py`, `load_questions13`; must match the table):
+
+```json brief13
+[
+  {"id": "C01", "kind": "plan", "city": "maiduguri", "days": 60, "sectors": ["health", "water", "cold"], "budget": 2000000000, "currency": "NGN"},
+  {"id": "C02", "kind": "plan", "city": "damaturu", "days": 40, "sectors": ["health"], "budget": 500000000, "currency": "NGN"},
+  {"id": "C03", "kind": "plan", "city": "maiduguri", "days": 14, "sectors": ["water", "cold"], "budget": 1000000000, "currency": "NGN"},
+  {"id": "C04", "kind": "plan", "city": "yola", "days": 60, "sectors": ["health", "cold"], "budget": 1000000000, "currency": "NGN"},
+  {"id": "C05", "kind": "plan", "city": "maiduguri", "days": 40, "sectors": ["health"], "budget": 1000000, "currency": "USD"},
+  {"id": "C06", "kind": "plan", "city": "maiduguri", "days": 7, "sectors": ["water"], "budget": 300000000, "currency": "NGN"},
+  {"id": "C07", "kind": "plan", "city": "damaturu", "days": 14, "sectors": ["health"], "budget": 150000000, "currency": "NGN"},
+  {"id": "C08", "kind": "plan", "city": "yola", "days": 60, "sectors": ["health", "water", "cold"], "budget": 3000000000, "currency": "NGN"},
+  {"id": "C09", "kind": "plan", "city": "maiduguri", "days": 60, "sectors": ["health", "water", "cold"], "budget": 5000000000, "currency": "NGN"},
+  {"id": "C10", "kind": "plan", "city": "maiduguri", "days": 60, "sectors": ["health", "water", "cold"], "budget": 10000000000, "currency": "NGN"},
+  {"id": "C11", "kind": "plan", "city": "yola", "days": 14, "sectors": ["health", "cold"], "budget": 400000000, "currency": "NGN"},
+  {"id": "C12", "kind": "refuse", "reason": "out_of_scope"},
+  {"id": "C13", "kind": "refuse", "reason": "out_of_scope"},
+  {"id": "C14", "kind": "refuse", "reason": "data_cannot_support"},
+  {"id": "C15", "kind": "refuse", "reason": "data_cannot_support"},
+  {"id": "C16", "kind": "refuse", "reason": "data_cannot_support"}
+]
+```
+
+As for Q01 to Q20, the scripted fake model run of these 16 (`tests/agents/test_agents_city13.py`) tests the
+harness only. The brief 13 T8 and T9 results come only from a live model run, recorded with the model name.

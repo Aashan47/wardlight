@@ -1,0 +1,623 @@
+{
+ "kind": "verifier_session",
+ "recorded": true,
+ "label": "Recorded session. sandbox, simulated replies. Replies typed for the demo; no site was contacted.",
+ "events": [
+  {
+   "type": "plan",
+   "seq": 0,
+   "t_ms": 0,
+   "steps": [
+    {
+     "id": "baseline",
+     "title": "Read the site's modelled figures"
+    },
+    {
+     "id": "ask_pump",
+     "title": "Ask how the pump is powered"
+    },
+    {
+     "id": "ask_generator",
+     "title": "Ask if there is a working generator"
+    },
+    {
+     "id": "ask_gen_hours",
+     "title": "Ask the generator's hours last week"
+    },
+    {
+     "id": "answer",
+     "title": "Show what was modelled and what was reported"
+    }
+   ]
+  },
+  {
+   "type": "step_start",
+   "seq": 1,
+   "t_ms": 0,
+   "id": "baseline"
+  },
+  {
+   "type": "tool_call",
+   "seq": 2,
+   "t_ms": 0,
+   "id": "v1",
+   "name": "read_site",
+   "args": {
+    "site_id": "W-BH-589",
+    "city": "maiduguri",
+    "days": 7
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 3,
+   "t_ms": 0,
+   "id": "v1",
+   "rows": 1,
+   "ms": 0,
+   "summary": "MOGCOLIS CAMP (motorized borehole): motorized_borehole, 56 critical service-hours needed a week",
+   "site": {
+    "id": "W-BH-589",
+    "name": "MOGCOLIS CAMP (motorized borehole)",
+    "sector": "water",
+    "archetype": "motorized_borehole",
+    "lga": "Maiduguri",
+    "kw": 0.436,
+    "hours_per_day": 8.0,
+    "supply": "band of the NERC rows naming Mafoni ward (as matched for a health facility there)"
+   },
+   "week": {
+    "needed_h": 56.0,
+    "today_h": 0.0,
+    "with_h": 56.0,
+    "diesel_l_avoided": 8.3
+   }
+  },
+  {
+   "type": "tool_call",
+   "seq": 4,
+   "t_ms": 0,
+   "id": "v2",
+   "name": "update_site",
+   "args": {
+    "site_id": "W-BH-589",
+    "why": "baseline: backup unknown"
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 5,
+   "t_ms": 0,
+   "id": "v2",
+   "summary": "critical service-hours kept in a 7-day cut: 0 to 56 of 56",
+   "rows": 1,
+   "ms": 0,
+   "interval": {
+    "lo": 0.0,
+    "hi": 56.0,
+    "point": null,
+    "width": 56.0,
+    "of": 56.0,
+    "basis": "MODELLED: backup unknown; from no backup (today) to the diesel scenario, which ASSUMES a generator with fuel for every needed hour"
+   },
+   "width_before": null,
+   "width_after": 56.0,
+   "widened": false
+  },
+  {
+   "type": "step_start",
+   "seq": 6,
+   "t_ms": 0,
+   "id": "ask_pump"
+  },
+  {
+   "type": "tool_call",
+   "seq": 7,
+   "t_ms": 0,
+   "id": "v3",
+   "name": "ask_site",
+   "args": {
+    "channel": "sms",
+    "to": "the borehole committee",
+    "message": "Wardlight (sandbox): how is the borehole pump powered? Reply 1 solar, 2 generator, 3 grid, 4 hand pump"
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 8,
+   "t_ms": 0,
+   "id": "v3",
+   "summary": "reply: 2",
+   "rows": 1,
+   "ms": 0,
+   "reply": "2",
+   "parsed": "generator",
+   "parse_status": "ok",
+   "parsed_by": "rule"
+  },
+  {
+   "type": "step_start",
+   "seq": 9,
+   "t_ms": 0,
+   "id": "ask_generator"
+  },
+  {
+   "type": "tool_call",
+   "seq": 10,
+   "t_ms": 0,
+   "id": "v4",
+   "name": "ask_site",
+   "args": {
+    "channel": "sms",
+    "to": "the borehole committee",
+    "message": "Wardlight (sandbox): does the site have a working generator? Reply 1 yes, 2 no"
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 11,
+   "t_ms": 0,
+   "id": "v4",
+   "summary": "reply: yes we have one",
+   "rows": 1,
+   "ms": 0,
+   "reply": "yes we have one",
+   "parsed": true,
+   "parse_status": "ok",
+   "parsed_by": "rule"
+  },
+  {
+   "type": "tool_call",
+   "seq": 12,
+   "t_ms": 0,
+   "id": "v5",
+   "name": "update_site",
+   "args": {
+    "site_id": "W-BH-589",
+    "why": "generator reported: yes"
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 13,
+   "t_ms": 0,
+   "id": "v5",
+   "summary": "critical service-hours kept in a 7-day cut: 0 to 56 of 56",
+   "rows": 1,
+   "ms": 0,
+   "interval": {
+    "lo": 0.0,
+    "hi": 56.0,
+    "point": null,
+    "width": 56.0,
+    "of": 56.0,
+    "basis": "MODELLED: backup unknown; from no backup (today) to the diesel scenario, which ASSUMES a generator with fuel for every needed hour"
+   },
+   "width_before": 56.0,
+   "width_after": 56.0,
+   "widened": false
+  },
+  {
+   "type": "step_start",
+   "seq": 14,
+   "t_ms": 0,
+   "id": "ask_gen_hours"
+  },
+  {
+   "type": "tool_call",
+   "seq": 15,
+   "t_ms": 0,
+   "id": "v6",
+   "name": "ask_site",
+   "args": {
+    "channel": "sms",
+    "to": "the borehole committee",
+    "message": "How many hours did the generator run last week? Reply one number from 0 to 168"
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 16,
+   "t_ms": 0,
+   "id": "v6",
+   "summary": "reply: maybe 10 or 12",
+   "rows": 1,
+   "ms": 0,
+   "reply": "maybe 10 or 12",
+   "parsed": null,
+   "parse_status": "ambiguous",
+   "parsed_by": "rule"
+  },
+  {
+   "type": "tool_call",
+   "seq": 17,
+   "t_ms": 0,
+   "id": "v7",
+   "name": "ask_site",
+   "args": {
+    "channel": "sms",
+    "to": "the borehole committee",
+    "message": "Sorry, please reply with one number of hours from 0 to 168, for example 10"
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 18,
+   "t_ms": 0,
+   "id": "v7",
+   "summary": "reply: 10",
+   "rows": 1,
+   "ms": 0,
+   "reply": "10",
+   "parsed": 10.0,
+   "parse_status": "ok",
+   "parsed_by": "rule"
+  },
+  {
+   "type": "tool_call",
+   "seq": 19,
+   "t_ms": 1,
+   "id": "v8",
+   "name": "update_site",
+   "args": {
+    "site_id": "W-BH-589",
+    "why": "generator hours reported: 10"
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 20,
+   "t_ms": 1,
+   "id": "v8",
+   "summary": "critical service-hours kept in a 7-day cut: 10 of 56 (reported)",
+   "rows": 1,
+   "ms": 0,
+   "interval": {
+    "lo": 10.0,
+    "hi": 10.0,
+    "point": 10.0,
+    "width": 0.0,
+    "of": 56.0,
+    "basis": "REPORTED: the generator's hours last week against the site's own schedule"
+   },
+   "width_before": 56.0,
+   "width_after": 0.0,
+   "widened": false
+  },
+  {
+   "type": "step_start",
+   "seq": 21,
+   "t_ms": 1,
+   "id": "answer"
+  },
+  {
+   "type": "check",
+   "seq": 22,
+   "t_ms": 2,
+   "kind": "grounding",
+   "numbers_checked": 13,
+   "unmatched": [],
+   "matches": [
+    {
+     "text": "7",
+     "value": 7.0,
+     "matched": 7.0
+    },
+    {
+     "text": "0",
+     "value": 0.0,
+     "matched": 0.0
+    },
+    {
+     "text": "56",
+     "value": 56.0,
+     "matched": 56.0
+    },
+    {
+     "text": "56",
+     "value": 56.0,
+     "matched": 56.0
+    },
+    {
+     "text": "10",
+     "value": 10.0,
+     "matched": 10.0
+    },
+    {
+     "text": "56",
+     "value": 56.0,
+     "matched": 56.0
+    },
+    {
+     "text": "8.3",
+     "value": 8.3,
+     "matched": 8.3
+    },
+    {
+     "text": "2019",
+     "value": 2019.0,
+     "matched": 2019.0
+    },
+    {
+     "text": "10",
+     "value": 10.0,
+     "matched": 10.0
+    },
+    {
+     "text": "1.5",
+     "value": 1.5,
+     "matched": 1.5
+    },
+    {
+     "text": "0.436",
+     "value": 0.436,
+     "matched": 0.436
+    },
+    {
+     "text": "N4,859",
+     "value": 4859.0,
+     "matched": 4859.0
+    },
+    {
+     "text": "N3,277.47",
+     "value": 3277.47,
+     "matched": 3277.47
+    }
+   ],
+   "ok": true
+  },
+  {
+   "type": "answer",
+   "seq": 23,
+   "t_ms": 2,
+   "markdown": "**MOGCOLIS CAMP (motorized borehole)** (sandbox, simulated replies; asked the borehole committee)\n\nBefore asking: in a 7 day line cut the site keeps between 0 and 56 of 56 critical service-hours, because its backup is unknown (modelled).\nAfter the replies: 10 of 56 (reported).\nThe planned solar + storage system would avoid about 8.3 litres a week in a cut (modelled).\n- pump powered by generator: consistent with the 2019 survey\n- generator ran 10 hours last week (reported): about 1.5 litres at the site's 0.436 kW critical load, N4,859 at N3,277.47 per litre\nReported answers come from typed sandbox replies; no site was contacted.",
+   "funded": [],
+   "not_reached": [],
+   "totals": {
+    "before": {
+     "lo": 0.0,
+     "hi": 56.0,
+     "point": null,
+     "width": 56.0,
+     "of": 56.0,
+     "basis": "MODELLED: backup unknown; from no backup (today) to the diesel scenario, which ASSUMES a generator with fuel for every needed hour"
+    },
+    "after": {
+     "lo": 10.0,
+     "hi": 10.0,
+     "point": 10.0,
+     "width": 0.0,
+     "of": 56.0,
+     "basis": "REPORTED: the generator's hours last week against the site's own schedule"
+    },
+    "narrowed_by": 56.0,
+    "answers": {
+     "pump": "generator",
+     "generator": true,
+     "gen_hours": 10.0
+    },
+    "facts": [
+     {
+      "key": "pump",
+      "modelled": "motorized_borehole (iMMAP 2019 survey)",
+      "reported": "generator",
+      "agrees": true
+     },
+     {
+      "key": "generator",
+      "modelled": "ASSUMED in the diesel scenario (every site, fuel for the whole window)",
+      "reported": true
+     },
+     {
+      "key": "gen_hours",
+      "reported": 10.0,
+      "kw": 0.436,
+      "l_per_kwh": 0.34,
+      "litres_week": 1.5,
+      "ngn_week": 4859.0,
+      "diesel_ngn_per_l": 3277.47,
+      "plan_litres_week": 8.3,
+      "schedule_h": 56.0,
+      "share_of_schedule": 0.1786
+     }
+    ],
+    "steps": [
+     {
+      "why": "baseline: backup unknown",
+      "interval": {
+       "lo": 0.0,
+       "hi": 56.0,
+       "point": null,
+       "width": 56.0,
+       "of": 56.0,
+       "basis": "MODELLED: backup unknown; from no backup (today) to the diesel scenario, which ASSUMES a generator with fuel for every needed hour"
+      },
+      "width_before": null
+     },
+     {
+      "why": "generator reported: yes",
+      "interval": {
+       "lo": 0.0,
+       "hi": 56.0,
+       "point": null,
+       "width": 56.0,
+       "of": 56.0,
+       "basis": "MODELLED: backup unknown; from no backup (today) to the diesel scenario, which ASSUMES a generator with fuel for every needed hour"
+      },
+      "width_before": 56.0
+     },
+     {
+      "why": "generator hours reported: 10",
+      "interval": {
+       "lo": 10.0,
+       "hi": 10.0,
+       "point": 10.0,
+       "width": 0.0,
+       "of": 56.0,
+       "basis": "REPORTED: the generator's hours last week against the site's own schedule"
+      },
+      "width_before": 56.0
+     }
+    ],
+    "label": "sandbox, simulated replies",
+    "site_id": "W-BH-589",
+    "week_days": 7
+   },
+   "sms": [
+    {
+     "from": "wardlight",
+     "text": "Wardlight (sandbox): how is the borehole pump powered? Reply 1 solar, 2 generator, 3 grid, 4 hand pump"
+    },
+    {
+     "from": "site",
+     "text": "2"
+    },
+    {
+     "from": "wardlight",
+     "text": "Wardlight (sandbox): does the site have a working generator? Reply 1 yes, 2 no"
+    },
+    {
+     "from": "site",
+     "text": "yes we have one"
+    },
+    {
+     "from": "wardlight",
+     "text": "How many hours did the generator run last week? Reply one number from 0 to 168"
+    },
+    {
+     "from": "site",
+     "text": "maybe 10 or 12"
+    },
+    {
+     "from": "wardlight",
+     "text": "Sorry, please reply with one number of hours from 0 to 168, for example 10"
+    },
+    {
+     "from": "site",
+     "text": "10"
+    }
+   ],
+   "notes": [
+    "pump powered by generator: consistent with the 2019 survey",
+    "generator ran 10 hours last week (reported): about 1.5 litres at the site's 0.436 kW critical load, N4,859 at N3,277.47 per litre"
+   ]
+  },
+  {
+   "type": "done",
+   "seq": 24,
+   "t_ms": 2,
+   "model": "rules only (no language model)",
+   "tokens": 0,
+   "cost_usd": 0.0,
+   "recorded": true,
+   "duration_ms": 2,
+   "label": "sandbox, simulated replies"
+  }
+ ],
+ "site": {
+  "id": "W-BH-589",
+  "name": "MOGCOLIS CAMP (motorized borehole)",
+  "sector": "water",
+  "archetype": "motorized_borehole",
+  "lga": "Maiduguri"
+ },
+ "city": "maiduguri",
+ "question": "Verify MOGCOLIS CAMP (motorized borehole) by SMS: does it have a generator, and how long did it run?",
+ "what": "SMS check with the borehole committee: pump type, generator, hours last week.",
+ "answers": {
+  "pump": "generator",
+  "generator": true,
+  "gen_hours": 10.0
+ },
+ "sms": [
+  {
+   "from": "wardlight",
+   "text": "Wardlight (sandbox): how is the borehole pump powered? Reply 1 solar, 2 generator, 3 grid, 4 hand pump"
+  },
+  {
+   "from": "site",
+   "text": "2"
+  },
+  {
+   "from": "wardlight",
+   "text": "Wardlight (sandbox): does the site have a working generator? Reply 1 yes, 2 no"
+  },
+  {
+   "from": "site",
+   "text": "yes we have one"
+  },
+  {
+   "from": "wardlight",
+   "text": "How many hours did the generator run last week? Reply one number from 0 to 168"
+  },
+  {
+   "from": "site",
+   "text": "maybe 10 or 12"
+  },
+  {
+   "from": "wardlight",
+   "text": "Sorry, please reply with one number of hours from 0 to 168, for example 10"
+  },
+  {
+   "from": "site",
+   "text": "10"
+  }
+ ],
+ "facts": [
+  {
+   "key": "pump",
+   "modelled": "motorized_borehole (iMMAP 2019 survey)",
+   "reported": "generator",
+   "agrees": true
+  },
+  {
+   "key": "generator",
+   "modelled": "ASSUMED in the diesel scenario (every site, fuel for the whole window)",
+   "reported": true
+  },
+  {
+   "key": "gen_hours",
+   "reported": 10.0,
+   "kw": 0.436,
+   "l_per_kwh": 0.34,
+   "litres_week": 1.5,
+   "ngn_week": 4859.0,
+   "diesel_ngn_per_l": 3277.47,
+   "plan_litres_week": 8.3,
+   "schedule_h": 56.0,
+   "share_of_schedule": 0.1786
+  }
+ ],
+ "before": {
+  "interval": {
+   "lo": 0.0,
+   "hi": 56.0,
+   "point": null,
+   "width": 56.0,
+   "of": 56.0,
+   "basis": "MODELLED: backup unknown; from no backup (today) to the diesel scenario, which ASSUMES a generator with fuel for every needed hour"
+  },
+  "answers": {}
+ },
+ "after": {
+  "interval": {
+   "lo": 10.0,
+   "hi": 10.0,
+   "point": 10.0,
+   "width": 0.0,
+   "of": 56.0,
+   "basis": "REPORTED: the generator's hours last week against the site's own schedule"
+  },
+  "answers": {
+   "pump": "generator",
+   "generator": true,
+   "gen_hours": 10.0
+  }
+ },
+ "notes": [
+  "pump powered by generator: consistent with the 2019 survey",
+  "generator ran 10 hours last week (reported): about 1.5 litres at the site's 0.436 kW critical load, N4,859 at N3,277.47 per litre"
+ ],
+ "data_version": "8606a23e82d2",
+ "brief": 13
+}

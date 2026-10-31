@@ -22,3 +22,10 @@ def test_nbsp_thousands_separators_rejoin():
     pool = ['{"spent_ngn": 79086656.08, "budget_ngn": 80000000}']
     rep = G.check("Spent N79 086 656.08 of N80 000 000 [S1].", pool, ["S1"])
     assert rep.ok, ([c.text for c in rep.unmatched], rep.unknown_tokens)
+
+
+def test_curly_quotes_around_numbers_are_punctuation():
+    # live run C10, 31 Oct: "derived from “not_funded_count: 0”" was blocked as the token '0”'
+    pool = ['{"not_funded_count": 0, "funded": 279}']
+    assert G.check("All 279 funded, “not_funded_count: 0” [S1].", pool, ["S1"]).ok
+    assert not G.check("All “987,654” funded [S1].", pool, ["S1"]).ok

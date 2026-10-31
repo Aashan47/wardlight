@@ -91,16 +91,49 @@ def _str(x) -> str | None:
 # ---------------------------------------------------------------- data
 
 
+def _agent_names(row: dict) -> dict:
+    """A full row from the API's on-disk store, renamed to this module's names: matches columns as match_*, and
+    `tier` the tier the result was run on (the result's own, else the match's), as in WardlightData.table."""
+    out = {("match_" + k[2:] if k.startswith("m_") else k): v for k, v in row.items()}
+    out["tier"] = out.get("result_tier") or out.get("match_tier")
+    out["state"] = out.get("state_standard")
+    return out
+
+
 class WardlightData:
-    """Lazy access to the work tables. Frames may be injected (tests); otherwise read from `work_dir`."""
+    """Lazy access to the work tables. Frames may be injected (tests); otherwise read from `work_dir`.
+
+    With `store` (the API's shared store: `core` frame, `nerc` frame, `data_version`, `full_rows(ids)`), nothing
+    is read again: the tables are views of the store's slim in-memory columns, and the full row (evidence, system
+    specs, labels) of a facility is read from the store's disk only when a tool returns it (`row`, `enrich`)."""
 
     def __init__(self, work_dir: Path | str | None = None, facilities: pd.DataFrame | None = None,
                  matches: pd.DataFrame | None = None, results: pd.DataFrame | None = None,
                  nerc_rows: pd.DataFrame | None = None, naija_dir: Path | str | None = None,
-                 band_history: pd.DataFrame | None = None):
+                 band_history: pd.DataFrame | None = None, store=None):
         self.work = Path(work_dir) if work_dir else WORK
         self.naija = Path(naija_dir) if naija_dir else NAIJA
         self._f, self._m, self._r, self._n, self._bh = facilities, matches, results, nerc_rows, band_history
+        self._store = store
+        if store is not None:
+            core = store.core
+            fac_cols = [c for c in ("unique_id", "facility_name", "facility_level", "facility_type",
+                                    "state_standard", "lga_standard", "latitude", "longitude", "source_version")
+                        if c in core]
+            self._f = core[fac_cols]
+            self._m = pd.DataFrame({"unique_id": core.unique_id, "tier": core.get("m_tier"),
+                                    "bands": core.get("m_bands"), "feeder_ids": core.get("m_feeder_ids"),
+                                    "evidence": core.get("ev_unit_json")})
+            self._r = core[core.has_result]
+            self._n = store.nerc
+
+    def enrich(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Rows with every column (store mode: read from the store for these rows only); unchanged otherwise."""
+        if self._store is None or df.empty:
+            return df
+        full = self._store.full_rows(df.unique_id)
+        extra = pd.DataFrame([_agent_names(full.get(u, {})) for u in df.unique_id], index=df.index)
+        return pd.concat([df, extra[[c for c in extra.columns if c not in df.columns]]], axis=1)
 
     def _read(self, name: str) -> pd.DataFrame:
         p = self.work / f"{name}.parquet"
@@ -139,6 +172,8 @@ class WardlightData:
     @cached_property
     def version(self) -> str:
         """Short hash of the input tables (file sizes and mtimes, or frame shapes when injected)."""
+        if self._store is not None:
+            return self._store.data_version
         h = hashlib.sha256()
         for name in ("facilities", "matches", "facility_results", "nerc_rows"):
             p = self.work / f"{name}.parquet"
@@ -154,6 +189,13 @@ class WardlightData:
     @cached_property
     def table(self) -> pd.DataFrame:
         """facilities, left-joined to matches (match_*) and results; `tier` is the tier the result was run on."""
+        if self._store is not None:
+            t = self._store.core.rename(columns={c: "match_" + c[2:] for c in self._store.core.columns
+                                                 if c.startswith("m_")})
+            rt = t["result_tier"] if "result_tier" in t else pd.Series(np.nan, index=t.index)
+            extra = pd.DataFrame({"tier": rt.where(rt.notna(), t.get("match_tier")), "state": t["state_standard"]},
+                                 index=t.index)
+            return pd.concat([t.drop(columns=["tier"], errors="ignore"), extra], axis=1)
         f = self.facilities.copy()
         m = self.matches.rename(columns={c: f"match_{c}" for c in self.matches.columns if c != "unique_id"})
         r = self.results.copy()
@@ -190,6 +232,11 @@ class WardlightData:
         raise ToolError(f"LGA '{lga}' not found in {state}; valid LGAs: {', '.join(lgas)}")
 
     def row(self, unique_id: str) -> pd.Series:
+        if self._store is not None:
+            full = self._store.full_rows([unique_id]).get(unique_id)
+            if full is None:
+                raise ToolError(f"no facility with id '{unique_id}'")
+            return pd.Series(_agent_names(full))
         t = self.table
         hit = t[t.unique_id == unique_id]
         if hit.empty:
@@ -394,7 +441,7 @@ class Toolbox:
                 "count": len(sub), "count_by_tier": by_tier,
                 "count_with_result": int(sub.has_result.sum()), "returned": int(min(limit, len(sub))),
                 "metric_definition": METRIC_DEFINITION,
-                "facilities": [self._brief(s, r) for _, r in sub.head(limit).iterrows()]}
+                "facilities": [self._brief(s, r) for _, r in self.data.enrich(sub.head(limit)).iterrows()]}
 
     def t_get_facility(self, s: Session, unique_id: str) -> dict:
         r = self.data.row(unique_id)
@@ -514,8 +561,9 @@ class Toolbox:
         if sub.empty:
             raise ToolError(f"no facility in {st}{' / ' + lga if lga else ''} has an engine result to rank")
         ranked, summ = EA.rank(sub, budget_ngn, priority)
-        f = ranked[ranked.funded].sort_values("rank")
-        unf = ranked[(~ranked.funded) & ranked["rank"].notna()].sort_values("rank")
+        f = self.data.enrich(ranked[ranked.funded].sort_values("rank"))
+        unf = self.data.enrich(ranked[(~ranked.funded) & ranked["rank"].notna()].sort_values("rank").head(MAX_LIST))
+        n_unf = int(((~ranked.funded) & ranked["rank"].notna()).sum())
         unknown = ranked[ranked["rank"].isna()]
         top = max(1, min(int(top or 10), MAX_LIST))
 
@@ -541,11 +589,11 @@ class Toolbox:
                   "remaining_ngn": _num(budget_ngn - spent, 2), "funded_count": int(summ["funded"]),
                   "benefit_total": _num(summ["benefit"]), "metric": priority,
                   "benefit_unit": EA.BENEFIT_UNIT[priority], "cost_basis": EA.COST_BASIS[priority],
-                  "candidates_ranked": int(summ["candidates"]), "ranked_not_funded": len(unf),
+                  "candidates_ranked": int(summ["candidates"]), "ranked_not_funded": n_unf,
                   "not_ranked_unknown_supply": int(summ["not_ranked_unknown_supply"]),
                   "no_engine_result": no_result, "facilities_in_scope": len(scope)}
         not_reached = {
-            "ranked_not_funded": {"count": len(unf), "reason": "budget spent on higher-ranked facilities",
+            "ranked_not_funded": {"count": n_unf, "reason": "budget spent on higher-ranked facilities",
                                   "next_in_line": [item(x, False) for _, x in unf.head(5).iterrows()]},
             "unknown_supply": {"count": len(unknown),
                                "reason": "not ranked: today's grid supply is unknown (refused match), so the gain "
@@ -554,7 +602,7 @@ class Toolbox:
                                  "reason": "no engine result row for these facilities in this data version"},
         }
         if lga is None and facility_level is None:
-            refused = scope[scope["tier"] == "d_refused"]
+            refused = self.data.enrich(scope[scope["tier"] == "d_refused"].head(1))
             if len(refused):
                 not_reached["unknown_supply"]["example_reason"] = _str(refused.iloc[0].get("match_reason"))
         out = {"state": st, "lga": lga, "facility_level": facility_level, "budget": _num(budget, 2),

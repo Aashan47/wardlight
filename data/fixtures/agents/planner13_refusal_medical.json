@@ -1,0 +1,120 @@
+{
+ "kind": "planner_session",
+ "recorded": true,
+ "label": "Recorded session. Scripted test model: rule-based, no language model was called. Tool results are real (brief 13 city build, data version 8606a23e82d2).",
+ "events": [
+  {
+   "type": "plan",
+   "seq": 0,
+   "t_ms": 0,
+   "steps": [
+    {
+     "id": "scope",
+     "title": "Check the question is in scope"
+    },
+    {
+     "id": "gather",
+     "title": "Read the data with tools"
+    },
+    {
+     "id": "draft",
+     "title": "Draft the answer"
+    },
+    {
+     "id": "check",
+     "title": "Check every number against the tool results"
+    },
+    {
+     "id": "answer",
+     "title": "Answer with citations"
+    }
+   ]
+  },
+  {
+   "type": "step_start",
+   "seq": 1,
+   "t_ms": 0,
+   "id": "scope"
+  },
+  {
+   "type": "step_start",
+   "seq": 2,
+   "t_ms": 0,
+   "id": "answer"
+  },
+  {
+   "type": "answer",
+   "seq": 3,
+   "t_ms": 0,
+   "markdown": "This is outside what Wardlight answers: power for critical sites (health, water pumping, cold chain) in Maiduguri, Damaturu and Yola, from its own data. For medical questions, ask a health worker.",
+   "funded": [],
+   "not_reached": [],
+   "totals": {},
+   "status": "refused",
+   "citations": []
+  },
+  {
+   "type": "done",
+   "seq": 4,
+   "t_ms": 0,
+   "model": "none (rule pre-filter)",
+   "tokens": 0,
+   "cost_usd": 0.0,
+   "recorded": true,
+   "duration_ms": 0,
+   "status": "refused"
+  }
+ ],
+ "scripted": true,
+ "question_id": "C12",
+ "what": "A medical-advice question, refused by the rule pre-filter.",
+ "output": {
+  "question": "What dose of measles vaccine should a nine-month-old in Maiduguri get?",
+  "answer_markdown": "This is outside what Wardlight answers: power for critical sites (health, water pumping, cold chain) in Maiduguri, Damaturu and Yola, from its own data. For medical questions, ask a health worker.",
+  "funded": [],
+  "not_reached": [],
+  "not_reached_groups": {},
+  "totals": {},
+  "plan_args": null,
+  "citations": [],
+  "tool_calls": [],
+  "model": "none (rule pre-filter)",
+  "client_kind": "none",
+  "grounded": true,
+  "status": "refused",
+  "refusal": {
+   "reason": "out_of_scope",
+   "by": "rule",
+   "explanation": "This is outside what Wardlight answers: power for critical sites (health, water pumping, cold chain) in Maiduguri, Damaturu and Yola, from its own data."
+  },
+  "grounding": null,
+  "usage": {
+   "steps": 0,
+   "prompt_tokens": 0,
+   "completion_tokens": 0,
+   "tool_calls": 0,
+   "total_tokens": 0
+  },
+  "budget": {
+   "max_steps": 8,
+   "max_tokens": 40000,
+   "max_tool_calls": 10,
+   "max_tool_result_chars": 10000,
+   "max_answer_tokens": 900,
+   "retries": 1
+  },
+  "data_version": null,
+  "label": "rule pre-filter, no model was called"
+ },
+ "transcript": [
+  {
+   "role": "system",
+   "content": "You are the Wardlight planner for brief 13, \"Power for a city the grid can't protect\". You help a funder, the state government or the distribution company decide which critical sites in Maiduguri, Damaturu or Yola get solar + storage so that hospitals, water pumping and the cold chain keep running when the 330 kV line is cut, using only Wardlight's tools.\n\nRules:\n1. Scope: only power for critical sites (health facilities, water pumping, market cold rooms) in the three cities Wardlight has built. For anything else, including medical or clinical advice and politics, call refuse with reason out_of_scope. When the data cannot answer (attack forecasts, which towers will be hit, measured outage logs per site, cities Wardlight has not built), call refuse with reason data_cannot_support and say what is missing.\n2. Numbers: every number you write must be copied from a tool result in this conversation; you may round it. Do not compute new figures (no sums, differences or percentages you were not given). Code checks every number and blocks the answer if one does not match.\n3. Citations: after each claim about a plan total, a site or a cost, cite the id the tool gave, like [S3]. Use only ids that tools returned.\n4. For a budget question: call rank_city_plan once with the city, the budget (currency USD if the user gave dollars), the outage length in days (7, 14, 40 or 60; two months is 60) and the sectors the user named (health, water, cold; all three if none). Then check the first funded site with get_site, and the cost per kWh with cost_compare.\n5. Answer in short markdown: sites funded, spent and left, critical service-hours kept today and with the funded sites, diesel litres and naira avoided, the top picks with their system and cost, what the money does not reach and what it would cost, and the cost per kWh against diesel and the gas plant (the plan works alongside the gas plant). Label that supply is modelled and critical loads are archetypes. Plain words, no em dashes.\n6. Write numbers with plain ASCII commas or no separators, and put the citation after a space, like 109 [S1]."
+  },
+  {
+   "role": "user",
+   "content": "What dose of measles vaccine should a nine-month-old in Maiduguri get?"
+  }
+ ],
+ "brief": 13
+}

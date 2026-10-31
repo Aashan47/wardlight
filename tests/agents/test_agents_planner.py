@@ -84,6 +84,36 @@ def test_rule_prefilter_refuses_medical_advice_without_a_model_call():
     assert model.calls == 0 and rec["output"]["usage"]["total_tokens"] == 0
 
 
+@pytest.mark.parametrize("q,refused", [
+    ("Which towers on the Damaturu to Maiduguri line will insurgents attack next?", True),
+    ("Where will the line be vandalised next?", True),
+    ("Which substation is likely to be targeted?", True),
+    ("Which pumps keep running if the line is attacked again?", False),
+    ("Which sites will keep running if insurgents hit the line again?", False),
+    ("Which clinics will be hit hardest by a 60 day cut?", False),
+])
+def test_rule_prefilter_refuses_attack_forecasts_only(q, refused):
+    assert (planner.scope_prefilter(q) == "data_cannot_support") is refused
+
+
+def test_attack_forecast_refused_without_a_model_call():
+    model = ScriptedModel([])
+    rec = planner.run("Which towers will insurgents attack next?", model, synth.toolbox())
+    o = rec["output"]
+    assert o["status"] == "refused" and o["refusal"] == {**o["refusal"], "reason": "data_cannot_support", "by": "rule"}
+    assert model.calls == 0 and "targets" in o["answer_markdown"]
+
+
+def test_reply_without_tool_results_is_sent_back_once():
+    # live run C14/C16, 31 Oct: the model wrote "I can't help" or a refuse call as plain text
+    refuse = assistant(calls=[tool_call("refuse", {"reason": "data_cannot_support",
+                                                   "explanation": "No outage logs per site."}, "c1")])
+    rec = run([assistant("**refuse** {\"reason\": \"data_cannot_support\"}"), refuse], q="Who lost power last week?")
+    o = rec["output"]
+    assert o["status"] == "refused" and o["refusal"]["reason"] == "data_cannot_support"
+    assert any(m["role"] == "user" and m["content"] == planner.NO_TOOLS_TEXT for m in rec["transcript"])
+
+
 def test_model_refusal_is_grounded():
     bad = assistant(calls=[tool_call("refuse", {"reason": "out_of_scope",
                                                 "explanation": "I only do energy; 42 other topics are out."}, "c1")])
@@ -121,8 +151,9 @@ def test_invented_citation_blocks():
 
 
 def test_number_from_the_question_alone_is_not_enough():
-    # the question says 3.5 million but no tool was called: the number is not a tool result
-    rec = run([assistant("You have N3.5 million."), assistant("You have N3.5 million.")])
+    # the question says 3.5 million but no tool was called: the number is not a tool result (the first reply is
+    # sent back for having no tool result, the second is blocked, the retry is blocked again)
+    rec = run([assistant("You have N3.5 million.")] * 3)
     assert rec["output"]["status"] == "blocked"
 
 

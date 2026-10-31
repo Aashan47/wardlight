@@ -1,0 +1,1627 @@
+{
+ "kind": "watcher_run",
+ "recorded": true,
+ "label": "Recorded run. The signals are TCN's 2024 statements (press, quoted); the plan is a scenario (the planner's budget plan). Code only, no model.",
+ "events": [
+  {
+   "type": "plan",
+   "seq": 0,
+   "t_ms": 0,
+   "steps": [
+    {
+     "id": "signal",
+     "title": "Read the line-cut signal"
+    },
+    {
+     "id": "locate",
+     "title": "Locate the cut on the 330 kV corridor"
+    },
+    {
+     "id": "replan",
+     "title": "Re-plan which sites run first"
+    },
+    {
+     "id": "restored",
+     "title": "Read the restoration signal"
+    },
+    {
+     "id": "close",
+     "title": "Close the event at its measured length"
+    },
+    {
+     "id": "report",
+     "title": "Write the run-order report"
+    }
+   ]
+  },
+  {
+   "type": "step_start",
+   "seq": 1,
+   "t_ms": 0,
+   "id": "signal"
+  },
+  {
+   "type": "tool_call",
+   "seq": 2,
+   "t_ms": 0,
+   "id": "w1",
+   "name": "read_signal",
+   "args": {
+    "signal": "tcn-2024-09-21-cut",
+    "source": "Nairametrics, 23 Sep 2024, quoting TCN"
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 3,
+   "t_ms": 0,
+   "id": "w1",
+   "rows": 1,
+   "ms": 0,
+   "signal": {
+    "id": "tcn-2024-09-21-cut",
+    "kind": "cut",
+    "at": "2024-09-21T01:44:00+01:00",
+    "line": "Gombe to Damaturu to Maiduguri 330 kV line",
+    "cities": [
+     "maiduguri",
+     "damaturu"
+    ],
+    "quote": "the transmission line was brought down by vandals by cutting all four-tower footing and was noticed by the TCN around 01:44 am on the 21st of September 2024.",
+    "quote_backup": "efforts are currently underway by its engineers to temporarily restore power to Damaturu through a 33kV transmission line from Potiskum, while Maiduguri will receive power from the Maiduguri Emergency Power Plant (MEPP).",
+    "source": "Nairametrics, 23 Sep 2024, quoting TCN",
+    "url": "https://nairametrics.com/2024/09/23/blackout-in-borno-yobe-as-vandals-destroy-gombe-maiduguri-transmission-three-months-after-repair",
+    "status": "VERIFIED_SECONDARY"
+   },
+   "summary": "TCN: Gombe to Damaturu to Maiduguri 330 kV line cut, noticed 2024-09-21 01:44 WAT"
+  },
+  {
+   "type": "step_start",
+   "seq": 4,
+   "t_ms": 0,
+   "id": "locate"
+  },
+  {
+   "type": "tool_call",
+   "seq": 5,
+   "t_ms": 0,
+   "id": "w2",
+   "name": "locate_cut",
+   "args": {
+    "line": "Gombe to Damaturu to Maiduguri 330 kV line",
+    "cities": [
+     "maiduguri",
+     "damaturu"
+    ]
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 6,
+   "t_ms": 0,
+   "id": "w2",
+   "rows": 2,
+   "ms": 0,
+   "corridor": {
+    "km_330": 745.1,
+    "towers": 2707,
+    "source": "OSM via Geofabrik nigeria-latest.osm.pbf (30 Oct 2026), osm_extract.py; mapped, not surveyed",
+    "box": "Gombe to Maiduguri, 10.1 to 12.1 N, 10.9 to 13.4 E (whole OSM ways that touch the box)",
+    "cities": [
+     "maiduguri",
+     "damaturu"
+    ]
+   },
+   "summary": "745.1 km of mapped 330 kV line, 2707 towers; 2 cities on it"
+  },
+  {
+   "type": "step_start",
+   "seq": 7,
+   "t_ms": 0,
+   "id": "replan"
+  },
+  {
+   "type": "tool_call",
+   "seq": 8,
+   "t_ms": 0,
+   "id": "w3",
+   "name": "replan_run_order",
+   "args": {
+    "city": "maiduguri",
+    "budget_ngn": 2000000000.0,
+    "days": 60,
+    "why": "outage length unknown: the brief's two months"
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 9,
+   "t_ms": 3,
+   "id": "w3",
+   "rows": 279,
+   "ms": 3,
+   "summary": "109 sites run on their own solar; 170 go dark unless fuelled, ordered by hours per litre",
+   "run_order": {
+    "own_solar": [
+     {
+      "order": 1,
+      "id": "H-SN_0B1D15D01C",
+      "name": "Tuba Lawanti Health Post",
+      "sector": "health"
+     },
+     {
+      "order": 2,
+      "id": "H-SN_2ECE211F0A",
+      "name": "Galangi Dispensary",
+      "sector": "health"
+     },
+     {
+      "order": 3,
+      "id": "H-SN_DD3F352097",
+      "name": "Tuba Dispensary",
+      "sector": "health"
+     },
+     {
+      "order": 4,
+      "id": "H-SN_D5F36F1430",
+      "name": "Kaalmari Health Care Centre",
+      "sector": "health"
+     },
+     {
+      "order": 5,
+      "id": "H-SN_5F3A08214F",
+      "name": "7 Division Hospital Maimalari",
+      "sector": "health"
+     },
+     {
+      "order": 6,
+      "id": "H-SN_06189EDBFF",
+      "name": "Zabarmari Clinic",
+      "sector": "health"
+     },
+     {
+      "order": 7,
+      "id": "H-SN_0DD0543898",
+      "name": "Gongulong Primary Health Centre",
+      "sector": "health"
+     },
+     {
+      "order": 8,
+      "id": "H-SN_17EBBA7C07",
+      "name": "Dominion Maternity",
+      "sector": "health"
+     },
+     {
+      "order": 9,
+      "id": "H-SN_234152F7AC",
+      "name": "Abbagana Terab Housing Etated Clinic",
+      "sector": "health"
+     },
+     {
+      "order": 10,
+      "id": "H-SN_2D504A4367",
+      "name": "Shehu'S Palace Clinic",
+      "sector": "health"
+     }
+    ],
+    "own_solar_count": 109,
+    "fuel_first": [
+     {
+      "rank": 143,
+      "id": "H-SN_2CA9850B89",
+      "name": "Falala Maternity Hospital",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 3.0,
+      "with_h": 2932.0,
+      "gained_h": 2929.0,
+      "litres": 172.9,
+      "hours_per_litre": 16.94,
+      "fuel_order": 1
+     },
+     {
+      "rank": 142,
+      "id": "H-SN_33083DA99E",
+      "name": "Garba Buzu Idp Camp Health Clinic",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 2.0,
+      "with_h": 2932.0,
+      "gained_h": 2930.0,
+      "litres": 172.9,
+      "hours_per_litre": 16.94,
+      "fuel_order": 2
+     },
+     {
+      "rank": 144,
+      "id": "H-SN_A79697A311",
+      "name": "Atal Medical Centre",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 3.0,
+      "with_h": 2932.0,
+      "gained_h": 2929.0,
+      "litres": 172.9,
+      "hours_per_litre": 16.94,
+      "fuel_order": 3
+     },
+     {
+      "rank": 145,
+      "id": "H-SN_B0287EC341",
+      "name": "Alpine Speciaistl Hospital",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 3.0,
+      "with_h": 2932.0,
+      "gained_h": 2929.0,
+      "litres": 172.9,
+      "hours_per_litre": 16.94,
+      "fuel_order": 4
+     },
+     {
+      "rank": 108,
+      "id": "H-SN_C31BBB65B5",
+      "name": "New Gra Primary Health Centre",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 2.0,
+      "with_h": 2936.0,
+      "gained_h": 2934.0,
+      "litres": 173.4,
+      "hours_per_litre": 16.92,
+      "fuel_order": 5
+     },
+     {
+      "rank": 109,
+      "id": "H-SN_C336BE2EF4",
+      "name": "Bulabulin Ngarannam Primary Health Centre",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 2.0,
+      "with_h": 2936.0,
+      "gained_h": 2934.0,
+      "litres": 173.4,
+      "hours_per_litre": 16.92,
+      "fuel_order": 6
+     },
+     {
+      "rank": 110,
+      "id": "H-SN_C5AE3165B2",
+      "name": "Gamboru Male Dispensary",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 2.0,
+      "with_h": 2936.0,
+      "gained_h": 2934.0,
+      "litres": 173.4,
+      "hours_per_litre": 16.92,
+      "fuel_order": 7
+     },
+     {
+      "rank": 111,
+      "id": "H-SN_D10FB36EF0",
+      "name": "Baga Road Primary Health Centre",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 2.0,
+      "with_h": 2936.0,
+      "gained_h": 2934.0,
+      "litres": 173.4,
+      "hours_per_litre": 16.92,
+      "fuel_order": 8
+     },
+     {
+      "rank": 112,
+      "id": "H-SN_D6FC384F12",
+      "name": "Gwange II Primary Health Centre",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 2.0,
+      "with_h": 2936.0,
+      "gained_h": 2934.0,
+      "litres": 173.4,
+      "hours_per_litre": 16.92,
+      "fuel_order": 9
+     },
+     {
+      "rank": 113,
+      "id": "H-SN_D7FC783F63",
+      "name": "Baga Motor Pack Dispensary",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 2.0,
+      "with_h": 2936.0,
+      "gained_h": 2934.0,
+      "litres": 173.4,
+      "hours_per_litre": 16.92,
+      "fuel_order": 10
+     }
+    ],
+    "dark_count": 170,
+    "fuel_first_litres": 1732.0,
+    "fuel_first_gained_h": 29321.0,
+    "litres_to_fuel_every_dark_site": 69895.7,
+    "ngn_to_fuel_every_dark_site": 229081060.0,
+    "diesel_ngn_per_l": 3277.47,
+    "rule": "funded sites run on their own solar + storage; every other site in order of critical service-hours gained per litre of diesel (its system's hours over today, and the litres a generator burns to deliver them), most first"
+   },
+   "funded": [
+    "H-SN_0B1D15D01C",
+    "H-SN_2ECE211F0A",
+    "H-SN_DD3F352097",
+    "H-SN_D5F36F1430",
+    "H-SN_5F3A08214F",
+    "H-SN_06189EDBFF",
+    "H-SN_0DD0543898",
+    "H-SN_17EBBA7C07",
+    "H-SN_234152F7AC",
+    "H-SN_2D504A4367",
+    "H-SN_2D527C2794",
+    "H-SN_31BCC884FC",
+    "H-SN_39146D4EBF",
+    "H-SN_3A3D2A8F8C",
+    "H-SN_3D15CE221F",
+    "H-SN_40765C672E",
+    "H-SN_4619701410",
+    "H-SN_46D16FE475",
+    "H-SN_48D8C9B480",
+    "H-SN_53144926AC",
+    "H-SN_56E3BB383C",
+    "H-SN_571CAE86D6",
+    "H-SN_5D133F00BC",
+    "H-SN_5ECE473AC5",
+    "H-SN_61D0C15121",
+    "H-SN_67C9217668",
+    "H-SN_6890A44DE4",
+    "H-SN_6A52678B4F",
+    "H-SN_6BB6EEBA62",
+    "H-SN_6C1A371D9E",
+    "H-SN_6D94CE43A0",
+    "H-SN_6E5D8F5C15",
+    "H-SN_6F3712D582",
+    "H-SN_705B613BC9",
+    "H-SN_7631007210",
+    "H-SN_78C0D0A744",
+    "H-SN_7AD4C4FDD9",
+    "H-SN_7C436F2B29",
+    "H-SN_844A27E01B",
+    "H-SN_85C3331228",
+    "H-SN_89701755BD",
+    "H-SN_8CD64C467B",
+    "H-SN_8DC33382D1",
+    "H-SN_90A6023B06",
+    "H-SN_926BB08CCF",
+    "H-SN_92FB6C7606",
+    "H-SN_948C4CD27D",
+    "H-SN_95A0A29A6A",
+    "H-SN_9E68297586",
+    "H-SN_9F7F3DAF4B",
+    "H-SN_A5F39CFE18",
+    "H-SN_ABDAB53621",
+    "H-SN_ADF52FA055",
+    "H-SN_B066A78323",
+    "H-SN_C2246FB0BB",
+    "H-SN_C241970FA2",
+    "H-SN_C6695B07F9",
+    "H-SN_C6C7E6C2BB",
+    "H-SN_CA881641EE",
+    "H-SN_D075E8FF14",
+    "H-SN_D67525DD3A",
+    "H-SN_D93008E4AE",
+    "H-SN_F6344C3EC8",
+    "H-SN_FE2F57238A",
+    "H-SN_FF2EAEEA80",
+    "H-SN_FF91F3FF58",
+    "H-SN_0111633C8A",
+    "H-SN_021F3E4333",
+    "H-SN_0767E8F299",
+    "H-SN_0A7B7C8C70",
+    "H-SN_0E4663378C",
+    "H-SN_13B1B5733B",
+    "H-SN_14BF6CD21B",
+    "H-SN_171B68B3CA",
+    "H-SN_1D968119AE",
+    "H-SN_2144BBA9E9",
+    "H-SN_249E41632B",
+    "H-SN_29EADFCD11",
+    "H-SN_2CAB313131",
+    "H-SN_3B59BF0983",
+    "H-SN_43F5DD2619",
+    "H-SN_444B77F3AD",
+    "H-SN_471F4023B4",
+    "H-SN_4D0CCA9822",
+    "H-SN_4D85F5CD8E",
+    "H-SN_5228F1F506",
+    "H-SN_557DB925D3",
+    "H-SN_5698FEDAB3",
+    "H-SN_5AA1F22FFC",
+    "H-SN_5F3D29A02E",
+    "H-SN_5F69E3F56D",
+    "H-SN_605E76D369",
+    "H-SN_6953ABF612",
+    "H-SN_7709E5575A",
+    "H-SN_77BE4E7DD1",
+    "H-SN_7B099E769F",
+    "H-SN_8715D93C47",
+    "H-SN_88B077DED0",
+    "H-SN_8E1ADF5249",
+    "H-SN_941E8B5BF7",
+    "H-SN_950AB6D043",
+    "H-SN_982CB3B19C",
+    "H-SN_9B0CBBEC76",
+    "H-SN_A36E033864",
+    "H-SN_AB34AE04AB",
+    "H-SN_AE3F15ECFF",
+    "H-SN_BC8477B8FA",
+    "W-BH-589",
+    "W-BH-586"
+   ]
+  },
+  {
+   "type": "step_start",
+   "seq": 10,
+   "t_ms": 3,
+   "id": "restored"
+  },
+  {
+   "type": "tool_call",
+   "seq": 11,
+   "t_ms": 3,
+   "id": "w4",
+   "name": "read_signal",
+   "args": {
+    "signal": "tcn-2024-10-31-restored",
+    "source": "Arise News, 2 Nov 2024, quoting TCN's GM Public Affairs Ndidi Mbah"
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 12,
+   "t_ms": 3,
+   "id": "w4",
+   "rows": 1,
+   "ms": 0,
+   "signal": {
+    "id": "tcn-2024-10-31-restored",
+    "kind": "restored",
+    "at": "2024-10-31T14:01:00+01:00",
+    "line": "Gombe to Damaturu to Maiduguri 330 kV line",
+    "cities": [
+     "maiduguri",
+     "damaturu"
+    ],
+    "quote": "power supply was fully restored on the Gombe-Damaturu line about 7:25p.m. on October 30, and on the Damaturu-Maiduguri (Molai) part of the line on October 31, 2024, around 2:01p.m.",
+    "source": "Arise News, 2 Nov 2024, quoting TCN's GM Public Affairs Ndidi Mbah",
+    "url": "https://www.arise.tv/tcn-restores-power-supply-through-gombe-damaturu-maiduguri-line/",
+    "status": "VERIFIED_SECONDARY"
+   },
+   "duration_days": 40.51,
+   "window_days": 40,
+   "summary": "restored 2024-10-31 14:01 WAT: 40.5 days out"
+  },
+  {
+   "type": "step_start",
+   "seq": 13,
+   "t_ms": 3,
+   "id": "close"
+  },
+  {
+   "type": "tool_call",
+   "seq": 14,
+   "t_ms": 3,
+   "id": "w5",
+   "name": "close_event",
+   "args": {
+    "city": "maiduguri",
+    "budget_ngn": 2000000000.0,
+    "days": 40
+   }
+  },
+  {
+   "type": "tool_result",
+   "seq": 15,
+   "t_ms": 6,
+   "id": "w5",
+   "rows": 279,
+   "ms": 3,
+   "closed": {
+    "duration_days": 40.51,
+    "window_days": 40,
+    "totals": {
+     "budget_ngn": 2000000000.0,
+     "spent_ngn": 1999099130.0,
+     "remaining_ngn": 900870.0,
+     "funded_count": 109,
+     "candidates": 279,
+     "not_funded_count": 170,
+     "city_sites": 279,
+     "csh_needed": 331520.0,
+     "csh_today": 23357.4,
+     "csh_with_funded": 233281.9,
+     "csh_gained": 209924.5,
+     "share_today": 0.070455,
+     "share_with_funded": 0.703674,
+     "share_with_every_site": 1.0,
+     "diesel_l_avoided": 12464.0,
+     "diesel_ngn_avoided": 40850484.0,
+     "diesel_ngn_per_l": 3277.47,
+     "capex_funded_ngn": 1999099130.0,
+     "capex_every_site_in_scope_ngn": 9422213030.0,
+     "metric": "critical_service_hours",
+     "days": 40
+    },
+    "run_order": {
+     "own_solar": [
+      {
+       "order": 1,
+       "id": "H-SN_0B1D15D01C",
+       "name": "Tuba Lawanti Health Post",
+       "sector": "health"
+      },
+      {
+       "order": 2,
+       "id": "H-SN_2ECE211F0A",
+       "name": "Galangi Dispensary",
+       "sector": "health"
+      },
+      {
+       "order": 3,
+       "id": "H-SN_DD3F352097",
+       "name": "Tuba Dispensary",
+       "sector": "health"
+      },
+      {
+       "order": 4,
+       "id": "H-SN_D5F36F1430",
+       "name": "Kaalmari Health Care Centre",
+       "sector": "health"
+      },
+      {
+       "order": 5,
+       "id": "H-SN_5F3A08214F",
+       "name": "7 Division Hospital Maimalari",
+       "sector": "health"
+      },
+      {
+       "order": 6,
+       "id": "H-SN_06189EDBFF",
+       "name": "Zabarmari Clinic",
+       "sector": "health"
+      },
+      {
+       "order": 7,
+       "id": "H-SN_0DD0543898",
+       "name": "Gongulong Primary Health Centre",
+       "sector": "health"
+      },
+      {
+       "order": 8,
+       "id": "H-SN_17EBBA7C07",
+       "name": "Dominion Maternity",
+       "sector": "health"
+      },
+      {
+       "order": 9,
+       "id": "H-SN_234152F7AC",
+       "name": "Abbagana Terab Housing Etated Clinic",
+       "sector": "health"
+      },
+      {
+       "order": 10,
+       "id": "H-SN_2D504A4367",
+       "name": "Shehu'S Palace Clinic",
+       "sector": "health"
+      }
+     ],
+     "own_solar_count": 109,
+     "fuel_first": [
+      {
+       "rank": 142,
+       "id": "H-SN_33083DA99E",
+       "name": "Garba Buzu Idp Camp Health Clinic",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 2.0,
+       "with_h": 1960.0,
+       "gained_h": 1958.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.89,
+       "fuel_order": 1
+      },
+      {
+       "rank": 109,
+       "id": "H-SN_C336BE2EF4",
+       "name": "Bulabulin Ngarannam Primary Health Centre",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 2.0,
+       "with_h": 1960.0,
+       "gained_h": 1958.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.89,
+       "fuel_order": 2
+      },
+      {
+       "rank": 111,
+       "id": "H-SN_D10FB36EF0",
+       "name": "Baga Road Primary Health Centre",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 2.0,
+       "with_h": 1960.0,
+       "gained_h": 1958.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.89,
+       "fuel_order": 3
+      },
+      {
+       "rank": 113,
+       "id": "H-SN_D7FC783F63",
+       "name": "Baga Motor Pack Dispensary",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 2.0,
+       "with_h": 1960.0,
+       "gained_h": 1958.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.89,
+       "fuel_order": 4
+      },
+      {
+       "rank": 115,
+       "id": "H-SN_FC4D157AB7",
+       "name": "Goni Damgari Primary Health Centre",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 2.0,
+       "with_h": 1960.0,
+       "gained_h": 1958.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.89,
+       "fuel_order": 5
+      },
+      {
+       "rank": 116,
+       "id": "H-SN_151E6A811E",
+       "name": "Mustashfa Clinic",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 3.0,
+       "with_h": 1960.0,
+       "gained_h": 1957.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.88,
+       "fuel_order": 6
+      },
+      {
+       "rank": 117,
+       "id": "H-SN_189485E43D",
+       "name": "Cbn Quarters Camp Clinic",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 3.0,
+       "with_h": 1960.0,
+       "gained_h": 1957.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.88,
+       "fuel_order": 7
+      },
+      {
+       "rank": 143,
+       "id": "H-SN_2CA9850B89",
+       "name": "Falala Maternity Hospital",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 3.0,
+       "with_h": 1960.0,
+       "gained_h": 1957.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.88,
+       "fuel_order": 8
+      },
+      {
+       "rank": 118,
+       "id": "H-SN_35BF43BAF2",
+       "name": "Ngamtuku Drugs And Medical Service",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 3.0,
+       "with_h": 1960.0,
+       "gained_h": 1957.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.88,
+       "fuel_order": 9
+      },
+      {
+       "rank": 119,
+       "id": "H-SN_3D6AAFC11F",
+       "name": "Olive Medical Clinic",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 3.0,
+       "with_h": 1960.0,
+       "gained_h": 1957.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.88,
+       "fuel_order": 10
+      }
+     ],
+     "dark_count": 170,
+     "fuel_first_litres": 1160.0,
+     "fuel_first_gained_h": 19575.0,
+     "litres_to_fuel_every_dark_site": 46782.2,
+     "ngn_to_fuel_every_dark_site": 153327257.0,
+     "diesel_ngn_per_l": 3277.47,
+     "rule": "funded sites run on their own solar + storage; every other site in order of critical service-hours gained per litre of diesel (its system's hours over today, and the litres a generator burns to deliver them), most first"
+    }
+   },
+   "summary": "40-day window: 7% kept today, 70.4% with the plan"
+  },
+  {
+   "type": "step_start",
+   "seq": 16,
+   "t_ms": 6,
+   "id": "report"
+  },
+  {
+   "type": "check",
+   "seq": 17,
+   "t_ms": 10,
+   "kind": "grounding",
+   "numbers_checked": 39,
+   "unmatched": [],
+   "matches": [
+    {
+     "text": "330",
+     "value": 330.0,
+     "matched": 330.0
+    },
+    {
+     "text": "21",
+     "value": 21.0,
+     "matched": 21.0
+    },
+    {
+     "text": "2024",
+     "value": 2024.0,
+     "matched": 2024.0
+    },
+    {
+     "text": "23",
+     "value": 23.0,
+     "matched": 23.0
+    },
+    {
+     "text": "2024",
+     "value": 2024.0,
+     "matched": 2024.0
+    },
+    {
+     "text": "745.1",
+     "value": 745.1,
+     "matched": 745.1
+    },
+    {
+     "text": "330",
+     "value": 330.0,
+     "matched": 330.0
+    },
+    {
+     "text": "2,707",
+     "value": 2707.0,
+     "matched": 2707.0
+    },
+    {
+     "text": "60",
+     "value": 60.0,
+     "matched": 60.0
+    },
+    {
+     "text": "two",
+     "value": 2.0,
+     "matched": 2.0
+    },
+    {
+     "text": "109",
+     "value": 109.0,
+     "matched": 109.0
+    },
+    {
+     "text": "70.1%",
+     "value": 70.1,
+     "matched": 0.701472
+    },
+    {
+     "text": "6.9%",
+     "value": 6.9,
+     "matched": 0.068898
+    },
+    {
+     "text": "170",
+     "value": 170.0,
+     "matched": 170.0
+    },
+    {
+     "text": "2929",
+     "value": 2929.0,
+     "matched": 2929.0
+    },
+    {
+     "text": "172.9",
+     "value": 172.9,
+     "matched": 172.9
+    },
+    {
+     "text": "2930",
+     "value": 2930.0,
+     "matched": 2930.0
+    },
+    {
+     "text": "172.9",
+     "value": 172.9,
+     "matched": 172.9
+    },
+    {
+     "text": "2929",
+     "value": 2929.0,
+     "matched": 2929.0
+    },
+    {
+     "text": "172.9",
+     "value": 172.9,
+     "matched": 172.9
+    },
+    {
+     "text": "2929",
+     "value": 2929.0,
+     "matched": 2929.0
+    },
+    {
+     "text": "172.9",
+     "value": 172.9,
+     "matched": 172.9
+    },
+    {
+     "text": "2934",
+     "value": 2934.0,
+     "matched": 2934.0
+    },
+    {
+     "text": "173.4",
+     "value": 173.4,
+     "matched": 173.4
+    },
+    {
+     "text": "10",
+     "value": 10.0,
+     "matched": 10.0
+    },
+    {
+     "text": "1732",
+     "value": 1732.0,
+     "matched": 1732.0
+    },
+    {
+     "text": "69,896",
+     "value": 69896.0,
+     "matched": 69895.7
+    },
+    {
+     "text": "N229,081,060",
+     "value": 229081060.0,
+     "matched": 229081060.0
+    },
+    {
+     "text": "N3,277.47",
+     "value": 3277.47,
+     "matched": 3277.47
+    },
+    {
+     "text": "0%",
+     "value": 0.0,
+     "matched": 0.0
+    },
+    {
+     "text": "31",
+     "value": 31.0,
+     "matched": 31.0
+    },
+    {
+     "text": "2024",
+     "value": 2024.0,
+     "matched": 2024.0
+    },
+    {
+     "text": "2",
+     "value": 2.0,
+     "matched": 2.0
+    },
+    {
+     "text": "2024",
+     "value": 2024.0,
+     "matched": 2024.0
+    },
+    {
+     "text": "40.51",
+     "value": 40.51,
+     "matched": 40.51
+    },
+    {
+     "text": "40",
+     "value": 40.0,
+     "matched": 40.0
+    },
+    {
+     "text": "70.4%",
+     "value": 70.4,
+     "matched": 0.703674
+    },
+    {
+     "text": "7%",
+     "value": 7.0,
+     "matched": 7.0
+    },
+    {
+     "text": "12,464",
+     "value": 12464.0,
+     "matched": 12464.0
+    }
+   ],
+   "ok": true
+  },
+  {
+   "type": "answer",
+   "seq": 18,
+   "t_ms": 10,
+   "markdown": "# Line cut: Gombe to Damaturu to Maiduguri 330 kV line\n\nSignal: TCN noticed the cut at 01:44 on 21 September 2024 (Nairametrics, 23 Sep 2024, quoting TCN). It names Maiduguri and Damaturu; the city build maps 745.1 km of 330 kV line and 2,707 towers on the corridor.\n\n## Run order for Maiduguri, before the outage length is known (60 days, the brief's two months)\n- 109 sites funded by the Maiduguri plan run on their own solar + storage: 70.1% of critical service-hours kept against 6.9% with nothing built.\n- 170 sites go dark unless fuelled. Fuel these first, most hours per litre:\n  1. Falala Maternity Hospital (health): 2929 critical service-hours for 172.9 litres\n  2. Garba Buzu Idp Camp Health Clinic (health): 2930 critical service-hours for 172.9 litres\n  3. Atal Medical Centre (health): 2929 critical service-hours for 172.9 litres\n  4. Alpine Speciaistl Hospital (health): 2929 critical service-hours for 172.9 litres\n  5. New Gra Primary Health Centre (health): 2934 critical service-hours for 173.4 litres\n- The first 10 on that list need 1732 litres; every dark site needs 69,896 litres, about N229,081,060 at N3,277.47 per litre.\n- Damaturu, also on the line, has no plan built: 0% of its critical service-hours are kept with no backup.\n\n## Closed\n\nRestored at 14:01 on 31 October 2024 (Arise News, 2 Nov 2024, quoting TCN's GM Public Affairs Ndidi Mbah): 40.51 days out, closed on the 40 day window. Over it the plan keeps 70.4% of Maiduguri's critical service-hours against 7% with nothing built, and its systems avoid 12,464 litres of diesel.\n\nSignals are TCN statements quoted by the press. The plan is a scenario; supply and loads are modelled, not measured.",
+   "funded": [],
+   "not_reached": [],
+   "totals": {
+    "city": "maiduguri",
+    "budget_ngn": 2000000000.0,
+    "own_solar": 109,
+    "dark": 170,
+    "share_today": 0.068898,
+    "share_with_plan": 0.701472,
+    "duration_days": 40.51,
+    "window_days": 40,
+    "diesel_l_avoided": 12464.0
+   },
+   "signals": [
+    {
+     "id": "tcn-2024-09-21-cut",
+     "kind": "cut",
+     "at": "2024-09-21T01:44:00+01:00",
+     "line": "Gombe to Damaturu to Maiduguri 330 kV line",
+     "cities": [
+      "maiduguri",
+      "damaturu"
+     ],
+     "quote": "the transmission line was brought down by vandals by cutting all four-tower footing and was noticed by the TCN around 01:44 am on the 21st of September 2024.",
+     "quote_backup": "efforts are currently underway by its engineers to temporarily restore power to Damaturu through a 33kV transmission line from Potiskum, while Maiduguri will receive power from the Maiduguri Emergency Power Plant (MEPP).",
+     "source": "Nairametrics, 23 Sep 2024, quoting TCN",
+     "url": "https://nairametrics.com/2024/09/23/blackout-in-borno-yobe-as-vandals-destroy-gombe-maiduguri-transmission-three-months-after-repair",
+     "status": "VERIFIED_SECONDARY"
+    },
+    {
+     "id": "tcn-2024-10-31-restored",
+     "kind": "restored",
+     "at": "2024-10-31T14:01:00+01:00",
+     "line": "Gombe to Damaturu to Maiduguri 330 kV line",
+     "cities": [
+      "maiduguri",
+      "damaturu"
+     ],
+     "quote": "power supply was fully restored on the Gombe-Damaturu line about 7:25p.m. on October 30, and on the Damaturu-Maiduguri (Molai) part of the line on October 31, 2024, around 2:01p.m.",
+     "source": "Arise News, 2 Nov 2024, quoting TCN's GM Public Affairs Ndidi Mbah",
+     "url": "https://www.arise.tv/tcn-restores-power-supply-through-gombe-damaturu-maiduguri-line/",
+     "status": "VERIFIED_SECONDARY"
+    }
+   ],
+   "run_order": {
+    "own_solar": [
+     {
+      "order": 1,
+      "id": "H-SN_0B1D15D01C",
+      "name": "Tuba Lawanti Health Post",
+      "sector": "health"
+     },
+     {
+      "order": 2,
+      "id": "H-SN_2ECE211F0A",
+      "name": "Galangi Dispensary",
+      "sector": "health"
+     },
+     {
+      "order": 3,
+      "id": "H-SN_DD3F352097",
+      "name": "Tuba Dispensary",
+      "sector": "health"
+     },
+     {
+      "order": 4,
+      "id": "H-SN_D5F36F1430",
+      "name": "Kaalmari Health Care Centre",
+      "sector": "health"
+     },
+     {
+      "order": 5,
+      "id": "H-SN_5F3A08214F",
+      "name": "7 Division Hospital Maimalari",
+      "sector": "health"
+     },
+     {
+      "order": 6,
+      "id": "H-SN_06189EDBFF",
+      "name": "Zabarmari Clinic",
+      "sector": "health"
+     },
+     {
+      "order": 7,
+      "id": "H-SN_0DD0543898",
+      "name": "Gongulong Primary Health Centre",
+      "sector": "health"
+     },
+     {
+      "order": 8,
+      "id": "H-SN_17EBBA7C07",
+      "name": "Dominion Maternity",
+      "sector": "health"
+     },
+     {
+      "order": 9,
+      "id": "H-SN_234152F7AC",
+      "name": "Abbagana Terab Housing Etated Clinic",
+      "sector": "health"
+     },
+     {
+      "order": 10,
+      "id": "H-SN_2D504A4367",
+      "name": "Shehu'S Palace Clinic",
+      "sector": "health"
+     }
+    ],
+    "own_solar_count": 109,
+    "fuel_first": [
+     {
+      "rank": 143,
+      "id": "H-SN_2CA9850B89",
+      "name": "Falala Maternity Hospital",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 3.0,
+      "with_h": 2932.0,
+      "gained_h": 2929.0,
+      "litres": 172.9,
+      "hours_per_litre": 16.94,
+      "fuel_order": 1
+     },
+     {
+      "rank": 142,
+      "id": "H-SN_33083DA99E",
+      "name": "Garba Buzu Idp Camp Health Clinic",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 2.0,
+      "with_h": 2932.0,
+      "gained_h": 2930.0,
+      "litres": 172.9,
+      "hours_per_litre": 16.94,
+      "fuel_order": 2
+     },
+     {
+      "rank": 144,
+      "id": "H-SN_A79697A311",
+      "name": "Atal Medical Centre",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 3.0,
+      "with_h": 2932.0,
+      "gained_h": 2929.0,
+      "litres": 172.9,
+      "hours_per_litre": 16.94,
+      "fuel_order": 3
+     },
+     {
+      "rank": 145,
+      "id": "H-SN_B0287EC341",
+      "name": "Alpine Speciaistl Hospital",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 3.0,
+      "with_h": 2932.0,
+      "gained_h": 2929.0,
+      "litres": 172.9,
+      "hours_per_litre": 16.94,
+      "fuel_order": 4
+     },
+     {
+      "rank": 108,
+      "id": "H-SN_C31BBB65B5",
+      "name": "New Gra Primary Health Centre",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 2.0,
+      "with_h": 2936.0,
+      "gained_h": 2934.0,
+      "litres": 173.4,
+      "hours_per_litre": 16.92,
+      "fuel_order": 5
+     },
+     {
+      "rank": 109,
+      "id": "H-SN_C336BE2EF4",
+      "name": "Bulabulin Ngarannam Primary Health Centre",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 2.0,
+      "with_h": 2936.0,
+      "gained_h": 2934.0,
+      "litres": 173.4,
+      "hours_per_litre": 16.92,
+      "fuel_order": 6
+     },
+     {
+      "rank": 110,
+      "id": "H-SN_C5AE3165B2",
+      "name": "Gamboru Male Dispensary",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 2.0,
+      "with_h": 2936.0,
+      "gained_h": 2934.0,
+      "litres": 173.4,
+      "hours_per_litre": 16.92,
+      "fuel_order": 7
+     },
+     {
+      "rank": 111,
+      "id": "H-SN_D10FB36EF0",
+      "name": "Baga Road Primary Health Centre",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 2.0,
+      "with_h": 2936.0,
+      "gained_h": 2934.0,
+      "litres": 173.4,
+      "hours_per_litre": 16.92,
+      "fuel_order": 8
+     },
+     {
+      "rank": 112,
+      "id": "H-SN_D6FC384F12",
+      "name": "Gwange II Primary Health Centre",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 2.0,
+      "with_h": 2936.0,
+      "gained_h": 2934.0,
+      "litres": 173.4,
+      "hours_per_litre": 16.92,
+      "fuel_order": 9
+     },
+     {
+      "rank": 113,
+      "id": "H-SN_D7FC783F63",
+      "name": "Baga Motor Pack Dispensary",
+      "sector": "health",
+      "archetype": "health_facility",
+      "lga": "Maiduguri",
+      "needed_h": 2940.0,
+      "today_h": 2.0,
+      "with_h": 2936.0,
+      "gained_h": 2934.0,
+      "litres": 173.4,
+      "hours_per_litre": 16.92,
+      "fuel_order": 10
+     }
+    ],
+    "dark_count": 170,
+    "fuel_first_litres": 1732.0,
+    "fuel_first_gained_h": 29321.0,
+    "litres_to_fuel_every_dark_site": 69895.7,
+    "ngn_to_fuel_every_dark_site": 229081060.0,
+    "diesel_ngn_per_l": 3277.47,
+    "rule": "funded sites run on their own solar + storage; every other site in order of critical service-hours gained per litre of diesel (its system's hours over today, and the litres a generator burns to deliver them), most first"
+   },
+   "closed": {
+    "duration_days": 40.51,
+    "window_days": 40,
+    "totals": {
+     "budget_ngn": 2000000000.0,
+     "spent_ngn": 1999099130.0,
+     "remaining_ngn": 900870.0,
+     "funded_count": 109,
+     "candidates": 279,
+     "not_funded_count": 170,
+     "city_sites": 279,
+     "csh_needed": 331520.0,
+     "csh_today": 23357.4,
+     "csh_with_funded": 233281.9,
+     "csh_gained": 209924.5,
+     "share_today": 0.070455,
+     "share_with_funded": 0.703674,
+     "share_with_every_site": 1.0,
+     "diesel_l_avoided": 12464.0,
+     "diesel_ngn_avoided": 40850484.0,
+     "diesel_ngn_per_l": 3277.47,
+     "capex_funded_ngn": 1999099130.0,
+     "capex_every_site_in_scope_ngn": 9422213030.0,
+     "metric": "critical_service_hours",
+     "days": 40
+    },
+    "run_order": {
+     "own_solar": [
+      {
+       "order": 1,
+       "id": "H-SN_0B1D15D01C",
+       "name": "Tuba Lawanti Health Post",
+       "sector": "health"
+      },
+      {
+       "order": 2,
+       "id": "H-SN_2ECE211F0A",
+       "name": "Galangi Dispensary",
+       "sector": "health"
+      },
+      {
+       "order": 3,
+       "id": "H-SN_DD3F352097",
+       "name": "Tuba Dispensary",
+       "sector": "health"
+      },
+      {
+       "order": 4,
+       "id": "H-SN_D5F36F1430",
+       "name": "Kaalmari Health Care Centre",
+       "sector": "health"
+      },
+      {
+       "order": 5,
+       "id": "H-SN_5F3A08214F",
+       "name": "7 Division Hospital Maimalari",
+       "sector": "health"
+      },
+      {
+       "order": 6,
+       "id": "H-SN_06189EDBFF",
+       "name": "Zabarmari Clinic",
+       "sector": "health"
+      },
+      {
+       "order": 7,
+       "id": "H-SN_0DD0543898",
+       "name": "Gongulong Primary Health Centre",
+       "sector": "health"
+      },
+      {
+       "order": 8,
+       "id": "H-SN_17EBBA7C07",
+       "name": "Dominion Maternity",
+       "sector": "health"
+      },
+      {
+       "order": 9,
+       "id": "H-SN_234152F7AC",
+       "name": "Abbagana Terab Housing Etated Clinic",
+       "sector": "health"
+      },
+      {
+       "order": 10,
+       "id": "H-SN_2D504A4367",
+       "name": "Shehu'S Palace Clinic",
+       "sector": "health"
+      }
+     ],
+     "own_solar_count": 109,
+     "fuel_first": [
+      {
+       "rank": 142,
+       "id": "H-SN_33083DA99E",
+       "name": "Garba Buzu Idp Camp Health Clinic",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 2.0,
+       "with_h": 1960.0,
+       "gained_h": 1958.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.89,
+       "fuel_order": 1
+      },
+      {
+       "rank": 109,
+       "id": "H-SN_C336BE2EF4",
+       "name": "Bulabulin Ngarannam Primary Health Centre",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 2.0,
+       "with_h": 1960.0,
+       "gained_h": 1958.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.89,
+       "fuel_order": 2
+      },
+      {
+       "rank": 111,
+       "id": "H-SN_D10FB36EF0",
+       "name": "Baga Road Primary Health Centre",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 2.0,
+       "with_h": 1960.0,
+       "gained_h": 1958.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.89,
+       "fuel_order": 3
+      },
+      {
+       "rank": 113,
+       "id": "H-SN_D7FC783F63",
+       "name": "Baga Motor Pack Dispensary",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 2.0,
+       "with_h": 1960.0,
+       "gained_h": 1958.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.89,
+       "fuel_order": 4
+      },
+      {
+       "rank": 115,
+       "id": "H-SN_FC4D157AB7",
+       "name": "Goni Damgari Primary Health Centre",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 2.0,
+       "with_h": 1960.0,
+       "gained_h": 1958.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.89,
+       "fuel_order": 5
+      },
+      {
+       "rank": 116,
+       "id": "H-SN_151E6A811E",
+       "name": "Mustashfa Clinic",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 3.0,
+       "with_h": 1960.0,
+       "gained_h": 1957.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.88,
+       "fuel_order": 6
+      },
+      {
+       "rank": 117,
+       "id": "H-SN_189485E43D",
+       "name": "Cbn Quarters Camp Clinic",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 3.0,
+       "with_h": 1960.0,
+       "gained_h": 1957.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.88,
+       "fuel_order": 7
+      },
+      {
+       "rank": 143,
+       "id": "H-SN_2CA9850B89",
+       "name": "Falala Maternity Hospital",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 3.0,
+       "with_h": 1960.0,
+       "gained_h": 1957.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.88,
+       "fuel_order": 8
+      },
+      {
+       "rank": 118,
+       "id": "H-SN_35BF43BAF2",
+       "name": "Ngamtuku Drugs And Medical Service",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 3.0,
+       "with_h": 1960.0,
+       "gained_h": 1957.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.88,
+       "fuel_order": 9
+      },
+      {
+       "rank": 119,
+       "id": "H-SN_3D6AAFC11F",
+       "name": "Olive Medical Clinic",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Maiduguri",
+       "needed_h": 1960.0,
+       "today_h": 3.0,
+       "with_h": 1960.0,
+       "gained_h": 1957.0,
+       "litres": 116.0,
+       "hours_per_litre": 16.88,
+       "fuel_order": 10
+      }
+     ],
+     "dark_count": 170,
+     "fuel_first_litres": 1160.0,
+     "fuel_first_gained_h": 19575.0,
+     "litres_to_fuel_every_dark_site": 46782.2,
+     "ngn_to_fuel_every_dark_site": 153327257.0,
+     "diesel_ngn_per_l": 3277.47,
+     "rule": "funded sites run on their own solar + storage; every other site in order of critical service-hours gained per litre of diesel (its system's hours over today, and the litres a generator burns to deliver them), most first"
+    }
+   },
+   "corridor": {
+    "km_330": 745.1,
+    "towers": 2707,
+    "source": "OSM via Geofabrik nigeria-latest.osm.pbf (30 Oct 2026), osm_extract.py; mapped, not surveyed",
+    "box": "Gombe to Maiduguri, 10.1 to 12.1 N, 10.9 to 13.4 E (whole OSM ways that touch the box)",
+    "cities": [
+     "maiduguri",
+     "damaturu"
+    ]
+   },
+   "others": {
+    "damaturu": {
+     "city_name": "Damaturu",
+     "share_today": 0.000368,
+     "sites": 37,
+     "fuel_first": [
+      {
+       "rank": 1,
+       "id": "H-SN_211F8B7B04",
+       "name": "Kabaru Dispensary",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Damaturu",
+       "needed_h": 2940.0,
+       "today_h": 0.0,
+       "with_h": 2940.0,
+       "gained_h": 2940.0,
+       "litres": 173.9,
+       "hours_per_litre": 16.9,
+       "fuel_order": 1
+      },
+      {
+       "rank": 2,
+       "id": "H-SN_3A93FCBCB8",
+       "name": "Sasawa Maternal And Child Health Care",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Damaturu",
+       "needed_h": 2940.0,
+       "today_h": 0.0,
+       "with_h": 2940.0,
+       "gained_h": 2940.0,
+       "litres": 173.9,
+       "hours_per_litre": 16.9,
+       "fuel_order": 2
+      },
+      {
+       "rank": 3,
+       "id": "H-SN_3C7E44233A",
+       "name": "Gabai Primary Health Centre",
+       "sector": "health",
+       "archetype": "health_facility",
+       "lga": "Damaturu",
+       "needed_h": 2940.0,
+       "today_h": 0.0,
+       "with_h": 2940.0,
+       "gained_h": 2940.0,
+       "litres": 173.9,
+       "hours_per_litre": 16.9,
+       "fuel_order": 3
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "done",
+   "seq": 19,
+   "t_ms": 10,
+   "model": "none (code only)",
+   "tokens": 0,
+   "cost_usd": 0.0,
+   "recorded": true,
+   "duration_ms": 10
+  }
+ ],
+ "totals": {
+  "city": "maiduguri",
+  "budget_ngn": 2000000000.0,
+  "own_solar": 109,
+  "dark": 170,
+  "share_today": 0.068898,
+  "share_with_plan": 0.701472,
+  "duration_days": 40.51,
+  "window_days": 40,
+  "diesel_l_avoided": 12464.0
+ },
+ "question": "TCN reports the Gombe to Damaturu to Maiduguri line cut. Which sites run first?",
+ "what": "The 2024 line cut, replayed from TCN's statements: run order, then the event closed.",
+ "data_version": "8606a23e82d2",
+ "brief": 13
+}
