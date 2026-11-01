@@ -331,3 +331,13 @@ footer.site { border-top: 1px solid var(--line); padding: 24px 0 40px; font-size
 .crop-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: #fff; margin-top: 8px; }
 .crop-wrap img.crop { height: 40px; width: auto; max-width: none; border: none; border-radius: 0; display: block; }
 .chip.long { white-space: normal; border-radius: 10px; line-height: 1.4; padding: 3px 9px; }
+
+/* Vertical rhythm between stacked blocks. Paragraphs carry space only below them, so a table, chart, map, chip row
+   or list followed by text sat flush, and inline `margin: 0` on many paragraphs removed the rest. Normal-flow margins
+   collapse, so these rules never double a gap that already exists. Horizontal containers are left alone. */
+:not(.row, .grid2, .metrics, .chips, .between) > :is(table, .table-scroll, .metrics, .chips, .crop-wrap, .cmap, .list, ol, ul, .grid2, .row, .field, details, figure, label.row, .stack, .card, p:not(.kicker, .tile-unit))
+  + :is(p, ul, ol, table, .table-scroll, .metrics, .row, label.row, details, .field) { margin-top: 12px !important; }
+:not(.row, .grid2, .metrics, .chips, .between) > :is(h2, h3, h4):not(.tile-num) + :is(p, ul, ol, table, .table-scroll) { margin-top: 8px !important; }
+:not(.row, .grid2, .metrics, .chips, .between) > :not(.kicker, h1, h2) + h2 { margin-top: 28px !important; }
+:not(.row, .grid2, .metrics, .chips, .between) > :not(.kicker, h1, h2, h3) + h3:not(.tile-num) { margin-top: 18px !important; }
+.kicker:not(:last-child) { margin-bottom: 6px !important; }
