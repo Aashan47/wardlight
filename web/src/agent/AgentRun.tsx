@@ -108,7 +108,10 @@ function Args({ args }: { args: Record<string, unknown> }) {
 
 function Grounding({ check, n }: { check: Check; n: number }) {
   const reduced = useReducedMotion()
-  const nums: CheckedNumber[] = check.matches ?? (Array.isArray(check.numbers_checked) ? check.numbers_checked : [])
+  // matches lists every number checked, the unmatched ones with matched: null; those show once, as the red chips
+  const unmatched = new Set(check.unmatched)
+  const nums: CheckedNumber[] = (check.matches ?? (Array.isArray(check.numbers_checked) ? check.numbers_checked : []))
+    .filter((x) => !(x.matched == null && !x.tool && unmatched.has(x.text)))
   const total = Array.isArray(check.numbers_checked) ? check.numbers_checked.length : check.numbers_checked
   const [shown, setShown] = useState(reduced ? nums.length : 0)
   useEffect(() => {
