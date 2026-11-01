@@ -14,7 +14,7 @@ The same rows are served at `GET /api/results` and shown on the How it decides p
 | T3 | Supply model: measured hours of failing Band A feeders inside the 90% interval for at least 85% | 27 of 32 inside the held-out interval (84.4%): **miss**. Widened x1.5625 under the PREREG failure rule: 28 of 32 (87.5%) | **miss**, then widened |
 | T4 | NASA POWER annual PV yield within 10% of PVGIS at 20 sites | 20 of 20 within 10%; median difference -1.0%, largest 6.2% | **hit** |
 | T5 | A typical primary health centre sizes inside SEforALL's range, or the difference is explained | grid-connected (Band C) sites 3 of 3 inside 5 to 10 kWp and 36 to 72 kWh; off-grid sites 0 of 3 inside (13.27 to 14.73 kWp), explained by the sizing target | **hit** (with the explained difference) |
-| T6 | What-if under 1 s at the 95th percentile, 200 facilities, on the deployed server | not measured on the deployed server yet | **not yet run** |
+| T6 | What-if under 1 s at the 95th percentile, 200 facilities, on the deployed server | Azure host, 1 Nov, cache off: p50 1.04 s, p95 1.07 s over 200 facilities | **miss** |
 | T7 | Brief 1 metric reported per facility with every input sourced (no target) | fridge uptime and doses reported for 55,035 of 61,009 facilities by the API | reported |
 | T8 | 100% of planner numbers traced to a tool result | 219 of 219 (run 1), 287 of 287 (run 2); section below | **hit** |
 | T9 | Amended: at least 15 of 16 plans correct | run 1: 11 of 16, **miss**; run 2 after fixes: 15 of 16 (not held out); section below | **miss** |
@@ -56,10 +56,17 @@ at 7.91 to 8.78 kWp and 57 to 63 kWh, inside SEforALL's 5 to 10 kWp and 36 to 72
 days at the pessimistic end (`data/work/t5_results.json`). The brief 13 outage-ready systems carry only the critical
 loads (4.73 kWh a day) and size at 1.27 to 1.64 kWp for a 7-day outage (`data/work/t5_outage.json`).
 
-### T6 (not yet run)
+### T6 (miss, 1 Nov 2026)
 
-PREREG names the deployed server. Not measured there yet; the Sunday runbook (`deploy/SUNDAY-RUNBOOK.md`) runs it on
-the Azure host with `deploy/t6_api.py`. Measurements that exist, none of them the PREREG measurement:
+PREREG names the deployed server. Measured there on Sun 1 Nov 2026, 7:09 to 7:12 PM PKT, with `deploy/t6_api.py`
+(200 facilities, seed 20261030, the web app's what-if body) against a second instance on the Azure host
+(`Standard_B2als_v2`, 2 vCPUs, AMD EPYC 7763, 4 GB) with the cache off (`WARDLIGHT_CACHE_ENTRIES=0`), beside the
+public instance. Data version 8606a23e82d2. Result: p50 1.04 s, **p95 1.07 s**, max 1.10 s, 0 cache hits, engine p50
+1,040 ms; load average 1.06 after the run (`data/work/t6_server.json`). The target is p95 under 1 s, so T6 is a
+**miss**, by about 70 ms. Almost all of the time is the engine run itself, not the API. A repeated what-if is a cache
+hit on the public instance; this measurement counts only first-time calls.
+
+Earlier measurements, none of them the PREREG measurement:
 
 - Build laptop, engine only, under heavy load from other jobs: p50 0.27 s, p95 1.00 s over 200 facilities
   (`data/work/t6_local_contended.json`).
