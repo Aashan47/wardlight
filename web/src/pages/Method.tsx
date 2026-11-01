@@ -1,6 +1,6 @@
 import { api } from '../api/client'
 import { Loading, RingDivider, TIER, TierTag } from '../components/ui'
-import type { Tier } from '../api/types'
+import type { Source, Tier } from '../api/types'
 import { useAsync } from '../hooks'
 import { Link } from '../router'
 
@@ -13,7 +13,7 @@ export function Method() {
       <h1>From one vulnerable line to a plan for every critical site</h1>
       <ol className="stack" style={{ paddingLeft: 20 }}>
         <li><strong>Critical sites.</strong> Health facilities from the GRID3 registry; motorized and solar boreholes from the iMMAP 2019 survey and the water works from OpenStreetMap; one cold room per named market. The UNIMAID/UMTH solar plant already powers its own site and is left out of every total.</li>
-        <li><strong>Critical loads, by site.</strong> Health sites carry the SEforALL priority-1 loads (delivery room, oxygen, lights) as an archetype, the vaccine fridge on its own PQS system; boreholes a pump sized from the survey's yield and a stated head range; cold rooms a ColdHubs-type room. Archetypes are labelled, not measured per site.</li>
+        <li><strong>Critical loads, by site.</strong> Health sites carry the SEforALL priority-1 loads (delivery room, oxygen, lights) as an archetype, the vaccine fridge on its own PQS system; boreholes a pump sized from the survey's yield and a stated head range; cold rooms a ColdHubs-type room. Archetypes are labelled as such; no site was metered.</li>
         <li><strong>Supply before the cut.</strong> The feeder band the regulator promises (A 20, B 16, C 12, D 8, E 4 hours a day) where a site can be matched, modelled below that ceiling and labelled modelled; solar boreholes off the grid.</li>
         <li><strong>The cut.</strong> The grid is forced off for the whole window: 14 days, 40 days (the real 2024 cut, 21 September to 31 October) or 60 days (the brief's two months).</li>
         <li><strong>Sun.</strong> NASA POWER hourly irradiance for each site, across several weather years.</li>
@@ -32,7 +32,8 @@ export function Method() {
       </ul>
 
       <RingDivider />
-      <h2>Matching health facilities to feeders</h2>
+      <h2>The health layer: placing each facility on a feeder</h2>
+      <p>Before the line is cut, a health facility's supply is the band its feeder is promised. Wardlight places each GRID3 facility on a feeder from the street lists in NERC's orders, in the tiers below, and refuses where no evidence places it. In the three cities this sets each health site's supply before the cut; during the cut the grid is off. <Link to="/facilities">Health facilities</Link> shows the result for every facility, with its outage hours and its system.</p>
       <div className="stack">
         {(Object.keys(TIER) as Tier[]).map((t) => <p key={t} style={{ margin: 0 }}><TierTag tier={t} /> <span className="small">{TIER[t].long}</span></p>)}
       </div>
@@ -40,7 +41,7 @@ export function Method() {
 
       <RingDivider />
       <h2>Pre-registered results</h2>
-      <p className="muted">Targets were written down before any data was parsed, matched or modelled. Misses will be shown next to hits. The agent targets T8 and T9 moved to the brief 13 planner by a dated amendment of 31 October 2026.</p>
+      <p className="muted">Targets were written down before any data was parsed, matched or modelled. Misses are shown next to hits. T1 to T6 test the health-facility layer: the reader, matcher, supply model, sun, sizing and speed. T7 is the vaccine-fridge and dose metric for health sites. T8 and T9 test the planner agent.</p>
       {results.loading ? <Loading /> : (
         <div className="table-scroll">
           <table className="table">
@@ -58,7 +59,7 @@ export function Method() {
       <ul>
         <li>A NERC band is a promise. No measured supply exists per site; the shortfall is modelled.</li>
         <li>Critical loads are archetypes. The water works load is an assumption (30 to 300 kW) until the operator confirms it; the existing solar boreholes' array sizes are assumed.</li>
-        <li>Diesel is priced at N3,277.47 per litre, the NBS national average for May 2026 (four outlets report the same figure; the NBS page itself could not be opened). It is a national average, not a Borno pump price; the NBS October 2024 figure, N1,441.28, is kept only as the low end of the range.</li>
+        <li>Diesel is priced at N3,277.47 per litre, the NBS national average for May 2026 (four outlets report the same figure; the NBS page itself could not be opened). It is a national average, so a Borno pump price may differ; the NBS October 2024 figure, N1,441.28, is kept only as the low end of the range.</li>
         <li>Roof fit rests on OpenStreetMap building outlines; ownership of a roof is not checked. Damaturu has few mapped buildings.</li>
         <li>English only. No unreviewed translations.</li>
       </ul>
@@ -69,11 +70,26 @@ export function Method() {
         <div className="table-scroll">
           <table className="table">
             <thead><tr><th>Source</th><th>Licence</th><th>Retrieved</th></tr></thead>
-            <tbody>{health.data?.sources.map((s) => <tr key={s.name}><td><a href={s.url} target="_blank" rel="noopener">{s.name}</a></td><td className="small">{s.licence}</td><td className="mono small">{s.retrieved}</td></tr>)}</tbody>
+            <tbody>{health.data?.sources.filter((s) => !DOSE_ONLY.test(s.name)).map((s) => <SourceRow key={s.name} s={s} />)}</tbody>
           </table>
         </div>
       )}
-      <p className="small muted">Data version <span className="mono">{health.data?.data_version}</span>. The city scoreboard's sources are listed in each metric's evidence drawer.</p>
+      <p className="small muted">The city build also uses OpenStreetMap (ODbL, © OpenStreetMap contributors) for markets, roofs and the 330 kV line, and the iMMAP 2019 Borno water-point survey (CC BY), with every other city source in each metric's evidence drawer.</p>
+      {health.data && health.data.sources.some((s) => DOSE_ONLY.test(s.name)) && (
+        <details className="small">
+          <summary>Sources used only by the vaccine-dose estimate (T7)</summary>
+          <p className="muted">The API computes a vaccine-dose estimate for the T7 record. These sources serve only that estimate; no brief 13 figure uses them.</p>
+          <div className="table-scroll"><table className="table"><tbody>{health.data.sources.filter((s) => DOSE_ONLY.test(s.name)).map((s) => <SourceRow key={s.name} s={s} />)}</tbody></table></div>
+        </details>
+      )}
+      <p className="small muted">Data version <span className="mono">{health.data?.data_version}</span>.</p>
     </article>
   )
+}
+
+/** Sources that serve only the dose estimate (catchment population and birth rate). */
+const DOSE_ONLY = /birth rate|WorldPop/i
+
+function SourceRow({ s }: { s: Source }) {
+  return <tr><td><a href={s.url} target="_blank" rel="noopener">{s.name}</a></td><td className="small">{s.licence}</td><td className="mono small">{s.retrieved}</td></tr>
 }
