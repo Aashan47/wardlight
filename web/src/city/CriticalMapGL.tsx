@@ -94,12 +94,12 @@ export default function CriticalMapGL({ sites, corridor, selected, onSelect, foc
         if (!k || !at) continue
         const node = document.createElement('div')
         node.className = `plant-mk ${k}`
-        if (k === 'battery') { node.innerHTML = '<span class="pm-dot" aria-hidden="true"></span>'; node.title = 'UNIMAID battery plant (mapped): existing, not part of our plan' }
+        if (k === 'battery') { node.innerHTML = '<span class="pm-dot" aria-hidden="true"></span>'; node.title = 'UNIMAID battery plant (mapped): existing, outside our plan' }
         else {
           // short tags so they never hide sites; the legend under the map carries the full wording
           node.innerHTML = `<span class="pm-dot" aria-hidden="true"></span><span class="pm-txt"></span>`
-          ;(node.querySelector('.pm-txt') as HTMLElement).textContent = k === 'gas' ? 'MEPP gas plant' : 'UMTH solar: existing, not in plan'
-          node.title = k === 'gas' ? 'Maiduguri Emergency Power Plant (MEPP): gas by road tanker; the plan works alongside it' : 'UNIMAID/UMTH solar plant: existing on-site solar, not part of our plan'
+          ;(node.querySelector('.pm-txt') as HTMLElement).textContent = k === 'gas' ? 'MEPP gas plant' : 'UMTH solar: existing, outside the plan'
+          node.title = k === 'gas' ? 'Maiduguri Emergency Power Plant (MEPP): gas by road tanker; the plan works alongside it' : 'UNIMAID/UMTH solar plant: existing on-site solar, outside our plan'
         }
         // labels lean away from the city (gas up, solar down) so they do not sit on the sites
         markers.current.push(new Marker({ element: node, anchor: 'left', offset: k === 'gas' ? [-7, -22] : k === 'solar' ? [-7, 22] : [-5, 0] }).setLngLat(at).addTo(m))

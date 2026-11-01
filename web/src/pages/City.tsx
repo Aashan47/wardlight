@@ -139,7 +139,7 @@ export function CityPage({ city }: { city: CityId }) {
           <p className="kicker">Brief 13 · power for a city the grid can't protect · {cityInfo.name}, {cityInfo.state} State</p>
           <span className="row" style={{ gap: 8 }}><SourceBadge src={src} />{m?.data_version && <span className="small muted mono" title="Engine data version">data {m.data_version}</span>}</span>
         </div>
-        {src === 'mock' && <p className="mock-banner" role="note"><b>Mock data.</b> The engine has not served this city yet, so every number on this page is a layout placeholder, not a result.</p>}
+        {src === 'mock' && <p className="mock-banner" role="note"><b>Mock data.</b> The engine has not served this city yet, so every number on this page is a layout placeholder.</p>}
         {met.error && !m && <Empty>{met.error.message}. {MOCK_ALLOWED ? '' : 'This view appears when the engine serves it.'}</Empty>}
         <h1 id="hero-h" className="hero-h">
           {m && shareToday && shareWith && litres ? (
@@ -269,9 +269,9 @@ export function CityPage({ city }: { city: CityId }) {
           <div>
             <p className="kicker">Agents that plan, verify and watch</p>
             <ul className="agent-links">
-              <li><Link to="/plan">Planner: turns a budget into a costed, cited plan</Link></li>
-              <li><Link to="/facilities">Verifier: asks a clinic by SMS when the data is unsure (on each facility page)</Link></li>
-              <li><Link to="/method">Regulator watcher: reads each new NERC order and re-runs what changed</Link></li>
+              <li><Link to="/plan">Funder planner: turns a budget and an outage length into a costed plan, every number checked against the data (on the Funder plan)</Link></li>
+              <li><Link to="/site/W-BH-589?city=maiduguri">SMS site verifier: asks a borehole committee, clinic or market by SMS whether a generator runs (on each site page)</Link></li>
+              <li><Link to="/plan">Line watcher: reads the line operator's cut and restoration statements and re-plans which sites run first (the 2024 cut, replayed, on the Funder plan)</Link></li>
             </ul>
           </div>
         </div>
@@ -296,11 +296,11 @@ function Human({ v, unit, before, label }: { v: Range; unit: string; before?: Ra
 function MapLegend() {
   return (
     <div className="map-legend" aria-label="Map legend">
-      <span><span className="lg-lamp" />critical site: brighter = more critical hours kept; size = critical load (health sites share one archetype load, not measured)</span>
+      <span><span className="lg-lamp" />critical site: brighter = more critical hours kept; size = critical load (health sites share one archetype load; loads are modelled)</span>
       {SECTORS.map((s) => <span key={s}><SectorDot sector={s} />{SECTOR_NAME[s]}</span>)}
       <span><span className="lg-line" />330 kV line, the single point of failure</span>
       <span><span className="lg-plant gas" />MEPP gas plant: gas by road tanker; the plan works alongside it</span>
-      <span><span className="lg-plant solar" />UNIMAID/UMTH solar: existing on-site solar, not part of our plan</span>
+      <span><span className="lg-plant solar" />UNIMAID/UMTH solar: existing on-site solar, outside our plan</span>
     </div>
   )
 }

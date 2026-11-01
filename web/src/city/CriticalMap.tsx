@@ -50,7 +50,7 @@ export function FallbackPlot({ sites, corridor, selected, onSelect, focus, cut, 
         return (
           <g key={`p${i}`} transform={`translate(${x(at[0])} ${y(at[1])})`}>
             <rect x={-6} y={-6} width={12} height={12} rx={3} fill={pk === 'gas' ? 'var(--grid-500)' : 'var(--sun-500)'} />
-            {pk !== 'battery' && <text x={10} y={4} fontSize="12" fill="var(--text)" fontFamily="var(--sans)">{pk === 'gas' ? 'MEPP gas plant' : 'UMTH solar: existing, not in plan'}</text>}
+            {pk !== 'battery' && <text x={10} y={4} fontSize="12" fill="var(--text)" fontFamily="var(--sans)">{pk === 'gas' ? 'MEPP gas plant' : 'UMTH solar: existing, outside the plan'}</text>}
           </g>
         )
       })}
