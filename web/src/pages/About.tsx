@@ -22,6 +22,10 @@ export function About() {
         The Funder plan turns a naira budget into a costed, ranked list of sites; the planner agent does the same from a plain question and shows every step.
         And the people at each site: the officer in charge, the borehole committee, the market association, who can confirm by SMS what the model can only assume.
       </p>
+      <h2>AI in the product</h2>
+      <p>
+        The planner agent runs openai/gpt-oss-120b on Nebius Token Factory, and code checks every number it writes against the engine's tool results before an answer is shown.
+      </p>
       <p>
         {MODE === 'fixture'
           ? 'This build is running on sample fixtures: facility numbers are synthetic placeholders and are labelled as such on every screen.'
