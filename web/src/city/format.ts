@@ -40,6 +40,13 @@ export const full = (n: number | null | undefined) => (n === null || n === undef
 export function share(x: number | null | undefined): string {
   if (x === null || x === undefined || !Number.isFinite(x)) return 'n/a'
   if (x >= 1) return '100%'
+  // below 1%: one significant digit, half up (0.04%, 0.2%), so a share above zero never prints as 0%
+  if (x > 0 && x * 100 < 0.95) {
+    const p = x * 100, e = Math.floor(Math.log10(p)), f = 10 ** e
+    const v = Math.floor(p / f + 0.5 + 1e-9) * f
+    const ev = Math.floor(Math.log10(v) + 1e-9) // 0.096 rounds to 0.1: one decimal, not two
+    return `${v.toFixed(Math.max(0, -ev))}%`
+  }
   let v = Math.floor(x * 1000 + 0.5 + 1e-9) / 10
   if (v >= 100) v = 99.9
   return `${Number.isInteger(v) ? v : v.toFixed(1)}%`
