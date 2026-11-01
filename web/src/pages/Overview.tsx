@@ -100,11 +100,11 @@ export function Overview() {
       </section>
 
       <RingDivider />
-      <section style={{ marginTop: 8 }} className="grid2 wide-left">
+      <section style={{ marginTop: 20 }} className="grid2 wide-left">
         <div className="stack">
           <h2 style={{ margin: 0 }}>Find any facility in the national registry</h2>
-          <p className="muted" style={{ margin: 0 }}>The same engine covers every facility GRID3 lists in Nigeria{MODE === 'live' && summary.data ? `, ${num(summary.data.headline.facilities)} in 37 states` : ''}. Each page shows its feeder evidence, its outage hours and the system that keeps them.</p>
-          {MODE === 'fixture' && <p className="small banner" style={{ margin: 0 }}><SampleBadge /> Fixture mode: registry search runs over synthetic sample records (Edo State). They are not engine results.</p>}
+          <p className="muted">The same engine covers every facility GRID3 lists in Nigeria{MODE === 'live' && summary.data ? `, ${num(summary.data.headline.facilities)} in 37 states` : ''}. Each page shows its feeder evidence, its outage hours and the system that keeps them.</p>
+          {MODE === 'fixture' && <p className="small banner"><SampleBadge /> Fixture mode: registry search runs over synthetic sample records (Edo State). They are not engine results.</p>}
           <form role="search" onSubmit={(e) => e.preventDefault()} className="field" style={{ maxWidth: 560 }}>
             <label htmlFor="q">Facility name, LGA or code</label>
             <div style={{ position: 'relative' }}>
@@ -155,16 +155,16 @@ export function Overview() {
       )}
 
       <RingDivider />
-      <section style={{ marginTop: 8 }} className="grid2">
+      <section style={{ marginTop: 20 }} className="grid2">
         <div className="stack">
           <h2 style={{ margin: 0 }}>For a funder with a fixed budget</h2>
-          <p style={{ margin: 0 }}>The funder plan puts these facilities beside the city's water pumping sites and market cold rooms, in one plan order, and shows which ones a budget funds and what the rest would cost.</p>
-          <p style={{ margin: 0 }}><Link className="btn primary" to="/plan">Open the funder plan</Link></p>
+          <p>The funder plan puts these facilities beside the city's water pumping sites and market cold rooms, in one plan order, and shows which ones a budget funds and what the rest would cost.</p>
+          <p><Link className="btn primary" to="/plan">Open the funder plan</Link></p>
         </div>
         <div className="stack">
           <h2 style={{ margin: 0 }}>For the officer in charge</h2>
-          <p style={{ margin: 0 }}>Every facility has a one-page sheet that prints and opens offline, with its outage hours, the system that keeps them and the feeder evidence.</p>
-          <p className="row" style={{ margin: 0 }}>{first?.facility_id && <Link className="btn" to={`/facility/${first.facility_id}/sheet`}><Icon name="doc" /> An example facility sheet</Link>}<Link className="btn" to="/method">How it decides</Link></p>
+          <p>Every facility has a one-page sheet that prints and opens offline, with its outage hours, the system that keeps them and the feeder evidence.</p>
+          <p className="row">{first?.facility_id && <Link className="btn" to={`/facility/${first.facility_id}/sheet`}><Icon name="doc" /> An example facility sheet</Link>}<Link className="btn" to="/method">How it decides</Link></p>
         </div>
       </section>
     </div>
