@@ -119,6 +119,11 @@ def _t5(s: Settings) -> dict:
 
 
 def _t6(s: Settings) -> dict:
+    srv = _read_json(s.work / "t6_server.json")  # the PREREG measurement: deploy/t6_api.py on the deployed server
+    if srv:
+        res = (f"deployed server ({srv.get('machine')}), cache off: p50 {srv['p50_s']:.2f} s, p95 {srv['p95_s']:.2f} s "
+               f"over {srv['n']} facilities against a target of p95 under 1 s")
+        return {"result": res, "status": "hit" if srv["p95_s"] < 1.0 else "miss", "source": "data/work/t6_server.json"}
     d = _read_json(s.work / "t6_local_contended.json")
     base = "PREREG names the deployed server, not yet measured there"
     if not d:

@@ -32,7 +32,7 @@ tar -C "$HERE" -czf - --exclude .venv --exclude node_modules --exclude web/scree
   | "${SSH[@]}" "$REMOTE" 'tar -xzf - -C ~/wardlight/app 2>/dev/null'
 tar -C "$HERE/data/work" -czf - facilities.parquet matches.parquet facility_results.parquet \
   facility_results.meta.json catchments.parquet catchments.meta.json nerc_rows.parquet nerc_shortfalls.parquet \
-  nerc_raw.parquet match_report.json nerc_crops brief13 | "${SSH[@]}" "$REMOTE" 'tar -xzf - -C ~/wardlight/app/data/work 2>/dev/null'
+  nerc_raw.parquet match_report.json t6_server.json nerc_crops brief13 | "${SSH[@]}" "$REMOTE" 'tar -xzf - -C ~/wardlight/app/data/work 2>/dev/null'
 tar -C "$EVENT/data-local" -czf - nasa-power naija-grid MANIFEST.md \
   | "${SSH[@]}" "$REMOTE" 'tar -xzf - -C ~/wardlight/data-local 2>/dev/null'
 tar -C "$STORE" -cf - . | "${SSH[@]}" "$REMOTE" 'tar -xf - -C ~/wardlight/cache 2>/dev/null'
